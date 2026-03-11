@@ -165,15 +165,17 @@ let STRESS = [
   {s:"Stagflation (UK)",impact:-8.4,exp:"Rates+4%, FTSE-15%",pr:"10%"},
 ];
 
-// 5 Forecast Scenarios — computed from user assumptions (to 2035)
+// 5 Forecast Scenarios — computed from PORT assumptions (to 2035)
 const computeScenario = (retPa, alphaBoost=0) => {
-  let fin = 362;
+  let fin = PORT.netWorth / 1000;
+  const salaryK = PORT.grossSalary / 1000;
+  const expK = PORT.monthlyExpenses * 12 / 1000;
   const pts = [];
   for(let yr=2026; yr<=2035; yr++) {
     const t = yr - 2026;
-    const salary = 170 * Math.pow(1.15, t);
-    const net = (salary * 2) * 0.53;
-    const exp = 72 * Math.pow(1.15, t);
+    const salary = salaryK * Math.pow(1.15, t);
+    const net = (salary * 2) * (1 - PORT.taxRate - PORT.niRate);
+    const exp = expK * Math.pow(1.15, t);
     const save = net - exp;
     if(t > 0) fin = fin * (1 + retPa + alphaBoost) + save;
     pts.push({y:yr, v:Math.round(fin)});
@@ -204,13 +206,13 @@ let NW_FORECAST = [
 // Human Capital model — to 2035
 let HC_DATA = (() => {
   const pts = [];
-  let fin = 362;
+  let fin = PORT.netWorth/1000;
   for(let yr=2026; yr<=2035; yr++) {
     const t = yr - 2026;
-    const age = 32 + t;
-    const salary = 170 * Math.pow(1.15, t);
-    const net = (salary * 2) * 0.53;
-    const exp = 72 * Math.pow(1.15, t);
+    const age = PORT.age + t;
+    const salary = (PORT.grossSalary/1000) * Math.pow(1.15, t);
+    const net = (salary * 2) * (1-PORT.taxRate-PORT.niRate);
+    const exp = (PORT.monthlyExpenses*12/1000) * Math.pow(1.15, t);
     const save = net - exp;
     if(t > 0) fin = fin * 1.15 + save;
     const yearsLeft = Math.max(55 - age, 0);
@@ -630,8 +632,12 @@ const T2 = ()=>{
   const sorted=[...HOLDINGS].sort((a,b)=>b.val-a.val);
   const top5=sorted.slice(0,5).reduce((a,h)=>a+h.val,0);
   const top3=sorted.slice(0,3).reduce((a,h)=>a+h.val,0);
-  const geoData=[{n:"UK",v:28.8,c:P.cyan},{n:"US",v:18.4,c:"#3b82f6"},{n:"SA",v:12.2,c:P.amber},{n:"Global",v:20.8,c:P.purple},{n:"Europe",v:3.0,c:P.indigo},{n:"EM",v:5.2,c:P.orange},{n:"Japan",v:1.8,c:"#06b6d4"},{n:"Asia",v:2.0,c:P.green},{n:"Mixed",v:7.8,c:"#94a3b8"}];
-  const ccyData=[{n:"GBP",v:51.2,c:P.cyan},{n:"USD",v:24.6,c:"#3b82f6"},{n:"ZAR",v:16.8,c:P.amber},{n:"EUR",v:2.0,c:P.indigo},{n:"GBP-H",v:5.4,c:P.purple}];
+  const geoColors={"UK":P.cyan,"US":"#3b82f6","SA":P.amber,"Global":P.purple,"Europe":P.indigo,"EM":P.orange,"Japan":"#06b6d4","Asia":P.green,"Mixed":"#94a3b8"};
+  const geoAgg={};HOLDINGS.forEach(h=>{geoAgg[h.geo]=(geoAgg[h.geo]||0)+h.val;});
+  const geoData=Object.entries(geoAgg).map(([n,v])=>({n,v:+(v/totalAssets*100).toFixed(1),c:geoColors[n]||P.t3})).sort((a,b)=>b.v-a.v);
+  const ccyColors={"GBP":P.cyan,"USD":"#3b82f6","ZAR":P.amber,"EUR":P.indigo,"GBP-H":P.purple,"Mixed":"#94a3b8"};
+  const ccyAgg={};HOLDINGS.forEach(h=>{ccyAgg[h.ccy]=(ccyAgg[h.ccy]||0)+h.val;});
+  const ccyData=Object.entries(ccyAgg).map(([n,v])=>({n,v:+(v/totalAssets*100).toFixed(1),c:ccyColors[n]||P.t3})).sort((a,b)=>b.v-a.v);
   const treemapData = sorted.slice(0,12).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),size:h.val,color:h.cls==="Crypto"?P.btc:h.cls==="ETF"?P.cyan:h.cls==="Pension"?"#06b6d4":h.cls==="Cash/FD"||h.cls==="Cash"?"#94a3b8":h.cls==="Investment"?P.indigo:P.purple}));
 
   return(<div>
@@ -726,13 +732,11 @@ const T3 = ()=>{
   // End bar
   waterfall.push({name:"End (Mar 26)", val:PORT.netWorth/1000, base:0, step:PORT.netWorth/1000, isAnchor:true, cum:PORT.netWorth/1000});
 
-  const sleevePerf = [
-    {name:"Pension",ret:28.6,contrib:4.6},{name:"UK ETF",ret:16.1,contrib:0.7},
-    {name:"ZAR Inv",ret:21.2,contrib:1.3},{name:"US ETF",ret:8.4,contrib:0.7},
-    {name:"Global ETF",ret:7.6,contrib:0.5},{name:"BTC",ret:-39.5,contrib:-5.4},
-    {name:"EC10",ret:-44.4,contrib:-3.5},{name:"ETH",ret:-54.4,contrib:-1.0},
-    {name:"SOL",ret:-63.6,contrib:-0.8},
-  ];
+  const sleevePerf = HOLDINGS.filter(h=>h.prev&&h.prev>0).map(h=>({
+    name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),
+    ret:+((h.val-h.prev)/h.prev*100).toFixed(1),
+    contrib:+((h.val-h.prev)/PORT.nw6moAgo*100).toFixed(1),
+  })).sort((a,b)=>b.contrib-a.contrib).filter((_,i,a)=>i<4||i>=a.length-5);
   const cumReturn = NW_WEEKLY.map(w=>({d:w.d,ret:((w.nw-PORT.nw6moAgo)/PORT.nw6moAgo*100)}));
 
   return(<div>
@@ -807,18 +811,8 @@ const T3 = ()=>{
     </Row>
     <Card hover>
       <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>TOP CONTRIBUTORS & DETRACTORS</div>
-      <Tbl h={["Holding","Start","End","P&L","Return","Interpretation"]}
-        r={[
-          ["Daiwa Pension",fK(63851),fK(82133),`+${fK(18282)}`,"+28.6%","Revaluation uplift — largest single contributor"],
-          ["JUKC.L (UK)",fK(15604),fK(18118),`+${fK(2514)}`,"+16.1%","UK value rotation beneficiary — best ETF"],
-          ["ZAR Invest",fK(22790),fK(27615),`+${fK(4825)}`,"+21.2%","Rand strengthening vs GBP"],
-          ["JURE.L (US)",fK(29971),fK(32477),`+${fK(2506)}`,"+8.4%","Solid S&P tracker with JPM alpha overlay"],
-          ["BTC",fK(49310),fK(29854),`-${fK(19456)}`,"-39.5%","Crypto winter — largest single detractor"],
-          ["EC10",fK(28508),fK(15845),`-${fK(12663)}`,"-44.4%","Altcoin basket devastation"],
-          ["ETH",fK(6545),fK(2986),`-${fK(3559)}`,"-54.4%","Worst large cap performer in portfolio"],
-          ["SOL",fK(4318),fK(1570),`-${fK(2748)}`,"-63.6%","Highest-conviction loss, small cap exposure"],
-          ["Rainy Day",fK(33978),fK(15752),`-${fK(18226)}`,"-53.6%","Cash drawdown for living expenses"],
-        ]} hl={3}/>
+      <Tbl h={["Holding","Start","End","P&L","Return"]}
+        r={HOLDINGS.filter(h=>h.prev).map(h=>({n:h.name.split("(")[0].split(" ").slice(0,3).join(" ").trim(),s:h.prev,e:h.val,pnl:h.val-h.prev,ret:(h.val-h.prev)/h.prev*100})).sort((a,b)=>b.pnl-a.pnl).map(h=>[h.n,fK(h.s),fK(h.e),`${h.pnl>=0?"+":""}${fK(h.pnl)}`,pc(h.ret)])} hl={3}/>
     </Card>
   </div>);
 };
@@ -981,7 +975,7 @@ const T6 = ()=>{
   const netBonus=PORT.grossBonus*(1-PORT.taxRate-PORT.niRate);
   const totalNet=netSalary+netBonus;
   const savingsRate=((totalNet-PORT.monthlyExpenses*12)/totalNet*100);
-  const liquidCash=15752+406+94;
+  const liquidCash=HOLDINGS.filter(h=>h.cls==="Cash"||h.name.includes("Rainy")).reduce((s,h)=>s+h.val,0);
   const runway=liquidCash/PORT.monthlyExpenses;
   const monthlyFlow=[
     {m:"Salary Net",v:+(netSalary/12).toFixed(0)},{m:"Expenses",v:-PORT.monthlyExpenses},
@@ -1230,18 +1224,18 @@ const T10 = ()=>{
   const wFiltered = WEALTH_5.filter(w=>[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].includes(w.y));
   // Savings vs Returns crossover (computed from base scenario)
   const crossover = [];
-  let prevFin = 362;
+  let prevFin = PORT.netWorth/1000;
   for(let yr=2026; yr<=2035; yr++) {
     const t = yr-2026;
-    const salary = 170*Math.pow(1.15,t);
-    const net = (salary*2)*0.53;
-    const exp = 72*Math.pow(1.15,t);
+    const salary = (PORT.grossSalary/1000)*Math.pow(1.15,t);
+    const net = (salary*2)*(1-PORT.taxRate-PORT.niRate);
+    const exp = (PORT.monthlyExpenses*12/1000)*Math.pow(1.15,t);
     const save = net-exp;
     const ret = t>0 ? prevFin*0.15 : 0;
     const total = save+ret;
     crossover.push({y:yr, savings:Math.round(save/(total||1)*100), returns:Math.round(ret/(total||1)*100)});
     if(t>0) prevFin = prevFin*1.15+save;
-    else prevFin = 362;
+    else prevFin = PORT.netWorth/1000;
   }
   const latestHC = HC_DATA[0];
   return(<div>
@@ -1355,12 +1349,7 @@ const T11 = ()=>{
     {m:"ETF Flows",v:cm.etfFlow,s:"INFLECTION?",c:P.amber,d:"Best single day of 2026"},
   ];
   const bullish=signals.filter(s=>s.c===P.green).length;
-  const cryptoHoldings=[
-    {name:"BTC",current:29854,prev:49310,ret:-39.5},
-    {name:"EC10",current:15845,prev:28508,ret:-44.4},
-    {name:"ETH",current:2986,prev:6545,ret:-54.4},
-    {name:"SOL",current:1570,prev:4318,ret:-63.6},
-  ];
+  const cryptoHoldings=HOLDINGS.filter(h=>h.cls==="Crypto").map(h=>({name:h.name.split("(")[0].split(" ")[0],current:h.val,prev:h.prev||h.val,ret:h.prev?+((h.val-h.prev)/h.prev*100).toFixed(1):0}));
   return(<div>
     <Hd t="CRYPTO ENGINE" s="On-chain analytics, cycle positioning, disciplined framework" tag="ON-CHAIN" ac={P.btc}/>
     <Row gap={10}>
@@ -1844,7 +1833,7 @@ function recalcDerived() {
       const t = yr - 2026;
       const age = PORT.age + t;
       const salary = (PORT.grossSalary/1000) * Math.pow(1.15, t);
-      const net = (salary * 2) * 0.53;
+      const net = (salary * 2) * (1 - PORT.taxRate - PORT.niRate);
       const exp = (PORT.monthlyExpenses*12/1000) * Math.pow(1.15, t);
       const save = net - exp;
       if(t > 0) fin = fin * 1.15 + save;
