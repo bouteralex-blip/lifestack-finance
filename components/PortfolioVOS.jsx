@@ -486,8 +486,8 @@ const T1 = ()=>{
   const monthlyReturns = MONTHLY_DATA.map(m=>({m:m.m,r:m.r}));
 
   // Sprint 1 — derived metrics (computed after Supabase overrides apply)
-  const activeReturn = nwReturn - (PORT.benchReturn||PORT.benchReturn===0?PORT.benchReturn*100:-2.8);
-  const realReturn = nwReturn - ((PORT.inflation||0.032) * 100 / 2);
+  const activeReturn = nwReturn - ((PORT.benchReturn != null ? PORT.benchReturn : -0.028) * 100);
+  const realReturn = nwReturn - ((PORT.inflation != null ? PORT.inflation : 0.032) * 100 / 2);
   const probNW = Math.round(0.15*PORT.netWorth*0.85 + 0.50*PORT.netWorth*1.12 + 0.25*PORT.netWorth*1.25 + 0.10*PORT.netWorth*1.45);
   const liquidCash = 15752+406+94;
   const runway = liquidCash / PORT.monthlyExpenses;
