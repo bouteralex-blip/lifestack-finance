@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSupabaseData } from '../lib/useData';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 
 // =========================================================================
@@ -36,7 +37,7 @@ const GS = {
   border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,
   boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
 };
-const PORT = {
+let PORT = {
   date:"7 March 2026",age:32,
   netWorth:362072, assets:375670, debts:13598,
   nw6moAgo:397457, nwPeak:394637,
@@ -45,9 +46,9 @@ const PORT = {
   fireTarget:1800000,
   amexDebt:10652, monzoFlex:2946,
 };
-const nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
+let nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
 
-const NW_WEEKLY = [
+let NW_WEEKLY = [
   {d:"20 Sep",nw:397457,a:400994},{d:"27 Sep",nw:387516,a:392212},
   {d:"4 Oct",nw:394637,a:399705},{d:"18 Oct",nw:389286,a:397849},
   {d:"25 Oct",nw:389424,a:397250},{d:"1 Nov",nw:363661,a:373153},
@@ -62,9 +63,9 @@ const NW_WEEKLY = [
   {d:"28 Feb",nw:350707,a:363363},{d:"7 Mar",nw:362072,a:375670},
 ];
 
-const NW_DD = NW_WEEKLY.map(w => ({d: w.d, dd: ((w.nw - PORT.nwPeak) / PORT.nwPeak * 100)}));
+let NW_DD = NW_WEEKLY.map(w => ({d: w.d, dd: ((w.nw - PORT.nwPeak) / PORT.nwPeak * 100)}));
 
-const HOLDINGS = [
+let HOLDINGS = [
   {name:"Daiwa Pension",val:82133,cls:"Pension",geo:"Global",ccy:"GBP",prev:63851},
   {name:"Fixed Deposit (5%)",val:45786,cls:"Cash/FD",geo:"UK",ccy:"GBP",prev:42631},
   {name:"JURE.L (US Res Enhanced)",val:32477,cls:"ETF",geo:"US",ccy:"USD",prev:29971},
@@ -89,10 +90,10 @@ const HOLDINGS = [
   {name:"Small positions (18)",val:17562,cls:"Mixed",geo:"Mixed",ccy:"Mixed",prev:16226},
 ];
 
-const totalAssets = PORT.assets;
-const byClass = {};
+let totalAssets = PORT.assets;
+let byClass = {};
 HOLDINGS.forEach(h => { byClass[h.cls] = (byClass[h.cls]||0) + h.val; });
-const SLEEVES = [
+let SLEEVES = [
   {name:"ETFs (JPM+iShares)",val:byClass.ETF||0,color:P.cyan},
   {name:"Pension",val:byClass.Pension||0,color:"#06b6d4"},
   {name:"Cash / FD",val:(byClass.Cash||0)+(byClass["Cash/FD"]||0),color:"#64748b"},
@@ -102,10 +103,10 @@ const SLEEVES = [
   {name:"Mixed (small)",val:byClass.Mixed||0,color:P.orange},
 ].map(s=>({...s,pct:+(s.val/totalAssets*100).toFixed(1)}));
 
-const cryptoTotal = 29854+15845+2986+1570+57;
-const cryptoPrev = 49310+28508+6545+4318+81;
+let cryptoTotal = 29854+15845+2986+1570+57;
+let cryptoPrev = 49310+28508+6545+4318+81;
 
-const BRIDGE_ITEMS = [
+let BRIDGE_ITEMS = [
   {name:"NW 20 Sep 25",delta:0,type:"anchor"},
   {name:"Salary Savings",delta:8000,type:"inflow"},
   {name:"Bonus Deploy",delta:14000,type:"inflow"},
@@ -121,14 +122,14 @@ const BRIDGE_ITEMS = [
   {name:"Other / Timing",delta:-12724,type:"drag"},
 ];
 let running = PORT.nw6moAgo;
-const BRIDGE = BRIDGE_ITEMS.map((b,i)=>{
+let BRIDGE = BRIDGE_ITEMS.map((b,i)=>{
   if(i===0) return {...b,start:0,end:PORT.nw6moAgo,cumulative:PORT.nw6moAgo};
   const start = running;
   running += b.delta;
   return {...b,start:Math.min(start,running),end:Math.max(start,running),cumulative:running};
 });
 
-const RISK = {
+let RISK = {
   vol:22.4,downDev:16.8,sharpe:0.42,sortino:0.58,calmar:0.34,omega:1.16,
   maxDD:-14.2,ddDur:78,ulcer:8.2,var95:-3.8,cvar95:-6.2,cdar:-12.8,
   tail:0.96,pain:4.6,painR:0.38,gtp:1.14,burke:0.32,sterling:0.26,martin:0.22,
@@ -136,7 +137,7 @@ const RISK = {
   skew:-0.52,kurt:5.4,hhi:0.065,effPos:15.4,divRatio:1.52,entropy:2.68,
 };
 
-const FACTORS = [
+let FACTORS = [
   {f:"Equity Beta",p:68,b:100,ret:4.2,risk:24,intent:"Yes"},
   {f:"Growth/Tech",p:30,b:45,ret:-0.8,risk:7,intent:"Reduced"},
   {f:"Value/Cyclical",p:54,b:35,ret:3.2,risk:6,intent:"Accidental OW"},
@@ -147,13 +148,13 @@ const FACTORS = [
   {f:"EM/ZAR FX",p:38,b:12,ret:1.6,risk:8,intent:"Partial"},
 ];
 
-const CRYPTO = {
+let CRYPTO = {
   btcPrice:68200,btcATH:126000,btcDD:-45.9,mvrvZ:0.49,nupl:0.10,fear:18,
   reserves:"2.48M ATL",funding:0.01,dom:58.2,rsi:27.5,sopr:0.95,
   reserveRisk:0.001,whale:"270K BTC",etfFlow:"+$500M 5 Mar",ethPrice:1975,solPrice:86,
 };
 
-const STRESS = [
+let STRESS = [
   {s:"Equities -20%",impact:-9.8,exp:"£109K equity ETFs",pr:"15%"},
   {s:"Crypto -40%",impact:-5.6,exp:"£50K crypto sleeve",pr:"20%"},
   {s:"BTC -60%",impact:-4.9,exp:"£30K BTC direct",pr:"10%"},
@@ -179,13 +180,13 @@ const computeScenario = (retPa, alphaBoost=0) => {
   }
   return pts;
 };
-const SC_CONSERV = computeScenario(0.08);
-const SC_BASE = computeScenario(0.15);
-const SC_WRAPPER = computeScenario(0.15, 0.012);
-const SC_ALLOPPS = computeScenario(0.15, 0.025);
-const SC_BULL = computeScenario(0.15, 0.04);
+let SC_CONSERV = computeScenario(0.08);
+let SC_BASE = computeScenario(0.15);
+let SC_WRAPPER = computeScenario(0.15, 0.012);
+let SC_ALLOPPS = computeScenario(0.15, 0.025);
+let SC_BULL = computeScenario(0.15, 0.04);
 
-const WEALTH_5 = SC_BASE.map((b,i) => ({
+let WEALTH_5 = SC_BASE.map((b,i) => ({
   y: b.y,
   conservative: SC_CONSERV[i].v,
   base: b.v,
@@ -195,13 +196,13 @@ const WEALTH_5 = SC_BASE.map((b,i) => ({
 }));
 
 // NW Trend + Forecast overlay data (historical + 5 scenarios from Mar 2026)
-const NW_FORECAST = [
+let NW_FORECAST = [
   ...NW_WEEKLY.map(w=>({d:w.d,nw:w.nw,a:w.a,type:"hist"})),
   ...SC_BASE.slice(1).map(s=>({d:`${s.y}`,nw:null,a:null,base:s.v*1000,conserv:SC_CONSERV.find(c=>c.y===s.y)?.v*1000,bull:SC_BULL.find(c=>c.y===s.y)?.v*1000,allOpps:SC_ALLOPPS.find(c=>c.y===s.y)?.v*1000,wrapper:SC_WRAPPER.find(c=>c.y===s.y)?.v*1000,type:"forecast"})),
 ];
 
 // Human Capital model — to 2035
-const HC_DATA = (() => {
+let HC_DATA = (() => {
   const pts = [];
   let fin = 362;
   for(let yr=2026; yr<=2035; yr++) {
@@ -222,14 +223,14 @@ const HC_DATA = (() => {
   return pts;
 })();
 
-const BONUS = {
+let BONUS = {
   gross:170000,tax:78200,ni:3400,postTax:88400,
   def:{debt:13598,isa:20000,pension:10000,equity:0,crypto:0,liq:34802,travel:10000,yr1:3200,yr3:12400,yr5:24800},
   bal:{debt:13598,isa:20000,pension:15000,equity:10000,crypto:5000,ai:5000,liq:12802,travel:7000,yr1:7800,yr3:32400,yr5:68200},
   agg:{debt:13598,isa:20000,pension:15000,equity:8000,crypto:10000,ai:8000,liq:5802,travel:8000,yr1:10200,yr3:45800,yr5:98400},
 };
 
-const OPPS = [
+let OPPS = [
   {t:"Wrapper Optimisation Alpha",c:10,tm:10,alpha:"80-120bps/yr",w:"ISA+SIPP",sz:"£35k",cat:"ISA deadline 5 April - 29 days",risks:["Rule changes"],kill:"None",col:P.cyan,val:7500},
   {t:"AI Infrastructure / Semis",c:9,tm:7,alpha:"300-500bps/yr",w:"S&S ISA",sz:"5-8% NAV",cat:"Q2 hyperscaler capex, Blackwell",risks:["Export controls","Valuation"],kill:"ASML cancellations >20%",col:P.indigo,val:6000},
   {t:"Quality Global Equities",c:8,tm:8,alpha:"150-250bps/yr",w:"ISA/SIPP",sz:"8-12% NAV",cat:"Broadening rotation",risks:["Recession","Derating"],kill:"ROIC <12% sustained",col:P.green,val:5400},
@@ -1794,6 +1795,67 @@ const T13 = ()=>{
   </div>);
 };
 
+
+// =========================================================================
+// SUPABASE DATA RECALCULATION — updates all derived values from live data
+// =========================================================================
+function recalcDerived() {
+  nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
+  NW_DD = NW_WEEKLY.map(w => ({d: w.d, dd: ((w.nw - PORT.nwPeak) / PORT.nwPeak * 100)}));
+  totalAssets = PORT.assets;
+  byClass = {};
+  HOLDINGS.forEach(h => { byClass[h.cls] = (byClass[h.cls]||0) + h.val; });
+  SLEEVES = [
+    {name:"ETFs (JPM+iShares)",val:byClass.ETF||0,color:P.cyan},
+    {name:"Pension",val:byClass.Pension||0,color:"#06b6d4"},
+    {name:"Cash / FD",val:(byClass.Cash||0)+(byClass["Cash/FD"]||0),color:"#64748b"},
+    {name:"Crypto",val:byClass.Crypto||0,color:P.btc},
+    {name:"Investments",val:byClass.Investment||0,color:P.indigo},
+    {name:"Stocks (Satrix)",val:byClass.Stock||0,color:P.purple},
+    {name:"Mixed (small)",val:byClass.Mixed||0,color:P.orange},
+  ].map(s=>({...s,pct:+(s.val/totalAssets*100).toFixed(1)}));
+  cryptoTotal = HOLDINGS.filter(h=>h.cls==="Crypto").reduce((s,h)=>s+h.val,0);
+  cryptoPrev = HOLDINGS.filter(h=>h.cls==="Crypto"&&h.prev).reduce((s,h)=>s+(h.prev||0),0);
+  running = PORT.nw6moAgo;
+  BRIDGE = BRIDGE_ITEMS.map((b,i)=>{
+    if(i===0) return {...b,start:0,end:PORT.nw6moAgo,cumulative:PORT.nw6moAgo};
+    const start = running;
+    running += b.delta;
+    return {...b,start:Math.min(start,running),end:Math.max(start,running),cumulative:running};
+  });
+  SC_CONSERV = computeScenario(0.08);
+  SC_BASE = computeScenario(0.15);
+  SC_WRAPPER = computeScenario(0.15, 0.012);
+  SC_ALLOPPS = computeScenario(0.15, 0.025);
+  SC_BULL = computeScenario(0.15, 0.04);
+  WEALTH_5 = SC_BASE.map((b,i) => ({
+    y: b.y, conservative: SC_CONSERV[i].v, base: b.v,
+    wrapperAlpha: SC_WRAPPER[i].v, allOpps: SC_ALLOPPS[i].v, bull: SC_BULL[i].v,
+  }));
+  NW_FORECAST = [
+    ...NW_WEEKLY.map(w=>({d:w.d,nw:w.nw,a:w.a,type:"hist"})),
+    ...SC_BASE.slice(1).map(s=>({d:`${s.y}`,nw:null,a:null,base:s.v*1000,conserv:SC_CONSERV.find(c=>c.y===s.y)?.v*1000,bull:SC_BULL.find(c=>c.y===s.y)?.v*1000,allOpps:SC_ALLOPPS.find(c=>c.y===s.y)?.v*1000,wrapper:SC_WRAPPER.find(c=>c.y===s.y)?.v*1000,type:"forecast"})),
+  ];
+  HC_DATA = (() => {
+    const pts = [];
+    let fin = PORT.netWorth / 1000;
+    for(let yr=2026; yr<=2035; yr++) {
+      const t = yr - 2026;
+      const age = PORT.age + t;
+      const salary = (PORT.grossSalary/1000) * Math.pow(1.15, t);
+      const net = (salary * 2) * 0.53;
+      const exp = (PORT.monthlyExpenses*12/1000) * Math.pow(1.15, t);
+      const save = net - exp;
+      if(t > 0) fin = fin * 1.15 + save;
+      const yearsLeft = Math.max(55 - age, 0);
+      let hc = 0;
+      for(let y=0; y<yearsLeft; y++) { hc += (net * Math.pow(1.15, y)) / Math.pow(1.07, y); }
+      pts.push({y:yr, fin:Math.round(fin), hc:Math.round(hc), total:Math.round(fin+hc)});
+    }
+    return pts;
+  })();
+}
+
 // =========================================================================
 // MAIN APP — 13 Tab Navigation
 // =========================================================================
@@ -1809,6 +1871,21 @@ const TABS=[
 
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
+  const [,refresh]=useState(0);
+  const {data,loading,source}=useSupabaseData();
+  useEffect(()=>{
+    if(data){
+      if(data.PORT) PORT=data.PORT;
+      if(data.HOLDINGS) HOLDINGS=data.HOLDINGS;
+      if(data.NW_WEEKLY) NW_WEEKLY=data.NW_WEEKLY;
+      if(data.BRIDGE_ITEMS) BRIDGE_ITEMS=data.BRIDGE_ITEMS;
+      if(data.RISK) RISK=data.RISK;
+      if(data.CRYPTO) CRYPTO=data.CRYPTO;
+      if(data.OPPS) OPPS=data.OPPS;
+      recalcDerived();
+      refresh(n=>n+1);
+    }
+  },[data]);
   const render=()=>{switch(tab){
     case "exec":return <T1/>;case "struct":return <T2/>;case "perf":return <T3/>;
     case "risk":return <T4/>;case "stress":return <T5/>;case "cash":return <T6/>;
@@ -1834,7 +1911,7 @@ export default function PortfolioVOS(){
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800}}>LS</div>
             <div>
               <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:P.cyan,fontWeight:700}}>LIFESTACK OS {"\u00B7"} PORTFOLIO INTELLIGENCE vOS</span>
-              <div style={{fontSize:10,color:P.t4}}>Institutional Review {"\u2014"} Real Data</div>
+              <div style={{fontSize:10,color:P.t4}}>Institutional Review {"\u2014"} {source==="supabase"?<span style={{color:P.green}}>\u25CF Live Data</span>:<span>Real Data</span>}</div>
             </div>
           </div>
           <div style={{textAlign:"right"}}>
