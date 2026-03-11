@@ -1872,6 +1872,28 @@ const T12 = ()=>{
         </div>
       </div>)}
     </Card>)}
+    {/* SPRINT 2 #28: 30-60-90 Day Execution Roadmap */}
+    <Card hover>
+      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>30-60-90 DAY EXECUTION ROADMAP</div>
+      <div style={{fontSize:12,color:P.t3,marginBottom:14}}>All actions mapped to tight time windows. Urgency creates accountability.</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+        {[
+          {window:"30 DAYS",c:P.red,items:["Max ISA £20k (deadline 5 Apr)","Clear Amex £10.7k in full","Start salary sacrifice £1,250/mo","Exit NEXO dust position"]},
+          {window:"60 DAYS",c:P.amber,items:["Bed & ISA top GIA gains","Rebuild emergency fund to £18k","Consolidate SOL → BTC","Write Investment Policy Statement"]},
+          {window:"90 DAYS",c:P.green,items:["Consolidate to ≤15 positions","Review pension fund allocation","Deploy into quality equities","Annual CGT harvest £3k"]},
+        ].map((w,wi)=>(
+          <div key={wi} style={{...G,padding:"16px",borderTop:`3px solid ${w.c}`}}>
+            <div style={{fontSize:13,fontWeight:800,color:w.c,letterSpacing:1,marginBottom:10}}>{w.window}</div>
+            {w.items.map((item,ii)=>(
+              <div key={ii} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:`1px solid ${P.b2}`}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:w.c,flexShrink:0,marginTop:6}}/>
+                <div style={{fontSize:13,color:P.t2,lineHeight:1.5}}>{item}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </Card>
     <Card style={{background:`linear-gradient(135deg,${P.cyanD},transparent)`,borderLeft:`3px solid ${P.cyan}`}}>
       <div style={{fontSize:16,fontWeight:800,color:P.cyan,marginBottom:10}}>FIVE CONCLUSIONS</div>
       {[
@@ -1988,6 +2010,27 @@ const T14 = ()=>{
           </AreaChart>
         </ResponsiveContainer>
         <div style={{fontSize:12,color:P.t3,marginTop:4}}>Target: GIA from 47% → 5% by 2035 through annual Bed & ISA + salary sacrifice + new contributions to ISA/SIPP only.</div>
+        {/* SPRINT 2 #27: 10Y Compound Tax Alpha — lifetime value of all tax strategies */}
+        <div style={{marginTop:16,padding:"14px 18px",borderRadius:14,background:`linear-gradient(135deg,${P.greenD},transparent)`,border:`1px solid ${P.green}20`}}>
+          <div style={{fontSize:13,fontWeight:700,color:P.green,marginBottom:6}}>10-YEAR COMPOUND VALUE OF TAX ALPHA</div>
+          {(()=>{
+            const annualSave = totalSaving;
+            const r = 0.15;
+            const fv10 = Math.round(annualSave * ((Math.pow(1+r,10)-1)/r));
+            const fv20 = Math.round(annualSave * ((Math.pow(1+r,20)-1)/r));
+            return(
+              <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+                {[{l:"Annual",v:annualSave,y:""},{l:"5-Year",v:Math.round(annualSave*((Math.pow(1+r,5)-1)/r)),y:""},{l:"10-Year",v:fv10,y:""},{l:"20-Year",v:fv20,y:""}].map((p,i)=>(
+                  <div key={i} style={{textAlign:"center",flex:"1 1 80px"}}>
+                    <div style={{fontSize:10,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>{p.l}</div>
+                    <div style={{fontSize:20,fontWeight:800,color:i===3?P.green:i===2?P.cyan:P.t1,fontFamily:"'JetBrains Mono',monospace"}}>{fK(p.v)}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+          <div style={{fontSize:12,color:P.t3,marginTop:8}}>At 15% portfolio return rate, {fmt(totalSaving)}/yr of tax savings compounds to six figures within a decade. This is the single most powerful argument for executing every wrapper optimisation strategy immediately.</div>
+        </div>
       </Card>
     </Row>
     <Card hover>
