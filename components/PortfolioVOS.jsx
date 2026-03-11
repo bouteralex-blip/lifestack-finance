@@ -868,7 +868,7 @@ const T2 = ()=>{
         const etfHoldings = HOLDINGS.filter(h=>h.cls==="ETF");
         const sectorAgg = {};
         etfHoldings.forEach(h=>{
-          const ticker = h.name.match(/\(([A-Z0-9]+)/)?.[1];
+          const ticker = h.name.split('.')[0];
           const weights = ticker ? sectorBreakdown[ticker] : null;
           if(weights){
             Object.entries(weights).forEach(([sec,pct])=>{
