@@ -1,7 +1,6 @@
-'use client';
-
-import PortfolioVOS from '../components/PortfolioVOS';
+"use client";
+import AppShell from "../components/AppShell";
 
 export default function Home() {
-  return <PortfolioVOS />;
+  return <AppShell />;
 }
