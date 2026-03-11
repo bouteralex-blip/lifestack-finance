@@ -1806,6 +1806,132 @@ const T10 = ()=>{
         ["£10m",`${SC_CONSERV.find(s=>s.v>=10000)?.y||'2035+'}`,`${SC_BASE.find(s=>s.v>=10000)?.y||'2035+'}`,`${SC_WRAPPER.find(s=>s.v>=10000)?.y||'2035+'}`,`${SC_ALLOPPS.find(s=>s.v>=10000)?.y||'2035+'}`,`${SC_BULL.find(s=>s.v>=10000)?.y||'2035+'}`],
       ]} hl={3}/>
     </Card>
+    {/* SPRINT 4 #3: Monte Carlo Fan Chart — 1,000 simulations, BoE-style percentile bands */}
+    {(()=>{
+      // Seeded PRNG (mulberry32) for deterministic results per session
+      const seed = 42;
+      let s = seed;
+      const rand = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+      // Box-Muller for normal distribution
+      const randn = () => { let u1=rand(),u2=rand(); return Math.sqrt(-2*Math.log(u1||0.001))*Math.cos(2*Math.PI*u2); };
+
+      const N = 1000;
+      const years = [2026,2027,2028,2029,2030,2031,2032,2033,2034,2035];
+      const mu = 0.12;
+      const sigma = 0.18;
+      const salaryGrowth = 0.15;
+      const expGrowth = 0.15;
+
+      // Run simulations
+      const allPaths = [];
+      for(let sim=0; sim<N; sim++){
+        const path = [PORT.netWorth/1000];
+        let nw = PORT.netWorth/1000;
+        for(let t=0; t<9; t++){
+          const salary = (PORT.grossSalary/1000)*Math.pow(1+salaryGrowth,t);
+          const netIncome = (salary*2)*(1-PORT.taxRate-PORT.niRate);
+          const expenses = (PORT.monthlyExpenses*12/1000)*Math.pow(1+expGrowth,t);
+          const savings = netIncome - expenses;
+          const retRate = mu + sigma * randn();
+          nw = nw * (1 + retRate) + savings;
+          if(nw < 0) nw = 0;
+          path.push(Math.round(nw));
+        }
+        allPaths.push(path);
+      }
+
+      // Extract percentiles per year
+      const pctiles = (arr, p) => { const sorted = [...arr].sort((a,b)=>a-b); const idx = Math.floor(p/100*(sorted.length-1)); return sorted[idx]; };
+      const fanData = years.map((y,i) => {
+        const vals = allPaths.map(p => p[i]);
+        return { y, p10:pctiles(vals,10), p25:pctiles(vals,25), p50:pctiles(vals,50), p75:pctiles(vals,75), p90:pctiles(vals,90) };
+      });
+
+      // #20: Probability of hitting milestones
+      const milestones = [500, 1000, 1800, 5000];
+      const milestoneLabels = ["£500k", "£1M", "FIRE (£1.8M)", "£5M"];
+      const probData = years.map((y,i) => {
+        const vals = allPaths.map(p => p[i]);
+        const row = { y };
+        milestones.forEach((m,mi) => { row[`m${mi}`] = +(vals.filter(v => v >= m).length / N * 100).toFixed(1); });
+        return row;
+      });
+      const milestoneColors = [P.amber, P.cyan, P.indigo, P.green];
+
+      return(<>
+        <Card hover>
+          <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>MONTE CARLO FAN CHART — {N.toLocaleString()} SIMULATIONS</div>
+          <div style={{fontSize:12,color:P.t3,marginBottom:12}}>BoE-style probability cone. Mean return {(mu*100).toFixed(0)}%, vol {(sigma*100).toFixed(0)}%. Bands show P10/P25/P50/P75/P90 outcomes. Wider bands = higher uncertainty as time horizon extends.</div>
+          <ResponsiveContainer width="100%" height={440}>
+            <AreaChart data={fanData}>
+              <CartesianGrid stroke={P.b2}/>
+              <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/>
+              <YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
+              <Tooltip content={({active,payload,label})=>{
+                if(!active||!payload?.length)return null;
+                const d = fanData.find(f=>f.y===label);
+                return(<div style={{...GS,padding:"12px 16px",fontSize:12,borderRadius:14}}>
+                  <div style={{color:P.t3,fontWeight:700,marginBottom:4}}>{label} (age {32+(label-2026)})</div>
+                  {[["P90 (Optimistic)",d?.p90,P.green],["P75",d?.p75,"#06b6d4"],["P50 (Median)",d?.p50,P.cyan],["P25",d?.p25,P.amber],["P10 (Pessimistic)",d?.p10,P.red]].map(([l,v,c],i)=>(
+                    <div key={i} style={{color:c,fontWeight:600}}>{"  "}{l}: £{v>=1000?`${(v/1000).toFixed(1)}m`:`${v}k`}</div>
+                  ))}
+                  <div style={{color:P.t4,fontSize:11,marginTop:4}}>Spread: £{((d?.p90-d?.p10)/1000).toFixed(1)}m range</div>
+                </div>);
+              }}/>
+              <Area type="monotone" dataKey="p90" stroke="none" fill={P.green} fillOpacity={0.06} stackId="fan"/>
+              <Area type="monotone" dataKey="p75" stroke="none" fill={P.cyan} fillOpacity={0.08}/>
+              <Area type="monotone" dataKey="p50" stroke={P.cyan} fill={P.cyan} fillOpacity={0.12} strokeWidth={2.5}/>
+              <Area type="monotone" dataKey="p25" stroke="none" fill={P.amber} fillOpacity={0.06}/>
+              <Area type="monotone" dataKey="p10" stroke={P.red} fill={P.red} fillOpacity={0.04} strokeWidth={1.5} strokeDasharray="4 4"/>
+              <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:11,fontWeight:700}}/>
+              <ReferenceLine y={1800} stroke={P.indigo} strokeDasharray="8 4" label={{value:"FIRE",fill:P.indigo,fontSize:11,fontWeight:700}}/>
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{display:"flex",gap:12,marginTop:8,flexWrap:"wrap"}}>
+            {[["P90",P.green,"Best 10%"],["P75","#06b6d4","Upper quartile"],["P50",P.cyan,"Median outcome"],["P25",P.amber,"Lower quartile"],["P10",P.red,"Worst 10%"]].map(([l,c,d],i)=>(
+              <div key={i} style={{fontSize:11,display:"flex",alignItems:"center",gap:4}}>
+                <div style={{width:12,height:4,background:c,borderRadius:2}}/>
+                <span style={{color:P.t3}}>{l}</span>
+                <span style={{color:P.t4}}>({d})</span>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:12,color:P.t3,marginTop:8}}>Median (P50) reaches £{fanData[4]?.p50>=1000?`${(fanData[4]?.p50/1000).toFixed(1)}m`:`${fanData[4]?.p50}k`} by {years[4]}. The P10-P90 spread by 2035 is £{((fanData[9]?.p90-fanData[9]?.p10)/1000).toFixed(1)}m — this is the true uncertainty range. Even the pessimistic P10 path stays above £{fanData[9]?.p10>=1000?`${(fanData[9]?.p10/1000).toFixed(1)}m`:`${fanData[9]?.p10}k`} because the savings engine is so dominant in early years.</div>
+        </Card>
+
+        {/* SPRINT 4 #20: Probability of Hitting Milestones */}
+        <Card hover>
+          <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>PROBABILITY OF HITTING MILESTONES</div>
+          <div style={{fontSize:12,color:P.t3,marginBottom:12}}>From {N.toLocaleString()} Monte Carlo paths: the percentage of simulations that reach each wealth level by each year. Darker = higher probability.</div>
+          <ResponsiveContainer width="100%" height={340}>
+            <AreaChart data={probData}>
+              <CartesianGrid stroke={P.b2}/>
+              <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/>
+              <YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>`${v}%`} domain={[0,100]}/>
+              <Tooltip content={<Tip/>}/>
+              {milestones.map((m,mi)=>(
+                <Area key={mi} type="monotone" dataKey={`m${mi}`} name={milestoneLabels[mi]} stroke={milestoneColors[mi]} fill={milestoneColors[mi]} fillOpacity={0.08} strokeWidth={2}/>
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{overflowX:"auto",marginTop:12}}>
+            <div style={{display:"grid",gridTemplateColumns:`80px repeat(${years.length},1fr)`,gap:2,fontSize:11}}>
+              <div style={{padding:6,fontWeight:700,color:P.t3}}/>
+              {years.map((y,i)=><div key={i} style={{padding:6,fontWeight:700,color:P.t2,textAlign:"center"}}>{y}</div>)}
+              {milestones.map((m,mi)=><>
+                <div key={`l${mi}`} style={{padding:6,fontWeight:700,color:milestoneColors[mi],fontSize:10}}>{milestoneLabels[mi]}</div>
+                {years.map((y,yi)=>{
+                  const pct = probData[yi]?.[`m${mi}`] || 0;
+                  const bg = pct >= 80 ? `${milestoneColors[mi]}30` : pct >= 50 ? `${milestoneColors[mi]}18` : pct >= 20 ? `${milestoneColors[mi]}0a` : "rgba(0,0,0,0.02)";
+                  return <div key={`${mi}-${yi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:pct>=50?milestoneColors[mi]:P.t4,fontFamily:"'JetBrains Mono',monospace",fontSize:12}}>{pct>0?`${pct}%`:"-"}</div>;
+                })}
+              </>)}
+            </div>
+          </div>
+          <div style={{fontSize:12,color:P.t3,marginTop:10}}>£500k is near-certain ({probData[3]?.m0}% by {years[3]}). £1M reaches {probData[5]?.m1}% probability by {years[5]}. FIRE (£1.8M) hits {probData[7]?.m2}% by {years[7]}. £5M remains a tail outcome at {probData[9]?.m3}% by 2035 — requires sustained above-average returns plus disciplined savings.</div>
+        </Card>
+      </>);
+    })()}
     {/* SPRINT 2: Real Wealth Path — nominal vs inflation-adjusted */}
     <Card hover>
       <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>REAL vs NOMINAL WEALTH PATH</div>
