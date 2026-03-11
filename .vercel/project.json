@@ -1,0 +1,9 @@
+{
+  "orgId": "team_yJOnKVnF38JmRAieqsQE3BAs",
+  "settings": {
+    "framework": "nextjs",
+    "installCommand": "npm install",
+    "buildCommand": "next build",
+    "outputDirectory": ".next"
+  }
+}
