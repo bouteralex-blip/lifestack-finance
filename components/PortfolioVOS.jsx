@@ -245,6 +245,11 @@ let OPPS = [
   {t:"Gold / Commodities Hedge",c:5,tm:7,alpha:"50-100bps/yr",w:"GIA",sz:"2-3% NAV",cat:"Inflation hedge, geopolitical tail risk",risks:["Disinflation","Opportunity cost"],kill:"Core CPI <2% sustained",col:"#d4a406",val:900},
 ];
 let OPPS_TOP5 = [...OPPS].sort((a,b)=>b.val-a.val).slice(0,5);
+let MONTHLY_DATA = [
+  {m:"Oct",r:-2.1,vol:18.2},{m:"Nov",r:-6.8,vol:32.4},{m:"Dec",r:-1.2,vol:24.1},
+  {m:"Jan",r:-0.5,vol:20.8},{m:"Feb",r:-4.2,vol:26.2},{m:"Mar",r:3.2,vol:19.6},
+];
+let SCORECARD = {overall:5.2,returns:3.8,riskMgmt:5.4,process:4.2,taxEff:6.0,diversify:7.6,capitalEff:4.4,commentary:"Overall 5.2/10 reflects strong diversification (7.6) offset by poor returns (3.8) driven by the crypto correction. Tax efficiency (6.0) is improving but 47% GIA exposure remains a drag. Process (4.2) is weak from missing rebalancing discipline and no IPS."};
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -393,9 +398,7 @@ const SankeyChart = () => {
 const T1 = ()=>{
   const fire=(PORT.netWorth/PORT.fireTarget*100);
   const contribData = HOLDINGS.filter(h=>h.prev).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),pnl:((h.val-h.prev)/1000)})).sort((a,b)=>b.pnl-a.pnl);
-  const monthlyReturns = [
-    {m:"Oct",r:-2.1},{m:"Nov",r:-6.8},{m:"Dec",r:-1.2},{m:"Jan",r:-0.5},{m:"Feb",r:-4.2},{m:"Mar",r:3.2}
-  ];
+  const monthlyReturns = MONTHLY_DATA.map(m=>({m:m.m,r:m.r}));
   return(<div>
     <Hd t="EXECUTIVE SUMMARY" s={`${PORT.date} · Net Worth ${fmt(PORT.netWorth)} · Assets ${fmt(PORT.assets)} · Debts ${fmt(PORT.debts)}`} tag="CIO BRIEFING"/>
     <Row gap={10}>
@@ -410,12 +413,12 @@ const T1 = ()=>{
     <Card style={{marginTop:14}} glow>
       <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:14}}>PORTFOLIO QUALITY SCORECARD</div>
       <Row gap={16} style={{justifyContent:"space-around"}}>
-        <Gauge score={5.2} label="Overall" size={76}/><Gauge score={3.8} label="Returns" size={76}/>
-        <Gauge score={5.4} label="Risk Mgmt" size={76}/><Gauge score={4.2} label="Process" size={76}/>
-        <Gauge score={6.0} label="Tax Eff." size={76}/><Gauge score={7.6} label="Diversify" size={76}/>
-        <Gauge score={4.4} label="Capital Eff." size={76}/>
+        <Gauge score={SCORECARD.overall} label="Overall" size={76}/><Gauge score={SCORECARD.returns} label="Returns" size={76}/>
+        <Gauge score={SCORECARD.riskMgmt} label="Risk Mgmt" size={76}/><Gauge score={SCORECARD.process} label="Process" size={76}/>
+        <Gauge score={SCORECARD.taxEff} label="Tax Eff." size={76}/><Gauge score={SCORECARD.diversify} label="Diversify" size={76}/>
+        <Gauge score={SCORECARD.capitalEff} label="Capital Eff." size={76}/>
       </Row>
-      <div style={{fontSize:14,color:P.t3,marginTop:12,textAlign:"center",lineHeight:1.6}}>Overall 5.2/10 reflects strong diversification (7.6) offset by poor returns (3.8) driven by the crypto correction. Tax efficiency (6.0) is improving but 47% GIA exposure remains a drag. Process (4.2) is weak from missing rebalancing discipline and no IPS.</div>
+      <div style={{fontSize:14,color:P.t3,marginTop:12,textAlign:"center",lineHeight:1.6}}>{SCORECARD.commentary}</div>
     </Card>
 
     <Ins text={`Net worth declined ${pc(nwReturn)} over 6 months (${fK(PORT.nw6moAgo)} → ${fK(PORT.netWorth)}). Crypto was the sole destructive force: BTC ${fK(-19456)}, EC10 ${fK(-12663)}, ETH ${fK(-3559)}, SOL ${fK(-2748)}. Total crypto losses of ~${fK(38400)} overwhelmed positive equity returns of +${fK(13600)} and pension revaluation of +${fK(16800)}. The rainy day fund was drawn down ${fK(18226)}, halving the cash buffer. The JPM Research Enhanced ETF suite is the portfolio's strongest structural engine — JUKC +16.1%, JURE +8.4%, JGEP +7.6%.`}/>
@@ -827,10 +830,7 @@ const T4 = ()=>{
     {name:"ZAR/EM",risk:14,capital:12,color:P.amber},{name:"Pension",risk:12,capital:22,color:"#06b6d4"},
     {name:"Cash/FD",risk:2,capital:16,color:"#94a3b8"},{name:"Other",risk:12,capital:9,color:P.purple},
   ];
-  const volTrend=[
-    {d:"Oct",vol:18.2,dd:-2.1},{d:"Nov",vol:32.4,dd:-6.8},{d:"Dec",vol:24.1,dd:-1.2},
-    {d:"Jan",vol:20.8,dd:-0.5},{d:"Feb",vol:26.2,dd:-4.2},{d:"Mar",vol:19.6,dd:3.2},
-  ];
+  const volTrend=MONTHLY_DATA.filter(m=>m.vol!=null).map(m=>({d:m.m,vol:m.vol,dd:m.r}));
   return(<div>
     <Hd t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis — all with interpretation" tag="RISK" ac={P.red}/>
     <Row gap={10}>
@@ -1873,6 +1873,11 @@ export default function PortfolioVOS(){
       if(data.RISK) RISK=data.RISK;
       if(data.CRYPTO) CRYPTO=data.CRYPTO;
       if(data.OPPS) OPPS=data.OPPS;
+      if(data.FACTORS) FACTORS=data.FACTORS;
+      if(data.STRESS) STRESS=data.STRESS;
+      if(data.BONUS) BONUS=data.BONUS;
+      if(data.MONTHLY) MONTHLY_DATA=data.MONTHLY;
+      if(data.SCORECARD) SCORECARD=data.SCORECARD;
       recalcDerived();
       refresh(n=>n+1);
     }
