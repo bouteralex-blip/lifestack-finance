@@ -242,6 +242,7 @@ let OPPS = [
   {t:"EM Small Cap Recovery",c:5,tm:5,alpha:"200-400bps/yr",w:"GIA",sz:"2-4% NAV",cat:"EM valuations at 20yr discount to DM",risks:["China slowdown","FX"],kill:"EM/DM spread widens >2 std dev",col:P.pink,val:1600},
   {t:"Gold / Commodities Hedge",c:5,tm:7,alpha:"50-100bps/yr",w:"GIA",sz:"2-3% NAV",cat:"Inflation hedge, geopolitical tail risk",risks:["Disinflation","Opportunity cost"],kill:"Core CPI <2% sustained",col:"#d4a406",val:900},
 ];
+let OPPS_TOP5 = [...OPPS].sort((a,b)=>b.val-a.val).slice(0,5);
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -1854,6 +1855,7 @@ function recalcDerived() {
     }
     return pts;
   })();
+  OPPS_TOP5 = [...OPPS].sort((a,b)=>b.val-a.val).slice(0,5);
 }
 
 // =========================================================================
