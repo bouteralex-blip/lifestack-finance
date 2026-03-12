@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSupabaseData } from '../lib/useData';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
+import dynamic from 'next/dynamic';
+const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
 // =========================================================================
 // LIFESTACK OS vOS — ORION GLASS · LIGHT MODE · INSTITUTIONAL REVIEW
@@ -649,7 +651,7 @@ const T1 = ()=>{
     {name:"Residual", val: -3.1, c: P.t3},
   ];
 
-  // Radar data for scorecard (Recharts RadarChart)
+  // Radar data for scorecard (ECharts radar)
   const radarData = [
     {metric:"Returns",score:SCORECARD.returns,full:10},
     {metric:"Risk Mgmt",score:SCORECARD.riskMgmt,full:10},
@@ -708,15 +710,11 @@ const T1 = ()=>{
           </div>
           <Gauge score={SCORECARD.overall} label="" size={52}/>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
-          <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={80}>
-            <PolarGrid stroke={P.b1} gridType="polygon"/>
-            <PolarAngleAxis dataKey="metric" tick={{fill:P.t3,fontSize:10}} tickLine={false}/>
-            <PolarRadiusAxis angle={90} domain={[0,10]} tick={{fill:P.t4,fontSize:9}} tickCount={6}/>
-            <Radar name="Score" dataKey="score" stroke={P.cyan} fill={P.cyan} fillOpacity={0.15} strokeWidth={2}/>
-            <Radar name="Target" dataKey="full" stroke={P.t4} fill="none" strokeWidth={1} strokeDasharray="4 4"/>
-          </RadarChart>
-        </ResponsiveContainer>
+        <ReactECharts option={{
+            tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.94)',borderColor:'rgba(255,255,255,0.08)',textStyle:{color:'#f1f5f9',fontSize:12}},
+            radar:{indicator:radarData.map(d=>({name:d.metric,max:10})),radius:'70%',axisName:{color:'#64748b',fontSize:10},splitArea:{areaStyle:{color:['rgba(99,102,241,0.02)','rgba(99,102,241,0.04)']}},splitLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}},axisLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}}},
+            series:[{type:'radar',data:[{value:radarData.map(d=>d.score),name:'Score',areaStyle:{color:'rgba(99,102,241,0.12)'},lineStyle:{color:'#6366f1',width:2.5},itemStyle:{color:'#6366f1'},symbol:'circle',symbolSize:6},{value:radarData.map(()=>10),name:'Target',lineStyle:{color:'#94a3b8',width:1,type:'dashed'},areaStyle:{color:'transparent'},itemStyle:{color:'transparent'},symbol:'none'}],emphasis:{focus:'self'}}],
+          }} style={{height:220,width:'100%'}} opts={{renderer:'svg'}}/>
         <div style={{fontSize:12,color:P.t3,lineHeight:1.5,borderTop:`1px solid ${P.b2}`,paddingTop:8,marginTop:4}}>
           <span style={{fontWeight:700,color:P.t2}}>Outcome {SCORECARD.overall}/10</span> \u2014 diversification ({SCORECARD.diversify}) strong. Crypto returns ({SCORECARD.returns}) the drag. <span style={{fontWeight:700,color:P.t2}}>Process {decisionQuality}/10</span> \u2014 wrapper {dqWrapper.toFixed(1)}, debt {dqDebt.toFixed(1)}, concentration {dqConcentration.toFixed(1)}.{" "}
           {decisionQuality < 5 && <span style={{color:P.amber,fontWeight:600}}>Process below target \u2014 structural fixes compound without market dependency.</span>}
@@ -1383,12 +1381,17 @@ const T4 = ()=>{
         {(()=>{
           const corrData = REF_DATA?.correlation_matrix || {sleeves:["Equity","Crypto","Pension","Cash/FD","ZAR","Other"],matrix:[[1,0.52,0.8,-0.15,0.35,0.6],[0.52,1,0.3,-0.05,0.25,0.2],[0.8,0.3,1,-0.1,0.25,0.5],[-0.15,-0.05,-0.1,1,0.05,-0.1],[0.35,0.25,0.25,0.05,1,0.4],[0.6,0.2,0.5,-0.1,0.4,1]]};
           const sl = corrData.sleeves; const mx = corrData.matrix;
-          const cellBg = (v) => v >= 0.7 ? "rgba(239,68,68,0.25)" : v >= 0.4 ? "rgba(251,191,36,0.15)" : v < 0 ? "rgba(34,197,94,0.15)" : "rgba(0,0,0,0.03)";
-          const cellC = (v) => v >= 0.7 ? P.red : v >= 0.4 ? P.amber : v < 0 ? P.green : P.t2;
-          return(<div style={{display:"grid",gridTemplateColumns:`70px repeat(${sl.length},1fr)`,gap:2,fontSize:10}}>
-            <div/>{sl.map((s,i)=><div key={i} style={{padding:4,fontWeight:700,color:P.t3,textAlign:"center",fontSize:9}}>{s}</div>)}
-            {sl.map((row,ri)=><>{[<div key={`l${ri}`} style={{padding:4,fontWeight:600,color:P.t2,fontSize:10,display:"flex",alignItems:"center"}}>{row}</div>,...mx[ri].map((v,ci)=><div key={`${ri}-${ci}`} style={{padding:"8px 3px",textAlign:"center",background:ri===ci?"rgba(99,102,241,0.10)":cellBg(v),borderRadius:5,fontWeight:ri===ci?800:700,color:ri===ci?P.indigo:cellC(v),fontFamily:P.mono,fontSize:ri===ci?11:10}}>{ri===ci?"1.00":v.toFixed(2)}</div>)]}</>)}
-          </div>);
+          const heatData = [];
+          sl.forEach((row,ri)=>{ sl.forEach((col,ci)=>{ heatData.push([ci,ri,mx[ri][ci]]); }); });
+          const heatOpt = {
+            tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.94)',borderColor:'rgba(255,255,255,0.08)',textStyle:{color:'#f1f5f9',fontSize:12},formatter:p=>`<b>${sl[p.data[1]]} \u2194 ${sl[p.data[0]]}</b><br/>Corr: <b style="color:${p.data[2]>=0.5?'#ef4444':p.data[2]<0?'#22c55e':'#f59e0b'}">${p.data[2].toFixed(2)}</b>`},
+            grid:{left:72,right:16,top:24,bottom:8},
+            xAxis:{type:'category',data:sl,axisLabel:{fontSize:9,color:'#64748b',rotate:0},axisTick:{show:false},axisLine:{show:false},position:'top'},
+            yAxis:{type:'category',data:sl,axisLabel:{fontSize:9,color:'#64748b'},axisTick:{show:false},axisLine:{show:false},inverse:true},
+            visualMap:{min:-0.2,max:1,orient:'horizontal',left:'center',bottom:0,show:false,inRange:{color:['#22c55e','#e2e8f0','#f59e0b','#ef4444']}},
+            series:[{type:'heatmap',data:heatData,label:{show:true,color:'#0f172a',fontSize:10,fontWeight:700,fontFamily:P.mono,formatter:p=>p.data[2].toFixed(2)},emphasis:{itemStyle:{shadowBlur:8,shadowColor:'rgba(0,0,0,0.15)'}},itemStyle:{borderColor:'rgba(255,255,255,0.6)',borderWidth:2,borderRadius:4}}],
+          };
+          return <ReactECharts option={heatOpt} style={{height:260}} opts={{renderer:'svg'}}/>;
         })()}
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>Equity-Crypto 0.52 = less diversification than perceived. Cash/FD is the only true diversifier.</div>
       </Card>
@@ -1414,7 +1417,7 @@ const T5 = ()=>{
     </FlexRow>
 
     {/* SIDE-BY-SIDE: Impact Matrix + Probability Chart */}
-    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+    <Grid cols="7fr 5fr" gap={14}>
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
       {STRESS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${P.b2}`}}>
@@ -1442,33 +1445,29 @@ const T5 = ()=>{
       </ResponsiveContainer>
       <div style={{fontSize:12,color:P.t3,marginTop:6}}>Expected loss: {probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(2)}% prob-weighted.</div>
     </Card>
-    </div>
+    </Grid>
     {/* SPRINT 2: Scenario Heatmap — sleeves × scenarios cross-matrix */}
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Each cell shows estimated portfolio impact (%) from that sleeve under that scenario. Darker red = larger loss exposure.</div>
+      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Each cell shows estimated portfolio impact (%) from that sleeve under that scenario. Darker red = larger loss.</div>
       {(()=>{
         const sleeves=[{n:"Equity ETFs",w:0.28,betas:{eq:1.0,cry:0.0,fx:-0.3,zar:0.0,rate:0.6}},{n:"Pension",w:0.22,betas:{eq:0.7,cry:0.0,fx:0.0,zar:0.0,rate:0.3}},{n:"Crypto",w:0.13,betas:{eq:0.0,cry:1.0,fx:0.0,zar:0.0,rate:0.0}},{n:"Cash/FD",w:0.16,betas:{eq:0.0,cry:0.0,fx:0.0,zar:0.0,rate:-0.2}},{n:"ZAR",w:0.10,betas:{eq:0.3,cry:0.0,fx:0.0,zar:1.0,rate:0.2}},{n:"Other",w:0.11,betas:{eq:0.4,cry:0.0,fx:0.0,zar:0.3,rate:0.3}}];
         const shocks=[{n:"Eq -20%",k:"eq",m:-20},{n:"Cry -40%",k:"cry",m:-40},{n:"BTC -60%",k:"cry",m:-60},{n:"GBP -10%",k:"fx",m:-10},{n:"ZAR -20%",k:"zar",m:-20},{n:"Combined",k:"eq",m:-20,k2:"cry",m2:-40},{n:"Stagflation",k:"eq",m:-15,k2:"rate",m2:4}];
-        const cellColor=(v)=>{if(v<=-3)return{bg:"rgba(239,68,68,0.30)",c:P.red};if(v<=-1)return{bg:"rgba(239,68,68,0.15)",c:P.red};if(v<0)return{bg:"rgba(239,68,68,0.06)",c:"#dc2626"};if(v===0)return{bg:"rgba(0,0,0,0.02)",c:P.t4};if(v>0)return{bg:"rgba(34,197,94,0.12)",c:P.green};return{bg:"rgba(0,0,0,0.02)",c:P.t4};};
-        return(
-          <div style={{overflowX:"auto"}}>
-            <div style={{display:"grid",gridTemplateColumns:`100px repeat(${shocks.length},1fr)`,gap:2,fontSize:11}}>
-              <div style={{padding:6,fontWeight:700,color:P.t3}}/>
-              {shocks.map((s,i)=><div key={i} style={{padding:"6px 4px",fontWeight:700,color:P.t2,textAlign:"center",fontSize:10}}>{s.n}</div>)}
-              {sleeves.map((sl,si)=><>
-                <div key={`l${si}`} style={{padding:6,fontWeight:600,color:P.t2,fontSize:12}}>{sl.n}</div>
-                {shocks.map((sh,shi)=>{
-                  let impact = sl.w * (sl.betas[sh.k]||0) * sh.m;
-                  if(sh.k2) impact += sl.w * (sl.betas[sh.k2]||0) * sh.m2;
-                  impact = +impact.toFixed(1);
-                  const {bg,c} = cellColor(impact);
-                  return <div key={`${si}-${shi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:c,fontFamily:P.mono,fontSize:12}}>{impact!==0?(impact>0?"+":"")+impact:"-"}</div>;
-                })}
-              </>)}
-            </div>
-          </div>
-        );
+        const heatData=[];
+        sleeves.forEach((sl,si)=>{shocks.forEach((sh,shi)=>{
+          let impact = sl.w*(sl.betas[sh.k]||0)*sh.m;
+          if(sh.k2) impact += sl.w*(sl.betas[sh.k2]||0)*sh.m2;
+          heatData.push([shi,si,+impact.toFixed(1)]);
+        });});
+        const opt={
+          tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.94)',borderColor:'rgba(255,255,255,0.08)',textStyle:{color:'#f1f5f9',fontSize:12},formatter:p=>`<b>${sleeves[p.data[1]].n}</b> \u00D7 <b>${shocks[p.data[0]].n}</b><br/>Impact: <b style="color:${p.data[2]>0?'#14b8a6':'#f43f5e'}">${p.data[2]>0?'+':''}${p.data[2]}%</b>`},
+          grid:{left:80,right:16,top:28,bottom:8},
+          xAxis:{type:'category',data:shocks.map(s=>s.n),axisLabel:{fontSize:9,color:'#64748b',rotate:0},axisTick:{show:false},axisLine:{show:false},position:'top'},
+          yAxis:{type:'category',data:sleeves.map(s=>s.n),axisLabel:{fontSize:10,color:'#334155'},axisTick:{show:false},axisLine:{show:false}},
+          visualMap:{min:-8,max:2,show:false,inRange:{color:['#ef4444','#fca5a5','#e2e8f0','#bbf7d0','#22c55e']}},
+          series:[{type:'heatmap',data:heatData,label:{show:true,color:'#0f172a',fontSize:10,fontWeight:700,fontFamily:P.mono,formatter:p=>{const v=p.data[2];return v===0?'-':(v>0?'+':'')+v;}},emphasis:{itemStyle:{shadowBlur:8,shadowColor:'rgba(0,0,0,0.15)'}},itemStyle:{borderColor:'rgba(255,255,255,0.6)',borderWidth:2,borderRadius:4}}],
+        };
+        return <ReactECharts option={opt} style={{height:240}} opts={{renderer:'svg'}}/>;
       })()}
     </Card>
     <Card hover>
