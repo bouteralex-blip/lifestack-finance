@@ -605,7 +605,7 @@ const T1 = ()=>{
   const contribData = HOLDINGS.filter(h=>h.prev).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),pnl:((h.val-h.prev)/1000)})).sort((a,b)=>b.pnl-a.pnl);
   const monthlyReturns = MONTHLY_DATA.map(m=>({m:m.m,r:m.r}));
 
-  // Metric Guide V2 — derived metrics (computed after Supabase overrides apply)
+  // Metric Guide V2 — all derived metrics computed inside T1 (after Supabase overrides)
   const activeReturn = nwReturn - ((PORT.benchReturn != null ? PORT.benchReturn : -0.028) * 100);
   const realReturn = nwReturn - ((PORT.inflation != null ? PORT.inflation : 0.032) * 100 / 2);
   const probNW = Math.round(0.15*PORT.netWorth*0.85 + 0.50*PORT.netWorth*1.12 + 0.25*PORT.netWorth*1.25 + 0.10*PORT.netWorth*1.45);
@@ -615,9 +615,6 @@ const T1 = ()=>{
   const ret3m = ((PORT.netWorth - nw3moAgo) / nw3moAgo * 100);
   const nw1moAgo = NW_WEEKLY[Math.max(NW_WEEKLY.length - 5, 0)]?.nw || PORT.netWorth;
   const ret1m = ((PORT.netWorth - nw1moAgo) / nw1moAgo * 100);
-  const sharpeD = RISK.sharpe?.toFixed(2) || "0.42";
-  const sortinoD = RISK.sortino?.toFixed(2) || "0.58";
-  const irD = RISK.ir?.toFixed(2) || "-0.18";
 
   // Decision Quality Score (4-factor model)
   const growthAssets = HOLDINGS.filter(h=>["ETF","Crypto","Stock","Investment"].includes(h.cls)).reduce((a,h)=>a+h.val,0);
@@ -628,18 +625,18 @@ const T1 = ()=>{
   const dqTiming = 5.0;
   const decisionQuality = +((dqWrapper * 0.30 + dqDebt * 0.25 + dqConcentration * 0.25 + dqTiming * 0.20).toFixed(1));
 
-  // Balance sheet metrics
+  // Balance sheet
   const netSalaryAnnLocal = (PORT.grossSalary + PORT.grossBonus) * (1 - PORT.taxRate - PORT.niRate);
   const savingsRateLocal = ((netSalaryAnnLocal - PORT.monthlyExpenses * 12) / netSalaryAnnLocal * 100);
   const debtToAsset = (PORT.debts / PORT.assets * 100);
   const leverage = PORT.debts / PORT.netWorth;
 
   const alerts = [
-    {msg:`ISA deadline: 29 days. \u00A30 of \u00A320k deployed.`, sev:"high"},
+    {msg:"ISA deadline: 29 days. \u00A30 of \u00A320k deployed.", sev:"high"},
     {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
     {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
-    {msg:`Crypto risk budget: 32% risk from 13% capital (2.5x limit).`, sev:"med"},
-    {msg:`18 positions below \u00A31k. Fragment drag ~\u00A3160/yr.`, sev:"low"},
+    {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
+    {msg:"18 positions below \u00A31k. Fragment drag ~\u00A3160/yr.", sev:"low"},
   ];
 
   const decomp = [
@@ -652,89 +649,140 @@ const T1 = ()=>{
     {name:"Residual", val: -3.1, c: P.t3},
   ];
 
+  // Radar data for scorecard (Recharts RadarChart)
+  const radarData = [
+    {metric:"Returns",score:SCORECARD.returns,full:10},
+    {metric:"Risk Mgmt",score:SCORECARD.riskMgmt,full:10},
+    {metric:"Process",score:SCORECARD.process,full:10},
+    {metric:"Tax Eff.",score:SCORECARD.taxEff,full:10},
+    {metric:"Diversify",score:SCORECARD.diversify,full:10},
+    {metric:"Capital Eff.",score:SCORECARD.capitalEff,full:10},
+  ];
+
   return(<div>
-    <Hd t="EXECUTIVE SUMMARY" s={`${PORT.date} \u00B7 NW ${fmt(PORT.netWorth)} \u00B7 Assets ${fmt(PORT.assets)} \u00B7 Debts ${fmt(PORT.debts)}`} tag="CIO BRIEFING"/>
+    <Hd t="EXECUTIVE SUMMARY" s={`${PORT.date} \u00B7 Net Worth ${fmt(PORT.netWorth)} \u00B7 Assets ${fmt(PORT.assets)} \u00B7 Debts ${fmt(PORT.debts)}`} tag="CIO BRIEFING"/>
 
-    <AlertPanel items={alerts}/>
+    {/* ═══ ROW 1: ALERTS + KPI STRIP (12-col grid) ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
+      {/* Alerts spanning 3 columns */}
+      <div style={{gridColumn:"span 3",gridRow:"span 2"}}>
+        <Card tier={1} style={{padding:"16px 18px",marginBottom:0}}>
+          <div style={{fontSize:11,fontWeight:700,color:P.red,letterSpacing:1.2,textTransform:"uppercase",marginBottom:8}}>GOVERNANCE ALERTS</div>
+          {alerts.map((a,i) => {
+            const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
+            return (
+              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"5px 0",borderBottom:i<alerts.length-1?`1px solid ${P.b2}`:"none"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:dc,flexShrink:0,marginTop:5,boxShadow:`0 0 6px ${dc}50`}}/>
+                <div style={{fontSize:12,color:P.t2,lineHeight:1.4,flex:1}}>{a.msg}</div>
+              </div>
+            );
+          })}
+        </Card>
+      </div>
+      {/* 8 KPI cards across remaining 9 columns (top row: 5 cards) */}
+      <div style={{gridColumn:"span 9",display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:8}}>
+        <K l="Net Worth" v={fK(PORT.netWorth)} c={P.t1} delta={`Peak: ${fK(PORT.nwPeak)}`} deltaType={PORT.netWorth>=PORT.nwPeak?"up":"down"}/>
+        <K l="6-Mo Return" v={pc(nwReturn)} c={nwReturn>0?P.positive:P.negative} delta="20 Sep \u2192 7 Mar" deltaType={nwReturn>0?"up":"down"}/>
+        <K l="Active Return" v={pc(activeReturn)} c={activeReturn>0?P.positive:P.negative} delta="vs MSCI World" deltaType={activeReturn>0?"up":"down"}/>
+        <K l="Real Return" v={pc(realReturn)} c={realReturn>0?P.positive:P.negative} delta="Inflation-adj" deltaType={realReturn>0?"up":"down"}/>
+        <K l="Peak Drawdown" v={`${RISK.maxDD}%`} c={P.negative} delta={`${RISK.ddDur}d duration`} deltaType="down"/>
+      </div>
+      {/* Bottom row of 9-col area: 4 more KPIs */}
+      <div style={{gridColumn:"span 9",display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:8}}>
+        <K l="FIRE Progress" v={`${fire.toFixed(0)}%`} c={P.cyan} delta={`of ${fK(PORT.fireTarget)}`}/>
+        <K l="Exp. NW (12M)" v={fK(probNW)} c={P.cyan} delta="Prob-weighted"/>
+        <K l="Sharpe Ratio" v={RISK.sharpe?.toFixed(2)||"0.42"} c={RISK.sharpe>=0.5?P.positive:P.amber} delta="Risk-adjusted"/>
+        <K l="Savings Rate" v={`${savingsRateLocal.toFixed(0)}%`} c={savingsRateLocal>25?P.positive:P.amber} delta="of net income"/>
+        <K l="Cash Buffer" v={`${runway.toFixed(1)}mo`} c={runway>=3?P.positive:P.negative} delta="vs 3.0 target" deltaType={runway>=3?"up":"down"}/>
+      </div>
+    </div>
 
-    {/* ROW 1: Primary KPI strip */}
-    <FlexRow gap={8} style={{marginBottom:10}}>
-      <K l="Net Worth" v={fK(PORT.netWorth)} c={P.t1} delta={`Peak: ${fK(PORT.nwPeak)}`} deltaType={PORT.netWorth>=PORT.nwPeak?"up":"down"}/>
-      <K l="6-Mo Return" v={pc(nwReturn)} c={nwReturn>0?P.positive:P.negative} delta="20 Sep \u2192 7 Mar" deltaType={nwReturn>0?"up":"down"}/>
-      <K l="Active Return" v={pc(activeReturn)} c={activeReturn>0?P.positive:P.negative} delta="vs MSCI World" deltaType={activeReturn>0?"up":"down"}/>
-      <K l="Real Return" v={pc(realReturn)} c={realReturn>0?P.positive:P.negative} delta="Inflation-adj" deltaType={realReturn>0?"up":"down"}/>
-      <K l="Peak Drawdown" v={`${RISK.maxDD}%`} c={P.negative} delta={`${RISK.ddDur}d duration`} deltaType="down"/>
-      <K l="FIRE Progress" v={`${fire.toFixed(0)}%`} c={P.cyan} delta={`Target: ${fK(PORT.fireTarget)}`}/>
-    </FlexRow>
-
-    {/* ROW 2: Secondary metrics */}
-    <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="1-Mo Return" v={pc(ret1m)} c={ret1m>0?P.positive:P.negative} sm delta="Rolling" deltaType={ret1m>0?"up":"down"}/>
-      <K l="3-Mo Return" v={pc(ret3m)} c={ret3m>0?P.positive:P.negative} sm delta="Rolling" deltaType={ret3m>0?"up":"down"}/>
-      <K l="Sharpe" v={sharpeD} c={RISK.sharpe>=0.5?P.positive:P.amber} sm/>
-      <K l="Sortino" v={sortinoD} c={RISK.sortino>=0.7?P.positive:P.amber} sm/>
-      <K l="Info Ratio" v={irD} c={RISK.ir>0?P.positive:P.negative} sm/>
-      <K l="Exp. NW (12M)" v={fK(probNW)} c={P.cyan} sm delta="Prob-weighted"/>
-      <K l="Eff. Positions" v={RISK.effPos?.toFixed(1)||"15.4"} c={P.positive} sm delta={`HHI: ${RISK.hhi||"0.065"}`}/>
-      <K l="Savings Rate" v={`${savingsRateLocal.toFixed(0)}%`} c={savingsRateLocal>25?P.positive:P.amber} sm/>
-    </FlexRow>
-
-    {/* SCORECARD + DECISION QUALITY */}
-    <Card style={{marginBottom:14}} glow>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div>
-          <div style={{fontSize:14,fontWeight:700,color:P.t1}}>PORTFOLIO QUALITY SCORECARD</div>
-          <div style={{fontSize:11,color:P.t3,marginTop:2}}>Outcome scores vs process quality. Process compounds \u2014 outcomes are noisy.</div>
+    {/* ═══ ROW 2: SCORECARD RADAR + RETURN DECOMPOSITION (side-by-side) ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      {/* Left: Scorecard with Radar Chart */}
+      <Card glow>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:P.t1}}>PORTFOLIO QUALITY SCORECARD</div>
+            <div style={{fontSize:11,color:P.t3,marginTop:2}}>Overall: {SCORECARD.overall}/10 \u00B7 Decision Quality: {decisionQuality}/10</div>
+          </div>
+          <Gauge score={SCORECARD.overall} label="" size={52}/>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{fontSize:10,color:P.t4,fontWeight:600,textTransform:"uppercase",letterSpacing:0.8}}>Decision Quality</div>
-          <Gauge score={decisionQuality} label="" size={52}/>
+        <ResponsiveContainer width="100%" height={220}>
+          <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={80}>
+            <PolarGrid stroke={P.b1} gridType="polygon"/>
+            <PolarAngleAxis dataKey="metric" tick={{fill:P.t3,fontSize:10}} tickLine={false}/>
+            <PolarRadiusAxis angle={90} domain={[0,10]} tick={{fill:P.t4,fontSize:9}} tickCount={6}/>
+            <Radar name="Score" dataKey="score" stroke={P.cyan} fill={P.cyan} fillOpacity={0.15} strokeWidth={2}/>
+            <Radar name="Target" dataKey="full" stroke={P.t4} fill="none" strokeWidth={1} strokeDasharray="4 4"/>
+          </RadarChart>
+        </ResponsiveContainer>
+        <div style={{fontSize:12,color:P.t3,lineHeight:1.5,borderTop:`1px solid ${P.b2}`,paddingTop:8,marginTop:4}}>
+          <span style={{fontWeight:700,color:P.t2}}>Outcome {SCORECARD.overall}/10</span> \u2014 diversification ({SCORECARD.diversify}) strong. Crypto returns ({SCORECARD.returns}) the drag. <span style={{fontWeight:700,color:P.t2}}>Process {decisionQuality}/10</span> \u2014 wrapper {dqWrapper.toFixed(1)}, debt {dqDebt.toFixed(1)}, concentration {dqConcentration.toFixed(1)}.{" "}
+          {decisionQuality < 5 && <span style={{color:P.amber,fontWeight:600}}>Process below target \u2014 structural fixes compound without market dependency.</span>}
         </div>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-around",flexWrap:"wrap",gap:8}}>
-        <Gauge score={SCORECARD.overall} label="Overall" size={68}/><Gauge score={SCORECARD.returns} label="Returns" size={68}/>
-        <Gauge score={SCORECARD.riskMgmt} label="Risk Mgmt" size={68}/><Gauge score={SCORECARD.process} label="Process" size={68}/>
-        <Gauge score={SCORECARD.taxEff} label="Tax Eff." size={68}/><Gauge score={SCORECARD.diversify} label="Diversify" size={68}/>
-        <Gauge score={SCORECARD.capitalEff} label="Capital Eff." size={68}/>
-      </div>
-      <div style={{fontSize:12,color:P.t3,marginTop:10,lineHeight:1.6,borderTop:`1px solid ${P.b2}`,paddingTop:8}}>
-        <span style={{fontWeight:700,color:P.t2}}>Outcome {SCORECARD.overall}/10</span> \u2014 diversification ({SCORECARD.diversify}) offset by crypto returns ({SCORECARD.returns}). <span style={{fontWeight:700,color:P.t2}}>Decision Quality {decisionQuality}/10</span> \u2014 wrapper ({dqWrapper.toFixed(1)}), debt ({dqDebt.toFixed(1)}), concentration ({dqConcentration.toFixed(1)}), timing ({dqTiming.toFixed(1)}).{" "}
-        {decisionQuality < 5 && <span style={{color:P.amber,fontWeight:600}}>Process quality below target \u2014 structural fixes compound without market dependency.</span>}
-      </div>
-    </Card>
+      </Card>
 
-    <Ins text={`Net worth declined ${pc(nwReturn)} over 6 months (${fK(PORT.nw6moAgo)} \u2192 ${fK(PORT.netWorth)}). Crypto was the sole destructive force: BTC ${fK(-19456)}, EC10 ${fK(-12663)}, ETH ${fK(-3559)}, SOL ${fK(-2748)}. Total crypto losses of ~${fK(38400)} overwhelmed positive equity returns of +${fK(13600)} and pension revaluation of +${fK(16800)}. The JPM Research Enhanced ETF suite is the strongest structural engine \u2014 JUKC +16.1%, JURE +8.4%, JGEP +7.6%.`}/>
-
-    <MiniWaterfall data={decomp}/>
-
-    {/* MONTHLY HEATMAP */}
-    <Card hover style={{marginBottom:14}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div>
-          <div style={{fontSize:14,fontWeight:700,color:P.t1}}>MONTHLY RETURN HEATMAP</div>
-          <div style={{fontSize:11,color:P.t3,marginTop:2}}>Colour intensity by magnitude. November catastrophe (-6.8%). March recovery.</div>
+      {/* Right: Return Decomposition Waterfall */}
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>RETURN DECOMPOSITION</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:12}}>What drove the {pc(nwReturn)} return. Allocation, selection, and structural effects.</div>
+        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+          {decomp.map((d,i) => {
+            const maxAbs = Math.max(...decomp.map(x=>Math.abs(x.val)));
+            const barW = Math.abs(d.val) / maxAbs * 100;
+            const isPos = d.val >= 0;
+            return (
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:110,fontSize:12,color:P.t3,textAlign:"right",flexShrink:0}}>{d.name}</div>
+                <div style={{flex:1,height:20,position:"relative"}}>
+                  <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:P.b1}}/>
+                  <div style={{
+                    position:"absolute",
+                    [isPos?"left":"right"]:"50%",
+                    width:`${barW/2}%`,height:"100%",
+                    background:`linear-gradient(${isPos?"90deg":"270deg"},${d.c||P.cyan}cc,${d.c||P.cyan}40)`,
+                    borderRadius:isPos?"0 5px 5px 0":"5px 0 0 5px",
+                    boxShadow:`0 2px 8px ${d.c||P.cyan}20`,
+                  }}/>
+                </div>
+                <div style={{width:50,fontSize:13,fontWeight:700,color:isPos?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>
+                  {isPos?"+":""}{d.val.toFixed(1)}%
+                </div>
+              </div>
+            );
+          })}
+          <div style={{display:"flex",alignItems:"center",gap:8,borderTop:`1px solid ${P.b1}`,paddingTop:6,marginTop:4}}>
+            <div style={{width:110,fontSize:12,color:P.t1,textAlign:"right",fontWeight:700}}>Total</div>
+            <div style={{flex:1}}/>
+            <div style={{width:50,fontSize:14,fontWeight:800,color:decomp.reduce((a,d)=>a+d.val,0)>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{decomp.reduce((a,d)=>a+d.val,0)>=0?"+":""}{decomp.reduce((a,d)=>a+d.val,0).toFixed(1)}%</div>
+          </div>
         </div>
-        <div style={{fontSize:12,color:P.t2,fontFamily:P.mono,fontWeight:700}}>Cum: {pc(MONTHLY_DATA.reduce((a,m)=>a+m.r,0))}</div>
-      </div>
-      <CalendarHeatmap data={monthlyReturns}/>
-    </Card>
+      </Card>
+    </div>
 
-    {/* MAIN GRID: 2-column layout */}
-    <Grid cols="1fr 1fr" gap={14} style={{marginBottom:14}}>
+    {/* ═══ INSIGHT CALLOUT ═══ */}
+    <Ins text={`Net worth declined ${pc(nwReturn)} over 6 months (${fK(PORT.nw6moAgo)} \u2192 ${fK(PORT.netWorth)}). Crypto was the sole destructive force: BTC ${fK(-19456)}, EC10 ${fK(-12663)}, ETH ${fK(-3559)}, SOL ${fK(-2748)}. Total crypto losses of ~${fK(38400)} overwhelmed equity returns of +${fK(13600)} and pension revaluation of +${fK(16800)}. The JPM Research Enhanced ETF suite is the strongest structural engine \u2014 JUKC +16.1%, JURE +8.4%, JGEP +7.6%.`}/>
+
+    {/* ═══ ROW 3: ALLOCATION + NW FORECAST + CONTRIBUTORS + HEATMAP (4 panels) ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"3fr 4fr 3fr",gap:14,marginBottom:14}}>
+      {/* Allocation donut */}
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>ALLOCATION BY SLEEVE</div>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart><Pie data={SLEEVES} cx="50%" cy="50%" innerRadius={50} outerRadius={88} dataKey="val" stroke="none" paddingAngle={2}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:6}}>ALLOCATION BY SLEEVE</div>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart><Pie data={SLEEVES} cx="50%" cy="50%" innerRadius={42} outerRadius={72} dataKey="val" stroke="none" paddingAngle={2}>
             {SLEEVES.map((s,i)=><Cell key={i} fill={s.color}/>)}
           </Pie><Tooltip content={<Tip/>}/></PieChart>
         </ResponsiveContainer>
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",marginTop:4}}>
-          {SLEEVES.map((s,i)=><span key={i} style={{fontSize:11,color:P.t2}}><span style={{color:s.color}}>{"\u25CF"}</span> {s.name.split("(")[0].trim()} {s.pct}%</span>)}
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+          {SLEEVES.map((s,i)=><span key={i} style={{fontSize:10,color:P.t3}}><span style={{color:s.color}}>{"\u25CF"}</span> {s.name.split("(")[0].trim()} {s.pct}%</span>)}
         </div>
       </Card>
+
+      {/* NW Forecast — hero chart */}
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>NET WORTH \u2014 HISTORICAL + FORECAST</div>
-        <ResponsiveContainer width="100%" height={300}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:6}}>NET WORTH \u2014 HISTORICAL + FORECAST TO 2035</div>
+        <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={NW_FORECAST} margin={{left:5}}>
             <CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="d" tick={{fill:P.t3,fontSize:9}} interval="preserveStartEnd"/>
@@ -742,42 +790,52 @@ const T1 = ()=>{
             <Tooltip content={({active,payload,label})=>{
               if(!active||!payload?.length)return null;
               return(<div style={{...GS,padding:"10px 14px",fontSize:11,borderRadius:12}}>
-                <div style={{color:P.t3,fontWeight:600,marginBottom:3}}>{label}</div>
+                <div style={{color:"#94a3b8",fontWeight:600,marginBottom:3}}>{label}</div>
                 {payload.filter(p=>p.value).map((p,i)=><div key={i} style={{color:p.color||P.cyan,fontWeight:600}}>{p.name}: \u00A3{p.value>=1000000?`${(p.value/1000000).toFixed(2)}m`:p.value>=1000?`${(p.value/1000).toFixed(0)}k`:p.value}</div>)}
               </div>);
             }}/>
-            <defs>
-              <linearGradient id="gNW" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.02}/></linearGradient>
-            </defs>
+            <defs><linearGradient id="gNW" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.02}/></linearGradient></defs>
             <Area type="monotone" dataKey="nw" name="Net Worth" stroke={P.cyan} strokeWidth={2.5} fill="url(#gNW)" dot={false}/>
-            <Line type="monotone" dataKey="base" name="Base Case" stroke={P.cyan} strokeWidth={1.5} strokeDasharray="6 3" dot={false}/>
+            <Line type="monotone" dataKey="base" name="Base" stroke={P.cyan} strokeWidth={1.5} strokeDasharray="6 3" dot={false}/>
             <Line type="monotone" dataKey="bull" name="Bull" stroke={P.green} strokeWidth={1} strokeDasharray="4 4" dot={false}/>
             <Line type="monotone" dataKey="conserv" name="Conservative" stroke={P.amber} strokeWidth={1} strokeDasharray="4 4" dot={false}/>
             <ReferenceLine y={1800000} stroke={P.green} strokeDasharray="8 4" label={{value:"FIRE \u00A31.8M",fill:P.green,fontSize:10,fontWeight:700}}/>
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
-    </Grid>
 
-    {/* P&L CONTRIBUTORS + BALANCE SHEET */}
-    <Grid cols="1fr 1fr" gap={14} style={{marginBottom:14}}>
+      {/* P&L Contributors */}
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>P&L CONTRIBUTORS (\u00A3k)</div>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={contribData.slice(0,10)} layout="vertical" margin={{left:85,right:15}}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:6}}>P&L CONTRIBUTORS (\u00A3k)</div>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={contribData.slice(0,8)} layout="vertical" margin={{left:70,right:10}}>
             <CartesianGrid stroke={P.b2} horizontal={false}/>
-            <XAxis type="number" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v>0?"+":""}${v.toFixed(0)}k`}/>
-            <YAxis type="category" dataKey="name" tick={{fill:P.t2,fontSize:11}} width={80}/>
+            <XAxis type="number" tick={{fill:P.t3,fontSize:9}} tickFormatter={v=>`${v>0?"+":""}${v.toFixed(0)}k`}/>
+            <YAxis type="category" dataKey="name" tick={{fill:P.t2,fontSize:10}} width={65}/>
             <Tooltip content={<Tip/>}/>
             <ReferenceLine x={0} stroke={P.b1}/>
-            <Bar dataKey="pnl" name="P&L" radius={[0,4,4,0]}>
-              {contribData.slice(0,10).map((d,i)=><Cell key={i} fill={d.pnl>=0?P.positive:P.negative}/>)}
+            <Bar dataKey="pnl" name="P&L" radius={[0,3,3,0]}>
+              {contribData.slice(0,8).map((d,i)=><Cell key={i} fill={d.pnl>=0?P.positive:P.negative}/>)}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </Card>
+    </div>
+
+    {/* ═══ ROW 4: HEATMAP + BALANCE SHEET (side-by-side) ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>BALANCE SHEET HEALTH</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:P.t1}}>MONTHLY RETURN HEATMAP</div>
+            <div style={{fontSize:11,color:P.t3,marginTop:2}}>Nov catastrophe (-6.8%). March recovery.</div>
+          </div>
+          <div style={{fontSize:12,color:P.t2,fontFamily:P.mono,fontWeight:700}}>Cum: {pc(MONTHLY_DATA.reduce((a,m)=>a+m.r,0))}</div>
+        </div>
+        <CalendarHeatmap data={monthlyReturns}/>
+      </Card>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>BALANCE SHEET HEALTH</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {[
             {l:"Total Assets",v:fmt(PORT.assets),c:P.t1},
@@ -791,32 +849,30 @@ const T1 = ()=>{
           ].map((m,i)=>(
             <div key={i} style={{padding:"8px 10px",borderRadius:10,background:"rgba(0,0,0,0.02)",border:`1px solid ${P.b2}`}}>
               <div style={{fontSize:10,color:P.t4,textTransform:"uppercase",letterSpacing:1,fontWeight:600}}>{m.l}</div>
-              <div style={{fontSize:17,fontWeight:800,color:m.c,fontFamily:P.mono,marginTop:2}}>{m.v}</div>
+              <div style={{fontSize:16,fontWeight:800,color:m.c,fontFamily:P.mono,marginTop:2}}>{m.v}</div>
             </div>
           ))}
         </div>
       </Card>
-    </Grid>
+    </div>
 
-    {/* STRENGTHS / WEAKNESSES / ACTIONS */}
-    <Grid cols="1fr 1fr 1fr" gap={12}>
+    {/* ═══ ROW 5: STRENGTHS / WEAKNESSES / ACTIONS (3-col narrative panels) ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
       <Card style={{borderTop:`3px solid ${P.positive}`}} hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.positive,marginBottom:8,textTransform:"uppercase",letterSpacing:0.8}}>Strengths</div>
-        {["JPM Research Enhanced suite all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+\u00A316.8k) \u2014 largest single contributor","15.4 effective positions with HHI 0.065 \u2014 genuinely diversified","New comp (\u00A3340k gross) transforms savings engine"].map((s,i)=><div key={i} style={{fontSize:13,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
+        <div style={{fontSize:12,fontWeight:700,color:P.positive,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Strengths</div>
+        {["JPM Research Enhanced suite all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+\u00A316.8k) \u2014 largest single contributor","15.4 effective positions with HHI 0.065 \u2014 genuinely diversified","New comp (\u00A3340k gross) transforms savings engine"].map((s,i)=><div key={i} style={{fontSize:12,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
       </Card>
       <Card style={{borderTop:`3px solid ${P.negative}`}} hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.negative,marginBottom:8,textTransform:"uppercase",letterSpacing:0.8}}>Weaknesses</div>
-        {[`Crypto lost ${fK(38400)} \u2014 32% risk from 13% capital`,`Cash buffer halved: ${fK(33978)} \u2192 ${fK(15752)}. Now 2.6mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR \u2014 most expensive capital`,`47% GIA wrapper \u2014 est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:13,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
+        <div style={{fontSize:12,fontWeight:700,color:P.negative,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Weaknesses</div>
+        {[`Crypto lost ${fK(38400)} \u2014 32% risk from 13% capital`,`Cash halved: ${fK(33978)} \u2192 ${fK(15752)}. Now 2.6mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR \u2014 most expensive capital`,`47% GIA wrapper \u2014 est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:12,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
       </Card>
       <Card style={{borderTop:`3px solid ${P.cyan}`}} hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.cyan,marginBottom:8,textTransform:"uppercase",letterSpacing:0.8}}>Priority Actions</div>
-        {[`Max ISA (\u00A320k) before 5 April \u2014 29 days. Non-negotiable.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus \u2014 guaranteed 22% return.`,`Salary sacrifice \u00A31,250/mo into pension \u2014 60% effective rate band.`,`Consolidate 18 micro-positions to \u226415 total.`].map((s,i)=><div key={i} style={{fontSize:13,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
+        <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Priority Actions</div>
+        {[`Max ISA (\u00A320k) before 5 April \u2014 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus \u2014 22% return.`,`Salary sacrifice \u00A31,250/mo \u2014 60% effective rate band.`,`Consolidate 18 micro-positions to \u226415.`].map((s,i)=><div key={i} style={{fontSize:12,color:P.t2,lineHeight:1.5,padding:"4px 0",borderBottom:`1px solid ${P.b2}`}}>{i+1}. {s}</div>)}
       </Card>
-    </Grid>
+    </div>
   </div>);
 };
-
-
 // =========================================================================
 // NAV STRUCTURE SANKEY — Assets → Classes → Wrappers
 // =========================================================================
