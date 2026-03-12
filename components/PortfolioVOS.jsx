@@ -412,16 +412,40 @@ const Tbl = ({h,r,hl}) => (
 const Tip = ({active,payload,label}) => {
   if(!active||!payload?.length) return null;
   return (
-    <div style={{...GS,padding:"10px 14px",fontSize:13,minWidth:120}}>
-      <div style={{color:"#94a3b8",marginBottom:4,fontSize:12,fontWeight:600}}>{label}</div>
-      {payload.filter(p=>p.name!==" ").map((p,i) => <div key={i} style={{color:p.color||"#818cf8",fontWeight:700}}>
-        {p.name}: {typeof p.value==="number"?(Math.abs(p.value)>999?`\u00A3${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
-      </div>)}
+    <div style={{
+      position:'relative',borderRadius:14,overflow:'hidden',minWidth:140,
+    }}>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.4)',WebkitBackdropFilter:'blur(20px) saturate(1.4)',background:'rgba(15,23,42,0.92)',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
+      <div style={{position:'relative',zIndex:1,padding:"12px 16px"}}>
+        <div style={{color:"#94a3b8",marginBottom:6,fontSize:11,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',borderBottom:'1px solid rgba(255,255,255,0.06)',paddingBottom:5}}>{label}</div>
+        {payload.filter(p=>p.name!==" ").map((p,i) => (
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:p.color||P.cyan,boxShadow:`0 0 8px ${p.color||P.cyan}60`,flexShrink:0}}/>
+            <span style={{fontSize:12,color:'#cbd5e1',flex:1}}>{p.name}</span>
+            <span style={{fontSize:13,color:p.color||"#818cf8",fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>
+              {typeof p.value==="number"?(Math.abs(p.value)>999?`\u00A3${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-const Row = ({children,gap=12,style}) => (<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
+const Row = ({children,gap=12,style,cols}) => (<div style={{display:"grid",gridTemplateColumns:cols||"repeat(auto-fit, minmax(320px, 1fr))",gap,...style}}>{children}</div>);
+const FlexRow = ({children,gap=12,style}) => (<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
+const ChartDefs = () => (
+  <defs>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.35}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gIndigo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.indigo} stopOpacity={0.3}/><stop offset="100%" stopColor={P.indigo} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.green} stopOpacity={0.3}/><stop offset="100%" stopColor={P.green} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.red} stopOpacity={0.25}/><stop offset="100%" stopColor={P.red} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.amber} stopOpacity={0.3}/><stop offset="100%" stopColor={P.amber} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.purple} stopOpacity={0.3}/><stop offset="100%" stopColor={P.purple} stopOpacity={0.02}/></linearGradient>
+    <linearGradient id="gBtc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.btc} stopOpacity={0.35}/><stop offset="100%" stopColor={P.btc} stopOpacity={0.02}/></linearGradient>
+    <filter id="chartGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+);
 const fmt = v=>`\u00A3${Math.abs(v).toLocaleString("en-GB",{maximumFractionDigits:0})}`;
 const fK = v=>`\u00A3${(v/1000).toFixed(v>=10000?0:1)}k`;
 const pc = v=>`${v>0?"+":""}${v.toFixed(1)}%`;
@@ -2754,12 +2778,172 @@ function recalcDerived() {
 // =========================================================================
 // MAIN APP — ORION GLASS LIGHT MODE
 // =========================================================================
+// =========================================================================
+// TAB 15 — SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT
+// =========================================================================
+const SYS_PLATFORMS = [
+  {name:"Claude Pro",role:"Primary AI engine — analysis, code generation, deployment",color:P.cyan,cat:"AI"},
+  {name:"Supabase",role:"PostgreSQL backend — portfolio data, metrics, snapshots",color:P.green,cat:"Data"},
+  {name:"Vercel",role:"Next.js hosting — auto-deploy from GitHub main branch",color:"#000",cat:"Deploy"},
+  {name:"GitHub",role:"Version control — bouteralex-blip/lifestack-finance",color:P.purple,cat:"Deploy"},
+  {name:"Mac Mini",role:"Automation engine — daily cron scripts, data pipeline",color:"#64748b",cat:"Compute"},
+  {name:"Obsidian",role:"Private vault — daily metric notes, Dataview queries",color:P.indigo,cat:"PKM"},
+  {name:"Notion",role:"Mobile display layer — weekly summaries, social layer",color:P.t1,cat:"PKM"},
+  {name:"Kubera",role:"Portfolio tracking — CSV exports, NAV snapshots",color:P.amber,cat:"Data"},
+  {name:"Recharts",role:"Visualisation library — all charts, area, bar, radar, pie",color:P.cyan,cat:"UI"},
+  {name:"Make.com",role:"Automation layer — WhatsApp digest, API orchestration",color:P.purple,cat:"Compute"},
+  {name:"Alpha Vantage",role:"Market data feed — equities, FX, crypto prices",color:P.green,cat:"Data"},
+  {name:"PowerDrill",role:"Formatted PDF report generation from data",color:P.pink,cat:"Output"},
+];
+const SYS_MODULES = [
+  {name:"A1 — Wealth Engine",tabs:14,status:"Live",pct:85,color:P.amber,feeds:["Kubera","Supabase","Alpha Vantage","Claude"]},
+  {name:"A2 — Market Research",tabs:24,status:"Live",pct:80,color:P.cyan,feeds:["FRED","CoinGecko","MacroMicro","Claude"]},
+  {name:"E1 — Calendar Intel",tabs:0,status:"Planned",pct:5,color:P.t3,feeds:["Google Calendar","Make.com"]},
+  {name:"B1 — Body & Mind",tabs:0,status:"Planned",pct:5,color:P.green,feeds:["WHOOP","Apple Health"]},
+  {name:"C1 — Social Graph",tabs:0,status:"Scoped",pct:15,color:P.pink,feeds:["Notion","Obsidian"]},
+  {name:"F1 — Orchestrator",tabs:0,status:"Scoped",pct:10,color:P.indigo,feeds:["Make.com","Mac Mini","Claude"]},
+];
+const SYS_STEPS = [
+  {step:"Liquid Glass UI system",desc:"Shell/plate/content stack across all tiles",pct:90,status:"In Progress",m1:true,m2:true,m3:true,m4:false},
+  {step:"Chart premium redesign",desc:"Curved gradients, milestone bubbles, dense grids",pct:70,status:"In Progress",m1:true,m2:true,m3:false,m4:false},
+  {step:"Supabase full data sync",desc:"All 14 tabs reading live from Supabase",pct:85,status:"Live",m1:true,m2:true,m3:true,m4:false},
+  {step:"Daily Digest pipeline",desc:"Mac Mini → Claude API → WhatsApp 06:32",pct:40,status:"Scoped",m1:true,m2:false,m3:false,m4:false},
+  {step:"Markets MCP integration",desc:"FRED + Yahoo Finance + FMP live feeds",pct:20,status:"Phase 2",m1:true,m2:false,m3:false,m4:false},
+  {step:"Social Graph module",desc:"Relationship tracking, contact intelligence",pct:15,status:"Scoped",m1:false,m2:false,m3:false,m4:false},
+  {step:"Body & Mind module",desc:"WHOOP sync, training analytics, sleep scoring",pct:5,status:"Planned",m1:false,m2:false,m3:false,m4:false},
+  {step:"Obsidian Dataview layer",desc:"Daily vault notes with metric templating",pct:30,status:"Scoped",m1:true,m2:false,m3:false,m4:false},
+  {step:"Notion weekly summaries",desc:"Auto-generated Sunday Scaries review",pct:25,status:"Scoped",m1:true,m2:false,m3:false,m4:false},
+  {step:"PowerDrill PDF reports",desc:"Formatted institutional-grade monthly reports",pct:10,status:"Planned",m1:false,m2:false,m3:false,m4:false},
+];
+const T15 = () => {
+  const Dot = ({on,c=P.cyan}) => (<div style={{width:12,height:12,borderRadius:'50%',background:on?c:'rgba(0,0,0,0.06)',boxShadow:on?`0 0 10px ${c}50`:'none',border:on?'none':'1px solid rgba(0,0,0,0.08)',transition:'all 0.3s'}}/>);
+  return (<div>
+    <Hd t="SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT" s="Module interconnections, platform piping, data flows, and 10-step execution roadmap" tag="LIFESTACK OS" ac={P.indigo}/>
+
+    {/* Module Map */}
+    <Card hover tier={2}>
+      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>MODULE INTERCONNECTION MAP</div>
+      <div style={{fontSize:13,color:P.t3,marginBottom:16}}>How the six LifeStack OS domains connect, which platforms feed them, and current build status.</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:12}}>
+        {SYS_MODULES.map((m,i) => (
+          <div key={i} style={{position:'relative',borderRadius:16,overflow:'hidden'}}>
+            <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(255,255,255,0.55)',border:'1px solid rgba(255,255,255,0.7)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.4)',pointerEvents:'none'}}/>
+            <div style={{position:'relative',zIndex:1,padding:'16px 18px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                <div style={{width:10,height:10,borderRadius:'50%',background:m.color,boxShadow:`0 0 12px ${m.color}50`}}/>
+                <div style={{fontSize:14,fontWeight:700,color:P.t1}}>{m.name}</div>
+                <span style={{marginLeft:'auto',fontSize:10,padding:'2px 8px',borderRadius:6,background:`${m.color}15`,color:m.color,fontWeight:700,border:`1px solid ${m.color}20`}}>{m.status}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+                <div style={{flex:1,height:6,background:'rgba(0,0,0,0.06)',borderRadius:4,overflow:'hidden'}}>
+                  <div style={{width:`${m.pct}%`,height:'100%',background:`linear-gradient(90deg,${m.color},${m.color}aa)`,borderRadius:4,boxShadow:`0 0 8px ${m.color}30`}}/>
+                </div>
+                <span style={{fontSize:11,fontWeight:700,color:m.color,fontFamily:"'JetBrains Mono',monospace"}}>{m.pct}%</span>
+              </div>
+              <div style={{fontSize:11,color:P.t3,marginBottom:4}}>{m.tabs} tabs {m.tabs>0?'built':''}</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                {m.feeds.map((f,fi) => <span key={fi} style={{fontSize:9,padding:'2px 7px',borderRadius:5,background:'rgba(99,102,241,0.08)',color:P.cyan,fontWeight:600,border:'1px solid rgba(99,102,241,0.12)'}}>{f}</span>)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+
+    {/* Platform Piping */}
+    <Card hover tier={2}>
+      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>PLATFORM PIPING & DATA FLOW</div>
+      <div style={{fontSize:13,color:P.t3,marginBottom:16}}>Every platform in the stack, its role, and how data flows between them.</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:10}}>
+        {SYS_PLATFORMS.map((p,i) => (
+          <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderRadius:12,background:'rgba(255,255,255,0.45)',border:'1px solid rgba(255,255,255,0.6)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.3)'}}>
+            <div style={{width:36,height:36,borderRadius:10,background:`${p.color}15`,border:`1px solid ${p.color}25`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:800,color:p.color,flexShrink:0}}>{p.name[0]}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:P.t1}}>{p.name}</div>
+              <div style={{fontSize:11,color:P.t3,lineHeight:1.4}}>{p.role}</div>
+            </div>
+            <span style={{fontSize:9,padding:'2px 7px',borderRadius:5,background:'rgba(0,0,0,0.04)',color:P.t3,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>{p.cat}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+
+    {/* Data Flow Diagram */}
+    <Card hover tier={2}>
+      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>DATA FLOW — HOW INFORMATION MOVES</div>
+      <div style={{fontSize:13,color:P.t3,marginBottom:14}}>Kubera CSV exports feed Supabase. Claude reads Supabase + market APIs to generate analysis. Next.js dashboard reads Supabase for display. Mac Mini orchestrates daily automation.</div>
+      <svg width="100%" viewBox="0 0 800 220" style={{overflow:'visible'}}>
+        {[{x:20,y:80,w:100,h:50,label:"Kubera",sub:"CSV Export",c:P.amber},
+          {x:180,y:80,w:100,h:50,label:"Supabase",sub:"PostgreSQL",c:P.green},
+          {x:340,y:30,w:100,h:50,label:"Claude API",sub:"AI Engine",c:P.cyan},
+          {x:340,y:130,w:100,h:50,label:"Next.js",sub:"Dashboard",c:P.indigo},
+          {x:500,y:80,w:100,h:50,label:"Vercel",sub:"Deploy",c:P.purple},
+          {x:660,y:80,w:110,h:50,label:"User Browser",sub:"Live App",c:P.t1},
+          {x:340,y:180,w:100,h:30,label:"Mac Mini",sub:"",c:"#64748b"}
+        ].map((n,i) => (
+          <g key={i}>
+            <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={10} fill={`${n.c}12`} stroke={n.c} strokeWidth={1.5} strokeOpacity={0.4}/>
+            <text x={n.x+n.w/2} y={n.y+n.h/2-4} textAnchor="middle" fill={n.c} fontSize={11} fontWeight={700}>{n.label}</text>
+            {n.sub&&<text x={n.x+n.w/2} y={n.y+n.h/2+10} textAnchor="middle" fill="#94a3b8" fontSize={9}>{n.sub}</text>}
+          </g>
+        ))}
+        {[[120,105,180,105],[280,105,340,55],[280,105,340,155],[440,55,500,105],[440,155,500,105],[600,105,660,105],[390,180,390,155]].map(([x1,y1,x2,y2],i)=>(
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(99,102,241,0.25)" strokeWidth={1.5} markerEnd="url(#arrow)"/>
+        ))}
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX={8} refY={5} markerWidth={6} markerHeight={6} orient="auto-start-auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(99,102,241,0.4)"/></marker></defs>
+      </svg>
+    </Card>
+
+    {/* 10 Next Steps Roadmap */}
+    <Card hover tier={1}>
+      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>10-STEP EXECUTION ROADMAP</div>
+      <div style={{fontSize:13,color:P.t3,marginBottom:16}}>Milestone checklist across four gates: Scoped, Built, Tested, Live. Activation dots show progress through each gate.</div>
+      <div style={{overflowX:'auto',borderRadius:14,border:`1px solid ${P.b1}`,background:'rgba(255,255,255,0.5)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+          <thead><tr>
+            {['#','Initiative','Description','Progress','Status','Scoped','Built','Tested','Live'].map((h,i) => (
+              <th key={i} style={{textAlign:i<4?'left':'center',padding:'10px 12px',borderBottom:`1px solid ${P.b1}`,color:P.t3,fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:0.5,background:'rgba(248,250,252,0.95)'}}>{h}</th>
+            ))}
+          </tr></thead>
+          <tbody>{SYS_STEPS.map((s,i) => {
+            const c = s.pct>=80?P.green:s.pct>=40?P.amber:s.pct>=20?P.cyan:P.t4;
+            return (
+              <tr key={i} style={{transition:'background 0.2s'}} onMouseEnter={e=>{e.currentTarget.style.background='rgba(99,102,241,0.04)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t3,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",width:36}}>{String(i+1).padStart(2,'0')}</td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t1,fontWeight:700,fontSize:13}}>{s.step}</td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t3,fontSize:12,maxWidth:220}}>{s.desc}</td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,width:120}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{flex:1,height:6,background:'rgba(0,0,0,0.06)',borderRadius:4,overflow:'hidden'}}>
+                      <div style={{width:`${s.pct}%`,height:'100%',background:`linear-gradient(90deg,${c},${c}aa)`,borderRadius:4,boxShadow:`0 0 6px ${c}25`}}/>
+                    </div>
+                    <span style={{fontSize:11,fontWeight:700,color:c,fontFamily:"'JetBrains Mono',monospace",minWidth:30,textAlign:'right'}}>{s.pct}%</span>
+                  </div>
+                </td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}>
+                  <span style={{fontSize:10,padding:'2px 8px',borderRadius:6,background:`${c}12`,color:c,fontWeight:700,border:`1px solid ${c}20`}}>{s.status}</span>
+                </td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}><Dot on={s.m1} c={P.cyan}/></td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}><Dot on={s.m2} c={P.indigo}/></td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}><Dot on={s.m3} c={P.amber}/></td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}><Dot on={s.m4} c={P.green}/></td>
+              </tr>
+            );
+          })}</tbody>
+        </table>
+      </div>
+    </Card>
+
+    <Ins text="System architecture is the foundation. Once the piping is solid, every new module plugs in cleanly — same glass surface, same data layer, same deployment pipeline. The 10-step roadmap prioritises the highest-leverage builds: data integrity first, then automation, then expansion." type="insight"/>
+  </div>);
+};
+
 const TABS=[
   {k:"exec",l:"Executive Summary"},{k:"struct",l:"Structure"},{k:"perf",l:"Performance"},
   {k:"risk",l:"Risk Engine"},{k:"stress",l:"Stress Tests"},{k:"cash",l:"Cashflow"},
   {k:"bonus",l:"Bonus Strategy"},{k:"opp",l:"Opportunities"},{k:"eff",l:"Efficiency"},
   {k:"long",l:"Long-Term"},{k:"crypto",l:"Crypto Engine"},{k:"act",l:"Action Plan"},
-  {k:"tax",l:"Tax Advisor"},{k:"gloss",l:"Glossary"},
+  {k:"tax",l:"Tax Advisor"},{k:"gloss",l:"Glossary"},{k:"sys",l:"System Architecture"},
 ];
 
 export default function PortfolioVOS(){
@@ -2790,7 +2974,7 @@ export default function PortfolioVOS(){
     case "risk":return <T4/>;case "stress":return <T5/>;case "cash":return <T6/>;
     case "bonus":return <T7/>;case "opp":return <T8/>;case "eff":return <T9/>;
     case "long":return <T10/>;case "crypto":return <T11/>;case "act":return <T12/>;
-    case "tax":return <T14/>;case "gloss":return <T13/>;default:return <T1/>;
+    case "tax":return <T14/>;case "gloss":return <T13/>;case "sys":return <T15/>;default:return <T1/>;
   }};
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
@@ -2838,7 +3022,7 @@ export default function PortfolioVOS(){
         </div>
       </div>
       {/* Content area */}
-      <div style={{position:"relative",zIndex:1,padding:"20px 28px 40px",maxWidth:1440,margin:"0 auto"}}>
+      <div style={{position:"relative",zIndex:1,padding:"20px 28px 40px",maxWidth:1680,margin:"0 auto"}}>
         {render()}
       </div>
       {/* Footer */}

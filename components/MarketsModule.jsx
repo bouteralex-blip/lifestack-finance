@@ -686,7 +686,7 @@ return(<div style={{minHeight:"100vh",background:`linear-gradient(145deg,${T.bg}
 </div>);})}</div>))}
 </div></div>}
 
-<div style={{flex:1,padding:"18px 24px 36px",maxWidth:940,margin:"0 auto",position:"relative",zIndex:1}}>
+<div style={{flex:1,padding:"18px 24px 36px",maxWidth:1200,margin:"0 auto",position:"relative",zIndex:1}}>
 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
 <button onClick={()=>setSide(!side)} style={{background:T.glass,border:`1px solid ${T.glassBorder}`,borderRadius:8,padding:"5px 9px",color:T.t2,cursor:"pointer",fontSize:10}}>{side?"\u2190 Hide":"Menu \u2192"}</button>
 <div style={{fontSize:9,color:T.t3}}>SECTION {TABS.find(t=>t.id===tab)?.s} {"\u2022"} TAB {tab}</div>
