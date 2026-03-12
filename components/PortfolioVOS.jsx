@@ -1356,7 +1356,7 @@ const T4 = ()=>{
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
-        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag.</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{"Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag."}</div>
         <div style={{display:"grid",gap:8}}>
           {riskContrib.map((rc,i)=>{
             const ratio = rc.capital > 0 ? (rc.risk / rc.capital) : 0;
