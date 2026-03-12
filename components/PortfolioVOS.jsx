@@ -1402,6 +1402,17 @@ const T5 = ()=>{
   const probWeighted = STRESS.map(s=>({...s,wImpact:+(s.impact*parseFloat(s.pr)/100).toFixed(2)}));
   return(<div>
     <Hd t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
+
+    {/* KPI STRIP */}
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Scenarios" v={STRESS.length} c={P.t2} sm/><K l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off"/>
+      <K l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted"/>
+      <K l="Max NW Impact" v={fK(PORT.netWorth * Math.min(...STRESS.map(s=>s.impact)) / 100)} c={P.negative} sm delta="At worst case"/>
+      <K l="Best Hedge" v="GBP/USD" c={P.positive} sm delta="+3.2% USD gain"/>
+    </FlexRow>
+
+    {/* SIDE-BY-SIDE: Impact Matrix + Probability Chart */}
+    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
       {STRESS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${P.b2}`}}>
@@ -1427,8 +1438,9 @@ const T5 = ()=>{
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <div style={{fontSize:13,color:P.t3,marginTop:6}}>Expected loss across all scenarios: {probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(2)}% probability-weighted. Combined risk-off is the tail event but only 5% probability.</div>
+      <div style={{fontSize:12,color:P.t3,marginTop:6}}>Expected loss: {probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(2)}% prob-weighted.</div>
     </Card>
+    </div>
     {/* SPRINT 2: Scenario Heatmap — sleeves × scenarios cross-matrix */}
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
@@ -1493,11 +1505,11 @@ const T6 = ()=>{
   ];
   return(<div>
     <Hd t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
-    <Row gap={10}>
+    <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March"/><K l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber}/>
       <K l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><K l="Expenses" v="£6k/mo" s="£72k/yr"/>
-      <K l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber}/><K l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative}/>
-    </Row>
+      <K l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber} sm/><K l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative} sm/>
+    </FlexRow>
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>BALANCE SHEET</div>
       <Tbl h={["Item","Amount","% NW","Interpretation"]} r={[
@@ -1510,8 +1522,8 @@ const T6 = ()=>{
         ["Debt-to-Assets",`${(PORT.debts/PORT.assets*100).toFixed(1)}%`,"---","Low leverage but Amex rate is punitive"],
       ]}/>
     </Card>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>MONTHLY CASHFLOW</div>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={monthlyFlow}>
@@ -1523,7 +1535,7 @@ const T6 = ()=>{
           </BarChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>DEPLOYMENT STATUS</div>
         <div style={{display:"grid",gap:14,marginTop:8}}>
           <Bar2 val={0} max={20000} c={P.red} label="ISA Allowance 2025/26 (29 days left)"/>
@@ -1532,7 +1544,7 @@ const T6 = ()=>{
           <Bar2 val={PORT.amexDebt} max={PORT.amexDebt} c={P.red} label={`Amex Outstanding: ${fmt(PORT.amexDebt)}`}/>
         </div>
       </Card>
-    </Row>
+    </div>
     {/* SPRINT 2: Capital Conversion Efficiency */}
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CAPITAL CONVERSION EFFICIENCY</div>
@@ -1683,13 +1695,21 @@ const T8 = ()=>{
   const valRanked = [...OPPS].sort((a,b)=>b.val-a.val);
   return(<div>
     <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive}/>
+
+    {/* KPI STRIP */}
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Opportunities" v={OPPS.length} c={P.t2} sm/><K l="Total Ann. Value" v={`\u00A3${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
+      <K l="Top Score" v={`${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta="Conv\u00D7Time"/><K l="Execute Now" v={OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
+      <K l="Avg Conviction" v={(OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={P.t2} sm/><K l="Avg Timing" v={(OPPS.reduce((a,o)=>a+o.tm,0)/OPPS.length).toFixed(1)} c={P.t2} sm/>
+    </FlexRow>
+
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CONVICTION vs TIMING MATRIX — ALL 10 OPPORTUNITIES</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Bubble size = estimated annual value (£). Top-right quadrant = execute immediately. Scores from 1-10.</div>
       <ConvictionMatrix/>
     </Card>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>TOP 5 BY ANNUAL VALUE (£)</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={valRanked.slice(0,5)} layout="vertical" margin={{left:80}}>
@@ -1701,7 +1721,7 @@ const T8 = ()=>{
           </BarChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>COMPOSITE SCORE (CONVICTION × TIMING)</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={[...OPPS].sort((a,b)=>(b.c*b.tm)-(a.c*a.tm))} layout="vertical" margin={{left:80}}>
@@ -1713,7 +1733,7 @@ const T8 = ()=>{
           </BarChart>
         </ResponsiveContainer>
       </Card>
-    </Row>
+    </div>
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>FULL OPPORTUNITY RANKING — ALL 10</div>
       <Tbl h={["#","Opportunity","Conv","Time","Score","Alpha","Wrapper","Est. Value","Priority"]}
@@ -1763,10 +1783,11 @@ const T9 = ()=>{
   const compoundWith=[{y:"Y1",w:tot,wo:postFixDrag},{y:"Y3",w:Math.round(tot*((Math.pow(1.15,3)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,3)-1)/0.15))},{y:"Y5",w:Math.round(tot*((Math.pow(1.15,5)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,5)-1)/0.15))},{y:"Y10",w:Math.round(tot*((Math.pow(1.15,10)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,10)-1)/0.15))},{y:"Y20",w:Math.round(tot*((Math.pow(1.15,20)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,20)-1)/0.15))}];
   return(<div>
     <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber}/>
-    <Row gap={10}>
-      <K l="Annual Drag" v={fmt(tot)} s="Total friction" c={P.red}/><K l="5Y Cost" v={`~${fK(tot*5*1.08)}`} s="Compounded" c={P.red}/>
-      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.red}/><K l="Efficiency" v="4.4/10" s="Score" c={P.red}/>
-    </Row>
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Annual Drag" v={fmt(tot)} s="Total friction" c={P.negative} sm/><K l="5Y Cost" v={`~${fK(tot*5*1.08)}`} s="Compounded" c={P.negative} sm/>
+      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v="4.4/10" s="Score" c={P.negative} sm/>
+      <K l="Post-Fix Drag" v={fmt(Math.max(postFixDrag,0))} c={P.amber} sm delta="After 3 fixes"/><K l="Savings" v={fmt(tot-Math.max(postFixDrag,0))} c={P.positive} sm delta="Annual uplift"/>
+    </FlexRow>
     {/* SPRINT 2: Wrapper Efficiency Score */}
     <Card hover>
       <div style={{display:"flex",alignItems:"center",gap:20}}>
@@ -1778,8 +1799,8 @@ const T9 = ()=>{
         </div>
       </div>
     </Card>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL DRAG BREAKDOWN</div>
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={drags} margin={{left:5,bottom:5}}>
@@ -1791,7 +1812,7 @@ const T9 = ()=>{
           </BarChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
+      <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE DRAG OVER TIME</div>
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={cumDrag}>
@@ -1803,7 +1824,7 @@ const T9 = ()=>{
           </AreaChart>
         </ResponsiveContainer>
       </Card>
-    </Row>
+    </div>
     {/* SPRINT 2: Efficiency Uplift Waterfall — before vs after fixing */}
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>EFFICIENCY UPLIFT — BEFORE vs AFTER FIXES</div>
@@ -2263,6 +2284,14 @@ const T12 = ()=>{
   ];
   return(<div>
     <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan}/>
+
+    {/* KPI STRIP */}
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta="30 days"/>
+      <K l="Combined Value" v="\u00A317.8k/yr" c={P.positive} sm delta="All actions"/><K l="Guaranteed" v="\u00A312.7k/yr" c={P.positive} sm delta="No market risk"/>
+      <K l="Positions Target" v="\u226415" c={P.t2} sm delta="From 40+"/>
+    </FlexRow>
+
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>ACTION IMPACT RANKING (Annual £ Value)</div>
