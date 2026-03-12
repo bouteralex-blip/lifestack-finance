@@ -384,7 +384,7 @@ const Hd = ({t,s,tag,ac=P.cyan}) => (
 );
 
 const Ins = ({text,type="insight"}) => {
-  const c={insight:P.cyan,warning:P.amber,action:P.indigo,risk:P.red,opp:P.green}[type]||P.cyan;
+  const c={insight:P.cyan,warning:P.amber,action:P.indigo,risk:P.negative,opp:P.positive}[type]||P.cyan;
   return (
     <div style={{
       position:'relative',overflow:'hidden',
@@ -413,7 +413,7 @@ const Tbl = ({h,r,hl}) => (
       <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
         const neg=typeof cell==="string"&&cell.startsWith("-");
         const pos=typeof cell==="string"&&cell.startsWith("+");
-        return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"9px 14px",borderBottom:`1px solid ${P.b2}`,color:hl===ci?(neg?P.red:pos?P.green:P.t1):(ci===0?P.t1:P.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:14}}>{cell}</td>;
+        return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"9px 14px",borderBottom:`1px solid ${P.b2}`,color:hl===ci?(neg?P.negative:pos?P.positive:P.t1):(ci===0?P.t1:P.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:14}}>{cell}</td>;
       })}</tr>)}</tbody>
     </table>
   </div>
@@ -432,7 +432,7 @@ const Tip = ({active,payload,label}) => {
           <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
             <div style={{width:8,height:8,borderRadius:'50%',background:p.color||P.cyan,boxShadow:`0 0 8px ${p.color||P.cyan}60`,flexShrink:0}}/>
             <span style={{fontSize:12,color:'#cbd5e1',flex:1}}>{p.name}</span>
-            <span style={{fontSize:13,color:p.color||"#818cf8",fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>
+            <span style={{fontSize:13,color:p.color||"#818cf8",fontWeight:700,fontFamily:P.mono}}>
               {typeof p.value==="number"?(Math.abs(p.value)>999?`\u00A3${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
             </span>
           </div>
@@ -462,14 +462,14 @@ const fK = v=>`\u00A3${(v/1000).toFixed(v>=10000?0:1)}k`;
 const pc = v=>`${v>0?"+":""}${v.toFixed(1)}%`;
 
 const Gauge = ({score,max=10,label,size=68}) => {
-  const p=(score/max)*100;const c=p>=70?P.green:p>=40?P.amber:P.red;
+  const p=(score/max)*100;const c=p>=70?P.positive:p>=40?P.amber:P.negative;
   return (<div style={{textAlign:"center",minWidth:size+10}}>
     <div style={{position:"relative",width:size,height:size,margin:"0 auto"}}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={size/2} cy={size/2} r={size/2-6} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={4}/>
         <circle cx={size/2} cy={size/2} r={size/2-6} fill="none" stroke={c} strokeWidth={4} strokeDasharray={`${p*(size/2-6)*0.0628} 200`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} style={{filter:`drop-shadow(0 0 6px ${c}55)`}}/>
       </svg>
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:size>60?22:16,fontWeight:800,color:c,fontFamily:"'JetBrains Mono',monospace"}}>{score}</div>
+      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:size>60?22:16,fontWeight:800,color:c,fontFamily:P.mono}}>{score}</div>
     </div>
     {label&&<div style={{fontSize:12,color:P.t3,marginTop:6,textTransform:"uppercase",letterSpacing:0.6,fontWeight:600}}>{label}</div>}
   </div>);
@@ -478,7 +478,7 @@ const Gauge = ({score,max=10,label,size=68}) => {
 const Bar2 = ({val,max=100,c=P.cyan,label}) => (<div style={{marginBottom:6}}>
   {label&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
     <span style={{fontSize:14,color:P.t3}}>{label}</span>
-    <span style={{fontSize:14,color:c,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{((val/max)*100).toFixed(0)}%</span>
+    <span style={{fontSize:14,color:c,fontWeight:700,fontFamily:P.mono}}>{((val/max)*100).toFixed(0)}%</span>
   </div>}
   <div style={{height:10,background:"rgba(0,0,0,0.06)",borderRadius:6,overflow:"hidden"}}>
     <div style={{width:`${Math.min((val/max)*100,100)}%`,height:"100%",background:`linear-gradient(90deg,${c},${c}bb)`,borderRadius:6,boxShadow:`0 0 12px ${c}25`,transition:"width 0.6s ease"}}/>
@@ -520,7 +520,7 @@ const CalendarHeatmap = ({data}) => {
         return (
           <div key={i} style={{background:bg,borderRadius:12,padding:"14px 8px",textAlign:"center",border:`1px solid ${text}15`}}>
             <div style={{fontSize:11,color:P.t4,fontWeight:600,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>{d.m}</div>
-            <div style={{fontSize:22,fontWeight:800,color:text,fontFamily:"'JetBrains Mono',monospace"}}>{d.r>0?"+":""}{d.r}%</div>
+            <div style={{fontSize:22,fontWeight:800,color:text,fontFamily:P.mono}}>{d.r>0?"+":""}{d.r}%</div>
           </div>
         );
       })}
@@ -553,7 +553,7 @@ const MiniWaterfall = ({data}) => {
                   boxShadow:`0 2px 8px ${d.c||P.cyan}20`,
                 }}/>
               </div>
-              <div style={{width:55,fontSize:13,fontWeight:700,color:isPos?P.green:P.red,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>
+              <div style={{width:55,fontSize:13,fontWeight:700,color:isPos?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>
                 {isPos?"+":""}{d.val.toFixed(1)}%
               </div>
             </div>
@@ -562,7 +562,7 @@ const MiniWaterfall = ({data}) => {
         <div style={{display:"flex",alignItems:"center",gap:10,borderTop:`1px solid ${P.b1}`,paddingTop:8,marginTop:4}}>
           <div style={{width:130,fontSize:12,color:P.t1,textAlign:"right",fontWeight:700}}>Total</div>
           <div style={{flex:1}}/>
-          <div style={{width:55,fontSize:14,fontWeight:800,color:total>=0?P.green:P.red,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{total>=0?"+":""}{total.toFixed(1)}%</div>
+          <div style={{width:55,fontSize:14,fontWeight:800,color:total>=0?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>{total>=0?"+":""}{total.toFixed(1)}%</div>
         </div>
       </div>
     </div>
@@ -746,7 +746,7 @@ const T1 = ()=>{
                     boxShadow:`0 2px 8px ${d.c||P.cyan}20`,
                   }}/>
                 </div>
-                <div style={{width:50,fontSize:13,fontWeight:700,color:isPos?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>
+                <div style={{width:50,fontSize:13,fontWeight:700,color:isPos?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>
                   {isPos?"+":""}{d.val.toFixed(1)}%
                 </div>
               </div>
@@ -755,7 +755,7 @@ const T1 = ()=>{
           <div style={{display:"flex",alignItems:"center",gap:8,borderTop:`1px solid ${P.b1}`,paddingTop:6,marginTop:4}}>
             <div style={{width:110,fontSize:12,color:P.t1,textAlign:"right",fontWeight:700}}>Total</div>
             <div style={{flex:1}}/>
-            <div style={{width:50,fontSize:14,fontWeight:800,color:decomp.reduce((a,d)=>a+d.val,0)>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{decomp.reduce((a,d)=>a+d.val,0)>=0?"+":""}{decomp.reduce((a,d)=>a+d.val,0).toFixed(1)}%</div>
+            <div style={{width:50,fontSize:14,fontWeight:800,color:decomp.reduce((a,d)=>a+d.val,0)>=0?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>{decomp.reduce((a,d)=>a+d.val,0)>=0?"+":""}{decomp.reduce((a,d)=>a+d.val,0).toFixed(1)}%</div>
           </div>
         </div>
       </Card>
@@ -1221,13 +1221,13 @@ const T3 = ()=>{
                     {a.v >= 0 ? <div style={{position:"absolute",left:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.green}60`,borderRadius:"0 7px 7px 0"}}/> : <div style={{position:"absolute",right:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.red}60`,borderRadius:"7px 0 0 7px"}}/>}
                     <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:"rgba(0,0,0,0.08)"}}/>
                   </div>
-                  <div style={{width:45,fontSize:12,fontWeight:800,color:a.v>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{a.v>=0?"+":""}{a.v.toFixed(1)}%</div>
+                  <div style={{width:45,fontSize:12,fontWeight:800,color:a.v>=0?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>{a.v>=0?"+":""}{a.v.toFixed(1)}%</div>
                 </div>);
               })}
               <div style={{display:"flex",alignItems:"center",gap:8,borderTop:`1px solid ${P.b2}`,paddingTop:6,marginTop:4}}>
                 <div style={{width:100,fontSize:12,color:P.t1,textAlign:"right",fontWeight:800}}>Total</div>
                 <div style={{flex:1}}/>
-                <div style={{width:45,fontSize:13,fontWeight:800,color:totalRet>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{totalRet>=0?"+":""}{totalRet.toFixed(1)}%</div>
+                <div style={{width:45,fontSize:13,fontWeight:800,color:totalRet>=0?P.positive:P.negative,fontFamily:P.mono,textAlign:"right"}}>{totalRet>=0?"+":""}{totalRet.toFixed(1)}%</div>
               </div>
             </div>
           );
@@ -1403,19 +1403,19 @@ const T5 = ()=>{
   return(<div>
     <Hd t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
       {STRESS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${P.b2}`}}>
         <div style={{flex:"1 1 160px",fontSize:14,color:P.t2,fontWeight:500}}>{s.s}</div>
         <div style={{width:120}}><div style={{height:8,background:"rgba(255,255,255,0.03)",borderRadius:4,overflow:"hidden"}}>
-          <div style={{width:`${Math.min(Math.abs(s.impact)/18*100,100)}%`,height:"100%",background:s.impact>0?P.green:P.red,borderRadius:4,boxShadow:`0 0 8px ${s.impact>0?P.green:P.red}30`}}/>
+          <div style={{width:`${Math.min(Math.abs(s.impact)/18*100,100)}%`,height:"100%",background:s.impact>0?P.positive:P.negative,borderRadius:4,boxShadow:`0 0 8px ${s.impact>0?P.positive:P.negative}30`}}/>
         </div></div>
-        <div style={{width:55,textAlign:"right",fontSize:16,fontWeight:800,color:s.impact>0?P.green:P.red,fontFamily:"'JetBrains Mono',monospace"}}>{s.impact>0?"+":""}{s.impact}%</div>
+        <div style={{width:55,textAlign:"right",fontSize:16,fontWeight:800,color:s.impact>0?P.positive:P.negative,fontFamily:P.mono}}>{s.impact>0?"+":""}{s.impact}%</div>
         <div style={{width:35,fontSize:12,color:P.t3,textAlign:"right"}}>{s.pr}</div>
         <div style={{flex:"0 0 120px",fontSize:13,color:P.t3,textAlign:"right"}}>{s.exp}</div>
       </div>)}
     </Card>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>PROBABILITY-WEIGHTED IMPACT</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>PROBABILITY-WEIGHTED IMPACT</div>
       <ResponsiveContainer width="100%" height={360}>
         <BarChart data={probWeighted} margin={{left:5}}>
           <CartesianGrid stroke={P.b2}/>
@@ -1423,7 +1423,7 @@ const T5 = ()=>{
           <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
           <Tooltip content={<Tip/>}/>
           <Bar dataKey="wImpact" name="Prob-Weighted %" radius={[4,4,0,0]}>
-            {probWeighted.map((d,i)=><Cell key={i} fill={d.wImpact>=0?P.green:P.red} fillOpacity={0.7}/>)}
+            {probWeighted.map((d,i)=><Cell key={i} fill={d.wImpact>=0?P.positive:P.negative} fillOpacity={0.7}/>)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -1431,7 +1431,7 @@ const T5 = ()=>{
     </Card>
     {/* SPRINT 2: Scenario Heatmap — sleeves × scenarios cross-matrix */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Each cell shows estimated portfolio impact (%) from that sleeve under that scenario. Darker red = larger loss exposure.</div>
       {(()=>{
         const sleeves=[{n:"Equity ETFs",w:0.28,betas:{eq:1.0,cry:0.0,fx:-0.3,zar:0.0,rate:0.6}},{n:"Pension",w:0.22,betas:{eq:0.7,cry:0.0,fx:0.0,zar:0.0,rate:0.3}},{n:"Crypto",w:0.13,betas:{eq:0.0,cry:1.0,fx:0.0,zar:0.0,rate:0.0}},{n:"Cash/FD",w:0.16,betas:{eq:0.0,cry:0.0,fx:0.0,zar:0.0,rate:-0.2}},{n:"ZAR",w:0.10,betas:{eq:0.3,cry:0.0,fx:0.0,zar:1.0,rate:0.2}},{n:"Other",w:0.11,betas:{eq:0.4,cry:0.0,fx:0.0,zar:0.3,rate:0.3}}];
@@ -1449,7 +1449,7 @@ const T5 = ()=>{
                   if(sh.k2) impact += sl.w * (sl.betas[sh.k2]||0) * sh.m2;
                   impact = +impact.toFixed(1);
                   const {bg,c} = cellColor(impact);
-                  return <div key={`${si}-${shi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:c,fontFamily:"'JetBrains Mono',monospace",fontSize:12}}>{impact!==0?(impact>0?"+":"")+impact:"-"}</div>;
+                  return <div key={`${si}-${shi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:c,fontFamily:P.mono,fontSize:12}}>{impact!==0?(impact>0?"+":"")+impact:"-"}</div>;
                 })}
               </>)}
             </div>
@@ -1458,7 +1458,7 @@ const T5 = ()=>{
       })()}
     </Card>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:6}}>WEALTH PROJECTION — 5 SCENARIOS</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>WEALTH PROJECTION — 5 SCENARIOS</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Salary: £170k +15%/yr · Bonus: 100% of salary · Tax: 47% · Expenses: £6k/mo +15%/yr · Returns vary by scenario</div>
       <ResponsiveContainer width="100%" height={420}>
         <AreaChart data={WEALTH_5.filter(w=>[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].includes(w.y))}><CartesianGrid stroke={P.b2}/>
@@ -1495,11 +1495,11 @@ const T6 = ()=>{
     <Hd t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
     <Row gap={10}>
       <K l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March"/><K l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber}/>
-      <K l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.green}/><K l="Expenses" v="£6k/mo" s="£72k/yr"/>
-      <K l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.green:P.amber}/><K l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.green:P.red}/>
+      <K l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><K l="Expenses" v="£6k/mo" s="£72k/yr"/>
+      <K l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber}/><K l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative}/>
     </Row>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>BALANCE SHEET</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>BALANCE SHEET</div>
       <Tbl h={["Item","Amount","% NW","Interpretation"]} r={[
         ["Total Assets",fmt(PORT.assets),"---","Includes pro-rata £100k correction"],
         ["Amex Credit Card",`-${fmt(PORT.amexDebt)}`,"2.9%","22% APR — clear immediately from bonus"],
@@ -1512,7 +1512,7 @@ const T6 = ()=>{
     </Card>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>MONTHLY CASHFLOW</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>MONTHLY CASHFLOW</div>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={monthlyFlow}>
             <CartesianGrid stroke={P.b2}/>
@@ -1524,7 +1524,7 @@ const T6 = ()=>{
         </ResponsiveContainer>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>DEPLOYMENT STATUS</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>DEPLOYMENT STATUS</div>
         <div style={{display:"grid",gap:14,marginTop:8}}>
           <Bar2 val={0} max={20000} c={P.red} label="ISA Allowance 2025/26 (29 days left)"/>
           <Bar2 val={5000} max={35000} c={P.amber} label="Pension Annual Allowance"/>
@@ -1535,7 +1535,7 @@ const T6 = ()=>{
     </Row>
     {/* SPRINT 2: Capital Conversion Efficiency */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>CAPITAL CONVERSION EFFICIENCY</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CAPITAL CONVERSION EFFICIENCY</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>What percentage of every pound earned actually compounds into wealth vs leaks to tax, expenses, debt, and friction.</div>
       {(()=>{
         const grossIncome = PORT.grossSalary + PORT.grossBonus;
@@ -1548,7 +1548,7 @@ const T6 = ()=>{
           {l:"Gross Income",v:grossIncome,c:P.cyan,pct:100},
           {l:"After Tax+NI",v:grossIncome-taxNI,c:P.indigo,pct:((grossIncome-taxNI)/grossIncome*100)},
           {l:"After Expenses",v:grossIncome-taxNI-expenses,c:P.amber,pct:((grossIncome-taxNI-expenses)/grossIncome*100)},
-          {l:"After Debt Service",v:investable,c:conversionRate>25?P.green:P.red,pct:conversionRate},
+          {l:"After Debt Service",v:investable,c:conversionRate>25?P.positive:P.negative,pct:conversionRate},
         ];
         return(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -1558,7 +1558,7 @@ const T6 = ()=>{
                 <div style={{flex:1,height:20,background:"rgba(0,0,0,0.04)",borderRadius:10,overflow:"hidden"}}>
                   <div style={{width:`${s.pct}%`,height:"100%",background:`linear-gradient(90deg,${s.c}bb,${s.c}50)`,borderRadius:10,transition:"width 0.6s"}}/>
                 </div>
-                <div style={{width:60,fontSize:13,fontWeight:700,color:s.c,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{fK(s.v)}</div>
+                <div style={{width:60,fontSize:13,fontWeight:700,color:s.c,fontFamily:P.mono,textAlign:"right"}}>{fK(s.v)}</div>
                 <div style={{width:40,fontSize:11,color:P.t4,textAlign:"right"}}>{s.pct.toFixed(0)}%</div>
               </div>
             ))}
@@ -1581,7 +1581,7 @@ const T7 = ()=>{
       <K l="Post-Tax" v={fK(BONUS.postTax)} s="Deployable" c={P.cyan}/><K l="ISA" v="£20k" s="Max immediately" c={P.t1}/><K l="Amex" v={fmt(PORT.amexDebt)} s="Clear in full" c={P.red}/>
     </Row>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO COMPARISON — ALLOCATION (£k)</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO COMPARISON — ALLOCATION (£k)</div>
       <ResponsiveContainer width="100%" height={380}>
         <BarChart data={compData}>
           <CartesianGrid stroke={P.b2}/>
@@ -1608,14 +1608,14 @@ const T7 = ()=>{
         {[["Debt",s.debt],["ISA",s.isa],["Pension",s.pension],["Equity",s.equity],["Crypto",s.crypto],["AI/Semis",s.ai||0],["Liquidity",s.liq],["Travel",s.travel]].map(([l,v])=>
           <div key={l} style={{background:"rgba(255,255,255,0.025)",borderRadius:10,padding:"8px",textAlign:"center"}}>
             <div style={{fontSize:11,color:P.t3,textTransform:"uppercase"}}>{l}</div>
-            <div style={{fontSize:17,fontWeight:700,color:v>0?P.t1:P.t4,fontFamily:"'JetBrains Mono',monospace"}}>{fK(v)}</div>
+            <div style={{fontSize:17,fontWeight:700,color:v>0?P.t1:P.t4,fontFamily:P.mono}}>{fK(v)}</div>
           </div>)}
       </div>
       <div style={{marginTop:8,fontSize:14,color:P.t3}}>Expected: <span style={{color:P.green,fontWeight:700}}>1Y +{fK(s.yr1)}</span> · <span style={{color:P.green,fontWeight:700}}>3Y +{fK(s.yr3)}</span> · <span style={{color:P.green,fontWeight:700}}>5Y +{fK(s.yr5)}</span></div>
     </Card>)}
     {/* SPRINT 2: Bonus Deployment IRR — all buckets ranked by return */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>DEPLOYMENT IRR BY BUCKET</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>DEPLOYMENT IRR BY BUCKET</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>All allocation options ranked by implied annualised return. Highest-certainty guaranteed returns come first.</div>
       {(()=>{
         const irrData=[
@@ -1682,15 +1682,15 @@ const T8 = ()=>{
   };
   const valRanked = [...OPPS].sort((a,b)=>b.val-a.val);
   return(<div>
-    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.green}/>
+    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive}/>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>CONVICTION vs TIMING MATRIX — ALL 10 OPPORTUNITIES</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CONVICTION vs TIMING MATRIX — ALL 10 OPPORTUNITIES</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Bubble size = estimated annual value (£). Top-right quadrant = execute immediately. Scores from 1-10.</div>
       <ConvictionMatrix/>
     </Card>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>TOP 5 BY ANNUAL VALUE (£)</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>TOP 5 BY ANNUAL VALUE (£)</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={valRanked.slice(0,5)} layout="vertical" margin={{left:80}}>
             <CartesianGrid stroke={P.b2}/>
@@ -1702,7 +1702,7 @@ const T8 = ()=>{
         </ResponsiveContainer>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>COMPOSITE SCORE (CONVICTION × TIMING)</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>COMPOSITE SCORE (CONVICTION × TIMING)</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={[...OPPS].sort((a,b)=>(b.c*b.tm)-(a.c*a.tm))} layout="vertical" margin={{left:80}}>
             <CartesianGrid stroke={P.b2}/>
@@ -1715,7 +1715,7 @@ const T8 = ()=>{
       </Card>
     </Row>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>FULL OPPORTUNITY RANKING — ALL 10</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>FULL OPPORTUNITY RANKING — ALL 10</div>
       <Tbl h={["#","Opportunity","Conv","Time","Score","Alpha","Wrapper","Est. Value","Priority"]}
         r={valRanked.map((o,i)=>[`${i+1}`,o.t,`${o.c}/10`,`${o.tm}/10`,`${o.c*o.tm}`,o.alpha,o.w,`£${(o.val/1000).toFixed(1)}k/yr`,i<3?"Immediate":i<6?"This Quarter":"This Year"])} hl={7}/>
     </Card>
@@ -1772,15 +1772,15 @@ const T9 = ()=>{
       <div style={{display:"flex",alignItems:"center",gap:20}}>
         <Gauge score={+(wrapperEff/10).toFixed(1)} max={10} label="Wrapper Eff." size={90}/>
         <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>WRAPPER EFFICIENCY — {wrapperEff}% SHELTERED</div>
+          <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>WRAPPER EFFICIENCY — {wrapperEff}% SHELTERED</div>
           <div style={{fontSize:13,color:P.t3,lineHeight:1.6}}>Only {wrapperEff}% of growth assets (ETFs, crypto, stocks, investments) are sheltered in ISA or pension. Target: above 60%. Every £1 moved from GIA to ISA eliminates tax drag permanently. At 45% marginal + 24% CGT, the annual cost of this inefficiency is ~£2,400/yr.</div>
-          <Bar2 val={wrapperEff} max={100} c={wrapperEff>60?P.green:wrapperEff>30?P.amber:P.red} label={`${wrapperEff}% sheltered → target 60%+`}/>
+          <Bar2 val={wrapperEff} max={100} c={wrapperEff>60?P.positive:wrapperEff>30?P.amber:P.negative} label={`${wrapperEff}% sheltered → target 60%+`}/>
         </div>
       </div>
     </Card>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL DRAG BREAKDOWN</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL DRAG BREAKDOWN</div>
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={drags} margin={{left:5,bottom:5}}>
             <CartesianGrid stroke={P.b2}/>
@@ -1792,7 +1792,7 @@ const T9 = ()=>{
         </ResponsiveContainer>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE DRAG OVER TIME</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE DRAG OVER TIME</div>
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={cumDrag}>
             <CartesianGrid stroke={P.b2}/>
@@ -1806,7 +1806,7 @@ const T9 = ()=>{
     </Row>
     {/* SPRINT 2: Efficiency Uplift Waterfall — before vs after fixing */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>EFFICIENCY UPLIFT — BEFORE vs AFTER FIXES</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>EFFICIENCY UPLIFT — BEFORE vs AFTER FIXES</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Current annual drag {fmt(tot)} → post-fix {fmt(Math.max(postFixDrag,0))}. Delta: {fmt(tot-Math.max(postFixDrag,0))}/yr structural improvement.</div>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {upliftData.map((d,i)=>{
@@ -1818,7 +1818,7 @@ const T9 = ()=>{
               <div style={{flex:1,height:20,background:"rgba(0,0,0,0.04)",borderRadius:10,overflow:"hidden"}}>
                 <div style={{width:`${Math.min(barW,100)}%`,height:"100%",background:`linear-gradient(90deg,${d.c}bb,${d.c}50)`,borderRadius:10}}/>
               </div>
-              <div style={{width:60,fontSize:13,fontWeight:700,color:d.c,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{isReduction?"-":""}£{Math.abs(d.v).toLocaleString()}</div>
+              <div style={{width:60,fontSize:13,fontWeight:700,color:d.c,fontFamily:P.mono,textAlign:"right"}}>{isReduction?"-":""}£{Math.abs(d.v).toLocaleString()}</div>
             </div>
           );
         })}
@@ -1826,7 +1826,7 @@ const T9 = ()=>{
     </Card>
     {/* SPRINT 2: Compound Drag Sensitivity — with fixes vs without */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>COMPOUND DRAG — WITH vs WITHOUT FIXES</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>COMPOUND DRAG — WITH vs WITHOUT FIXES</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Cumulative wealth destroyed by friction at 15% portfolio return. The 20Y gap is the behaviour-changing number.</div>
       <ResponsiveContainer width="100%" height={320}>
         <AreaChart data={compoundWith}>
@@ -1873,7 +1873,7 @@ const T10 = ()=>{
     </Row>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>HUMAN CAPITAL vs FINANCIAL (£k)</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>HUMAN CAPITAL vs FINANCIAL (£k)</div>
         <div style={{fontSize:13,color:P.t3,marginBottom:8}}>Salary £170k +15%/yr, bonus 100%, tax 47%, assets +15%/yr, discount 7%, career to 55. Total wealth increases every year.</div>
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={hcFiltered}><CartesianGrid stroke={P.b2}/>
@@ -1895,7 +1895,7 @@ const T10 = ()=>{
         <div style={{fontSize:13,color:P.t3,marginTop:6}}>Total wealth grows from £{(latestHC.total/1000).toFixed(1)}m to £{(HC_DATA[9].total/1000).toFixed(1)}m. HC grows initially (15% salary growth outpaces 7% discount) then declines as remaining career years shrink. Financial capital takes over as the dominant component by ~2038.</div>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>SAVINGS vs RETURNS CONTRIBUTION</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SAVINGS vs RETURNS CONTRIBUTION</div>
         <div style={{fontSize:13,color:P.t3,marginBottom:8}}>Crossover point: when compounding returns exceed new savings as the primary growth driver.</div>
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={crossover.filter(c=>[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].includes(c.y))}><CartesianGrid stroke={P.b2}/>
@@ -1910,7 +1910,7 @@ const T10 = ()=>{
     </Row>
 
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:6}}>5 FORECAST SCENARIOS — INCORPORATING OPPORTUNITIES</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>5 FORECAST SCENARIOS — INCORPORATING OPPORTUNITIES</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:10}}>All scenarios share: salary £170k +15%/yr, bonus 100%, tax 47%, expenses £6k/mo +15%/yr. Difference is investment return rate + opportunity alpha.</div>
       <ResponsiveContainer width="100%" height={440}>
         <AreaChart data={wFiltered}><CartesianGrid stroke={P.b2}/>
@@ -1935,7 +1935,7 @@ const T10 = ()=>{
     </Card>
 
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO DEFINITIONS & ASSUMPTIONS</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO DEFINITIONS & ASSUMPTIONS</div>
       <Tbl h={["Scenario","Return","Alpha Source","£1M By","FIRE By","2035 NW"]}
         r={[
           ["1. Conservative","8%","No alpha — passive index only",`${SC_CONSERV.find(s=>s.v>=1000)?.y||'2033'}`,`${SC_CONSERV.find(s=>s.v>=1800)?.y||'2035+'}`,`£${(SC_CONSERV[9].v/1000).toFixed(1)}m`],
@@ -1948,7 +1948,7 @@ const T10 = ()=>{
     </Card>
 
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>WEALTH MILESTONES BY SCENARIO</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>WEALTH MILESTONES BY SCENARIO</div>
       <Tbl h={["Milestone","Conservative","Base","+ Wrapper","All Opps","Bull+Crypto"]} r={[
         ["£500k",`${SC_CONSERV.find(s=>s.v>=500)?.y||'---'}`,`${SC_BASE.find(s=>s.v>=500)?.y||'---'}`,`${SC_WRAPPER.find(s=>s.v>=500)?.y||'---'}`,`${SC_ALLOPPS.find(s=>s.v>=500)?.y||'---'}`,`${SC_BULL.find(s=>s.v>=500)?.y||'---'}`],
         ["£1m",`${SC_CONSERV.find(s=>s.v>=1000)?.y||'---'}`,`${SC_BASE.find(s=>s.v>=1000)?.y||'---'}`,`${SC_WRAPPER.find(s=>s.v>=1000)?.y||'---'}`,`${SC_ALLOPPS.find(s=>s.v>=1000)?.y||'---'}`,`${SC_BULL.find(s=>s.v>=1000)?.y||'---'}`],
@@ -2011,7 +2011,7 @@ const T10 = ()=>{
 
       return(<>
         <Card hover>
-          <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>MONTE CARLO FAN CHART — {N.toLocaleString()} SIMULATIONS</div>
+          <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MONTE CARLO FAN CHART — {N.toLocaleString()} SIMULATIONS</div>
           <div style={{fontSize:12,color:P.t3,marginBottom:12}}>BoE-style probability cone. Mean return {(mu*100).toFixed(0)}%, vol {(sigma*100).toFixed(0)}%. Bands show P10/P25/P50/P75/P90 outcomes. Wider bands = higher uncertainty as time horizon extends.</div>
           <ResponsiveContainer width="100%" height={440}>
             <AreaChart data={fanData}>
@@ -2052,7 +2052,7 @@ const T10 = ()=>{
 
         {/* SPRINT 4 #20: Probability of Hitting Milestones */}
         <Card hover>
-          <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>PROBABILITY OF HITTING MILESTONES</div>
+          <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>PROBABILITY OF HITTING MILESTONES</div>
           <div style={{fontSize:12,color:P.t3,marginBottom:12}}>From {N.toLocaleString()} Monte Carlo paths: the percentage of simulations that reach each wealth level by each year. Darker = higher probability.</div>
           <ResponsiveContainer width="100%" height={340}>
             <AreaChart data={probData}>
@@ -2074,7 +2074,7 @@ const T10 = ()=>{
                 {years.map((y,yi)=>{
                   const pct = probData[yi]?.[`m${mi}`] || 0;
                   const bg = pct >= 80 ? `${milestoneColors[mi]}30` : pct >= 50 ? `${milestoneColors[mi]}18` : pct >= 20 ? `${milestoneColors[mi]}0a` : "rgba(0,0,0,0.02)";
-                  return <div key={`${mi}-${yi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:pct>=50?milestoneColors[mi]:P.t4,fontFamily:"'JetBrains Mono',monospace",fontSize:12}}>{pct>0?`${pct}%`:"-"}</div>;
+                  return <div key={`${mi}-${yi}`} style={{padding:"8px 4px",textAlign:"center",background:bg,borderRadius:6,fontWeight:700,color:pct>=50?milestoneColors[mi]:P.t4,fontFamily:P.mono,fontSize:12}}>{pct>0?`${pct}%`:"-"}</div>;
                 })}
               </>)}
             </div>
@@ -2085,7 +2085,7 @@ const T10 = ()=>{
     })()}
     {/* SPRINT 2: Real Wealth Path — nominal vs inflation-adjusted */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>REAL vs NOMINAL WEALTH PATH</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>REAL vs NOMINAL WEALTH PATH</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Nominal NW (what the account says) vs real NW (today's purchasing power at {((PORT.inflation||0.032)*100).toFixed(1)}% CPI). The gap widens dramatically over time.</div>
       {(()=>{
         const inf = PORT.inflation || 0.032;
@@ -2142,16 +2142,16 @@ const T11 = ()=>{
       <K l="BTC" v={`$${(cm.btcPrice/1000).toFixed(1)}k`} s={`DD: ${cm.btcDD}%`} c={P.btc}/>
       <K l="Crypto Wt" v={`${cryptoWt.toFixed(1)}%`} s="of assets" c={P.btc}/>
       <K l="Risk Contrib" v="32%" s="of total risk" c={P.red}/>
-      <K l="Signals" v={`${bullish}/${signals.length}`} s="Bullish" c={P.green}/>
+      <K l="Signals" v={`${bullish}/${signals.length}`} s="Bullish" c={P.positive}/>
       <K l="6mo P&L" v={fK(cryptoTotal-cryptoPrev)} s="All crypto" c={P.red}/>
     </Row>
     <Ins type="opp" text={`${bullish}/${signals.length} on-chain signals bullish — highest density since late 2022. MVRV 0.49, Fear 18, RSI 27.5, whale accumulation 270K BTC. Smart money is buying what retail is selling. However, 32% risk from 13% capital = 2.5x risk-to-capital ratio remains excessive. The strategy is to consolidate, not expand.`}/>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>ON-CHAIN SIGNAL DASHBOARD</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ON-CHAIN SIGNAL DASHBOARD</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
         {signals.map((s,i)=><div key={i} style={{...G,padding:"12px 14px"}}>
           <div style={{fontSize:11,color:P.t3,textTransform:"uppercase",marginBottom:3,letterSpacing:0.8}}>{s.m}</div>
-          <div style={{fontSize:24,fontWeight:800,color:P.t1,fontFamily:"'JetBrains Mono',monospace"}}>{s.v}</div>
+          <div style={{fontSize:24,fontWeight:800,color:P.t1,fontFamily:P.mono}}>{s.v}</div>
           <div style={{display:"flex",justifyContent:"space-between",marginTop:5}}>
             <span style={{fontSize:11,fontWeight:700,color:s.c,padding:"2px 6px",background:`${s.c}18`,borderRadius:4}}>{s.s}</span>
             <span style={{fontSize:10,color:P.t4}}>{s.d}</span>
@@ -2171,7 +2171,7 @@ const T11 = ()=>{
           const composite = Math.round(mvrvScore*0.30 + nuplScore*0.25 + fearScore*0.20 + rrScore*0.15 + soprScore*0.10);
           const zone = composite >= 70 ? {l:"DEEP ACCUMULATION",c:P.green} : composite >= 50 ? {l:"ACCUMULATE",c:P.green} : composite >= 30 ? {l:"HOLD",c:P.amber} : {l:"TRIM / TAKE PROFIT",c:P.red};
           return(<div style={{textAlign:"center"}}>
-            <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:12}}>CYCLE POSITION</div>
+            <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>CYCLE POSITION</div>
             <Gauge score={+(composite/10).toFixed(1)} max={10} label="" size={110}/>
             <div style={{fontSize:24,fontWeight:800,color:zone.c,marginTop:8}}>{composite}/100</div>
             <div style={{fontSize:13,fontWeight:700,color:zone.c,padding:"4px 12px",background:`${zone.c}15`,borderRadius:8,display:"inline-block",marginTop:6}}>{zone.l}</div>
@@ -2181,7 +2181,7 @@ const T11 = ()=>{
       </Card>
       {/* SPRINT 2: BTC Accumulation Progress */}
       <Card style={{flex:"1 1 380px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>BTC ACCUMULATION PROGRESS</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>BTC ACCUMULATION PROGRESS</div>
         {(()=>{
           const btcHeld = 29854 / cm.btcPrice;
           const target = 1.0;
@@ -2212,7 +2212,7 @@ const T11 = ()=>{
     </Row>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CRYPTO HOLDINGS P&L</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CRYPTO HOLDINGS P&L</div>
         <ResponsiveContainer width="100%" height={360}>
           <BarChart data={cryptoHoldings}>
             <CartesianGrid stroke={P.b2}/>
@@ -2225,7 +2225,7 @@ const T11 = ()=>{
         </ResponsiveContainer>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CRYPTO HOLDINGS TABLE</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CRYPTO HOLDINGS TABLE</div>
         <Tbl h={["Asset","Current","6mo Ago","P&L","Return","Action"]} r={[
           ["BTC",fK(29854),fK(49310),`-${fK(19456)}`,"-39.5%","Core — hold, signals say accumulate"],
           ["EC10",fK(15845),fK(28508),`-${fK(12663)}`,"-44.4%","Consider consolidating to BTC"],
@@ -2265,7 +2265,7 @@ const T12 = ()=>{
     <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan}/>
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>ACTION IMPACT RANKING (Annual £ Value)</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>ACTION IMPACT RANKING (Annual £ Value)</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>All actions competing on one axis. Guaranteed returns rank highest regardless of market views.</div>
       {(()=>{
         const actionImpacts = [
@@ -2298,13 +2298,13 @@ const T12 = ()=>{
         <div style={{flex:1}}>
           <div style={{fontSize:15,color:P.t1,fontWeight:600,lineHeight:1.5}}>{a.a}</div>
           <div style={{fontSize:13,color:P.t3,marginTop:3}}>To: {a.to} · Because: {a.why}</div>
-          <div style={{fontSize:13,color:P.green,marginTop:2,fontWeight:700}}>Impact: {a.imp}</div>
+          <div style={{fontSize:13,color:P.positive,marginTop:2,fontWeight:700}}>Impact: {a.imp}</div>
         </div>
       </div>)}
     </Card>)}
     {/* SPRINT 2 #28: 30-60-90 Day Execution Roadmap */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>30-60-90 DAY EXECUTION ROADMAP</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>30-60-90 DAY EXECUTION ROADMAP</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:14}}>All actions mapped to tight time windows. Urgency creates accountability.</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
         {[
@@ -2392,11 +2392,11 @@ const T14 = ()=>{
     {y:2030,gia:12,isa:38,sipp:38,other:12},{y:2035,gia:5,isa:45,sipp:42,other:8},
   ];
   return(<div>
-    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.green}/>
+    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.positive}/>
     <Row gap={10}>
-      <K l="Annual Tax Saving" v={fmt(totalSaving)} s="All strategies combined" c={P.green}/>
+      <K l="Annual Tax Saving" v={fmt(totalSaving)} s="All strategies combined" c={P.positive}/>
       <K l="Pre-Tax Equiv." v={fmt(Math.round(totalSaving/0.55))} s="At 45% marginal" c={P.cyan}/>
-      <K l="10Y Value" v={`~${fK(totalSaving*10*1.28)}`} s="Compounded" c={P.green}/>
+      <K l="10Y Value" v={`~${fK(totalSaving*10*1.28)}`} s="Compounded" c={P.positive}/>
       <K l="Marginal Rate" v="45%" s="Additional rate" c={P.red}/>
       <K l="CGT Rate" v="24%" s="Higher rate" c={P.amber}/>
       <K l="GIA Exposure" v="47%" s="Taxable wrappers" c={P.red}/>
@@ -2404,7 +2404,7 @@ const T14 = ()=>{
     <Ins text={`Combined annual tax optimisation value: ${fmt(totalSaving)}/yr. The pre-tax equivalent at 45% marginal rate is ${fmt(Math.round(totalSaving/0.55))}/yr — meaning you'd need to earn that much gross to have the same after-tax impact. Over 10 years with compounding, these strategies are worth approximately ${fK(totalSaving*10*1.28)}. The three highest-certainty moves (salary sacrifice + ISA + Amex) alone deliver ${fmt(6750+3600+2343)}/yr.`}/>
     <Row gap={14}>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL TAX SAVING BY STRATEGY</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL TAX SAVING BY STRATEGY</div>
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={taxBreakdown} layout="vertical" margin={{left:75}}>
             <CartesianGrid stroke={P.b2}/>
@@ -2416,7 +2416,7 @@ const T14 = ()=>{
         </ResponsiveContainer>
       </Card>
       <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE TAX SAVINGS OVER TIME</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE TAX SAVINGS OVER TIME</div>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={cumTax}>
             <CartesianGrid stroke={P.b2}/>
@@ -2426,7 +2426,7 @@ const T14 = ()=>{
             <Area type="monotone" dataKey="v" name="Cumulative Savings (£)" stroke={P.green} fill={P.green} fillOpacity={0.12} strokeWidth={2.5}/>
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginTop:16,marginBottom:10}}>WRAPPER MIGRATION ROADMAP (%)</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginTop:16,marginBottom:10}}>WRAPPER MIGRATION ROADMAP (%)</div>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={wrapperMigration}>
             <CartesianGrid stroke={P.b2}/>
@@ -2442,7 +2442,7 @@ const T14 = ()=>{
         <div style={{fontSize:12,color:P.t3,marginTop:4}}>Target: GIA from 47% → 5% by 2035 through annual Bed & ISA + salary sacrifice + new contributions to ISA/SIPP only.</div>
         {/* SPRINT 2 #27: 10Y Compound Tax Alpha — lifetime value of all tax strategies */}
         <div style={{marginTop:16,padding:"14px 18px",borderRadius:14,background:`linear-gradient(135deg,${P.greenD},transparent)`,border:`1px solid ${P.green}20`}}>
-          <div style={{fontSize:13,fontWeight:700,color:P.green,marginBottom:6}}>10-YEAR COMPOUND VALUE OF TAX ALPHA</div>
+          <div style={{fontSize:13,fontWeight:700,color:P.positive,marginBottom:6}}>10-YEAR COMPOUND VALUE OF TAX ALPHA</div>
           {(()=>{
             const annualSave = totalSaving;
             const r = 0.15;
@@ -2453,7 +2453,7 @@ const T14 = ()=>{
                 {[{l:"Annual",v:annualSave,y:""},{l:"5-Year",v:Math.round(annualSave*((Math.pow(1+r,5)-1)/r)),y:""},{l:"10-Year",v:fv10,y:""},{l:"20-Year",v:fv20,y:""}].map((p,i)=>(
                   <div key={i} style={{textAlign:"center",flex:"1 1 80px"}}>
                     <div style={{fontSize:10,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>{p.l}</div>
-                    <div style={{fontSize:20,fontWeight:800,color:i===3?P.green:i===2?P.cyan:P.t1,fontFamily:"'JetBrains Mono',monospace"}}>{fK(p.v)}</div>
+                    <div style={{fontSize:20,fontWeight:800,color:i===3?P.green:i===2?P.cyan:P.t1,fontFamily:P.mono}}>{fK(p.v)}</div>
                   </div>
                 ))}
               </div>
@@ -2464,13 +2464,13 @@ const T14 = ()=>{
       </Card>
     </Row>
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>TAX STRATEGY PRIORITY TABLE</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>TAX STRATEGY PRIORITY TABLE</div>
       <Tbl h={["Strategy","Annual Saving","Certainty","Priority","Action Required"]}
         r={taxItems.filter(t=>t.saving>0).sort((a,b)=>b.saving-a.saving).map(t=>[t.area,fmt(t.saving),`${t.certainty}/10`,t.priority,t.action.split(".")[0]+"."])} hl={1}/>
     </Card>
     {/* SPRINT 3 #16: Marginal Rate Zone Analysis — income bands mapped to effective rates */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>MARGINAL RATE ZONE ANALYSIS</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MARGINAL RATE ZONE ANALYSIS</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Your income mapped against UK tax bands. The 60% PA taper trap between £100k-£125k is the single most important zone to optimise via salary sacrifice.</div>
       {(()=>{
         const taxBands = REF_DATA?.uk_tax_bands?.bands || [
@@ -2500,7 +2500,7 @@ const T14 = ()=>{
                       <div style={{width:`${Math.min(barPct,100)}%`,height:"100%",background:`${bandColors[b.name]||P.t3}50`,borderRadius:6}}/>
                       {sacLine && <div style={{position:"absolute",left:`${(grossAfterSacrifice-b.from)/(b.to-b.from)*100}%`,top:0,bottom:0,width:2,background:P.cyan,zIndex:2}}/>}
                     </div>
-                    <div style={{width:50,fontSize:12,fontWeight:700,color:bandColors[b.name]||P.t3,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{(b.rate*100).toFixed(0)}%</div>
+                    <div style={{width:50,fontSize:12,fontWeight:700,color:bandColors[b.name]||P.t3,fontFamily:P.mono,textAlign:"right"}}>{(b.rate*100).toFixed(0)}%</div>
                     <div style={{width:55,fontSize:11,color:P.t4,textAlign:"right"}}>{fK(bandW)} in band</div>
                   </div>
                 );
@@ -2509,19 +2509,19 @@ const T14 = ()=>{
             <div style={{display:"flex",gap:16,marginTop:14,padding:"10px 14px",borderRadius:10,background:"rgba(0,0,0,0.03)"}}>
               <div style={{flex:1}}>
                 <div style={{fontSize:11,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>Gross Income</div>
-                <div style={{fontSize:18,fontWeight:800,color:P.t1,fontFamily:"'JetBrains Mono',monospace"}}>{fK(gross)}</div>
+                <div style={{fontSize:18,fontWeight:800,color:P.t1,fontFamily:P.mono}}>{fK(gross)}</div>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:11,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>After Sacrifice</div>
-                <div style={{fontSize:18,fontWeight:800,color:P.cyan,fontFamily:"'JetBrains Mono',monospace"}}>{fK(grossAfterSacrifice)}</div>
+                <div style={{fontSize:18,fontWeight:800,color:P.cyan,fontFamily:P.mono}}>{fK(grossAfterSacrifice)}</div>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:11,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>In 60% Trap</div>
-                <div style={{fontSize:18,fontWeight:800,color:gross>100000?P.red:P.green,fontFamily:"'JetBrains Mono',monospace"}}>{gross>125140?"£25k":gross>100000?fK(Math.min(gross,125140)-100000):"£0"}</div>
+                <div style={{fontSize:18,fontWeight:800,color:gross>100000?P.negative:P.positive,fontFamily:P.mono}}>{gross>125140?"£25k":gross>100000?fK(Math.min(gross,125140)-100000):"£0"}</div>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:11,color:P.t4,textTransform:"uppercase",letterSpacing:0.8}}>Effective Rate</div>
-                <div style={{fontSize:18,fontWeight:800,color:P.amber,fontFamily:"'JetBrains Mono',monospace"}}>{(PORT.taxRate*100+PORT.niRate*100).toFixed(0)}%</div>
+                <div style={{fontSize:18,fontWeight:800,color:P.amber,fontFamily:P.mono}}>{(PORT.taxRate*100+PORT.niRate*100).toFixed(0)}%</div>
               </div>
             </div>
             <div style={{fontSize:12,color:P.t3,marginTop:8}}>At £{(gross/1000).toFixed(0)}k gross, £{Math.min(25140, Math.max(0,gross-100000)).toLocaleString()} sits in the 60% effective trap. Salary sacrifice of £15k/yr drops taxable income into the 45% band and recovers the personal allowance — saving £6,750/yr with zero risk.</div>
@@ -2534,13 +2534,13 @@ const T14 = ()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{fontSize:17,fontWeight:800,color:P.t1}}>{t.area}</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <span style={{fontSize:14,fontWeight:700,color:P.green,fontFamily:"'JetBrains Mono',monospace"}}>{fmt(t.saving)}/yr</span>
+            <span style={{fontSize:14,fontWeight:700,color:P.positive,fontFamily:P.mono}}>{fmt(t.saving)}/yr</span>
             <span style={{padding:"3px 8px",borderRadius:6,fontSize:11,fontWeight:700,background:t.priority==="Immediate"?`${P.red}18`:t.priority.includes("Q2")?`${P.amber}18`:`${P.green}18`,color:t.priority==="Immediate"?P.red:t.priority.includes("Q2")?P.amber:P.green}}>{t.priority}</span>
           </div>
         </div>
         <div style={{fontSize:14,color:P.t2,lineHeight:1.7,marginBottom:10}}>{t.desc}</div>
         <div style={{padding:"10px 14px",borderRadius:12,background:`linear-gradient(135deg,${P.green}08,transparent)`,borderLeft:`2px solid ${P.green}40`}}>
-          <div style={{fontSize:11,color:P.green,fontWeight:700,letterSpacing:1,marginBottom:4}}>ACTION</div>
+          <div style={{fontSize:11,color:P.positive,fontWeight:700,letterSpacing:1,marginBottom:4}}>ACTION</div>
           <div style={{fontSize:14,color:P.t2,lineHeight:1.6}}>{t.action}</div>
         </div>
         <div style={{fontSize:13,color:P.t3,marginTop:8}}><span style={{color:P.cyan,fontWeight:600}}>Impact:</span> {t.impact}</div>
@@ -2725,7 +2725,7 @@ const T13 = ()=>{
                     padding:"4px 10px",borderRadius:8,
                     background:`${cat.color}15`,border:`1px solid ${cat.color}25`,
                     fontSize:14,fontWeight:700,color:cat.color,
-                    fontFamily:"'JetBrains Mono',monospace",
+                    fontFamily:P.mono,
                     whiteSpace:"nowrap",marginLeft:12,
                   }}>{item.yours}</div>
                 </div>
@@ -2865,7 +2865,7 @@ const T15 = () => {
 
     {/* Module Map */}
     <Card hover tier={2}>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>MODULE INTERCONNECTION MAP</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MODULE INTERCONNECTION MAP</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:16}}>How the six LifeStack OS domains connect, which platforms feed them, and current build status.</div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:12}}>
         {SYS_MODULES.map((m,i) => (
@@ -2881,7 +2881,7 @@ const T15 = () => {
                 <div style={{flex:1,height:6,background:'rgba(0,0,0,0.06)',borderRadius:4,overflow:'hidden'}}>
                   <div style={{width:`${m.pct}%`,height:'100%',background:`linear-gradient(90deg,${m.color},${m.color}aa)`,borderRadius:4,boxShadow:`0 0 8px ${m.color}30`}}/>
                 </div>
-                <span style={{fontSize:11,fontWeight:700,color:m.color,fontFamily:"'JetBrains Mono',monospace"}}>{m.pct}%</span>
+                <span style={{fontSize:11,fontWeight:700,color:m.color,fontFamily:P.mono}}>{m.pct}%</span>
               </div>
               <div style={{fontSize:11,color:P.t3,marginBottom:4}}>{m.tabs} tabs {m.tabs>0?'built':''}</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
@@ -2895,7 +2895,7 @@ const T15 = () => {
 
     {/* Platform Piping */}
     <Card hover tier={2}>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>PLATFORM PIPING & DATA FLOW</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>PLATFORM PIPING & DATA FLOW</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:16}}>Every platform in the stack, its role, and how data flows between them.</div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:10}}>
         {SYS_PLATFORMS.map((p,i) => (
@@ -2913,7 +2913,7 @@ const T15 = () => {
 
     {/* Data Flow Diagram */}
     <Card hover tier={2}>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>DATA FLOW — HOW INFORMATION MOVES</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>DATA FLOW — HOW INFORMATION MOVES</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:14}}>Kubera CSV exports feed Supabase. Claude reads Supabase + market APIs to generate analysis. Next.js dashboard reads Supabase for display. Mac Mini orchestrates daily automation.</div>
       <svg width="100%" viewBox="0 0 800 220" style={{overflow:'visible'}}>
         {[{x:20,y:80,w:100,h:50,label:"Kubera",sub:"CSV Export",c:P.amber},
@@ -2939,7 +2939,7 @@ const T15 = () => {
 
     {/* 10 Next Steps Roadmap */}
     <Card hover tier={1}>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>10-STEP EXECUTION ROADMAP</div>
+      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>10-STEP EXECUTION ROADMAP</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:16}}>Milestone checklist across four gates: Scoped, Built, Tested, Live. Activation dots show progress through each gate.</div>
       <div style={{overflowX:'auto',borderRadius:14,border:`1px solid ${P.b1}`,background:'rgba(255,255,255,0.5)'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
@@ -2952,7 +2952,7 @@ const T15 = () => {
             const c = s.pct>=80?P.green:s.pct>=40?P.amber:s.pct>=20?P.cyan:P.t4;
             return (
               <tr key={i} style={{transition:'background 0.2s'}} onMouseEnter={e=>{e.currentTarget.style.background='rgba(99,102,241,0.04)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
-                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t3,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",width:36}}>{String(i+1).padStart(2,'0')}</td>
+                <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t3,fontWeight:700,fontFamily:P.mono,width:36}}>{String(i+1).padStart(2,'0')}</td>
                 <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t1,fontWeight:700,fontSize:13}}>{s.step}</td>
                 <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,color:P.t3,fontSize:12,maxWidth:220}}>{s.desc}</td>
                 <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,width:120}}>
@@ -2960,7 +2960,7 @@ const T15 = () => {
                     <div style={{flex:1,height:6,background:'rgba(0,0,0,0.06)',borderRadius:4,overflow:'hidden'}}>
                       <div style={{width:`${s.pct}%`,height:'100%',background:`linear-gradient(90deg,${c},${c}aa)`,borderRadius:4,boxShadow:`0 0 6px ${c}25`}}/>
                     </div>
-                    <span style={{fontSize:11,fontWeight:700,color:c,fontFamily:"'JetBrains Mono',monospace",minWidth:30,textAlign:'right'}}>{s.pct}%</span>
+                    <span style={{fontSize:11,fontWeight:700,color:c,fontFamily:P.mono,minWidth:30,textAlign:'right'}}>{s.pct}%</span>
                   </div>
                 </td>
                 <td style={{padding:'10px 12px',borderBottom:`1px solid ${P.b2}`,textAlign:'center'}}>
