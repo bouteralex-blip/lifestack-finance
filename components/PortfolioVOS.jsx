@@ -26,19 +26,19 @@ const P = {
 // Playbook: shell communicates material via edge/blur, plate protects content
 // Background must be visible through tiles. Blur + edge = glass, not opacity.
 const glassLight = (tier=2) => {
-  const plate = tier===1?0.32:tier===3?0.10:0.18;
-  const blur = tier===1?18:tier===3?30:24;
-  const borderA = tier===1?0.40:tier===3?0.20:0.30;
-  const hlA = tier===1?0.06:tier===3?0.15:0.10;
-  const inA = tier===1?0.30:tier===3?0.15:0.22;
+  const plate = tier===1?0.25:tier===3?0.06:0.14;
+  const blur = tier===1?20:tier===3?32:26;
+  const borderA = tier===1?0.45:tier===3?0.22:0.32;
+  const hlA = tier===1?0.08:tier===3?0.20:0.14;
+  const inA = tier===1?0.35:tier===3?0.18:0.25;
   return {
     background:`rgba(255,255,255,${plate})`,
-    backdropFilter:`blur(${blur}px) saturate(1.6)`,
-    WebkitBackdropFilter:`blur(${blur}px) saturate(1.6)`,
+    backdropFilter:`blur(${blur}px) saturate(1.7)`,
+    WebkitBackdropFilter:`blur(${blur}px) saturate(1.7)`,
     border:`1px solid rgba(255,255,255,${borderA})`,
     borderRadius:20,
-    boxShadow:`0 8px 32px rgba(0,0,0,0.08), 0 20px 60px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,${inA}), inset 0 0 0 1px rgba(255,255,255,${inA*0.5})`,
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${hlA}), transparent 50%)`,
+    boxShadow:`0 10px 40px rgba(0,0,0,0.12), 0 24px 80px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,${inA}), inset 0 0 0 1px rgba(255,255,255,${inA*0.5})`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${hlA}), transparent 55%)`,
   };
 };
 const G = glassLight(2);
@@ -2985,7 +2985,7 @@ export default function PortfolioVOS(){
         {/* Header shell */}
         <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.5)',WebkitBackdropFilter:'blur(24px) saturate(1.5)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.3)',pointerEvents:'none'}}/>
         {/* Header plate */}
-        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.20)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.12)',pointerEvents:'none'}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -3000,17 +3000,23 @@ export default function PortfolioVOS(){
             <div style={{fontSize:11,color:P.t4}}>{PORT.date} {"\u00B7"} NW {fmt(PORT.netWorth)}</div>
           </div>
         </div>
-        {/* Tab bar */}
-        <div style={{display:"flex",gap:0,overflowX:"auto",whiteSpace:"nowrap",paddingBottom:0}}>
-          {TABS.map((t,i) => (
+        {/* Tab bar — Liquid Glass Pill Navigation */}
+        <div style={{display:"flex",gap:4,overflowX:"auto",whiteSpace:"nowrap",padding:"6px 0",scrollbarWidth:'none'}}>
+          {TABS.map((t,i) => {
+            const active = tab===t.k;
+            return (
             <button key={t.k} onClick={()=>setTab(t.k)} style={{
-              background:tab===t.k?"rgba(99,102,241,0.08)":"transparent",
-              border:"none",borderBottom:tab===t.k?`2.5px solid ${P.cyan}`:"2.5px solid transparent",
-              color:tab===t.k?P.cyan:P.t3,padding:"10px 16px",fontSize:12,fontWeight:tab===t.k?700:500,
-              cursor:"pointer",transition:"all 0.2s ease",whiteSpace:"nowrap",fontFamily:"inherit",
-              borderRadius:"8px 8px 0 0",
-            }}><span style={{fontSize:9,opacity:0.4,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
-          ))}
+              position:'relative',overflow:'hidden',
+              background:active?"rgba(99,102,241,0.12)":"transparent",
+              border:"none",
+              color:active?P.cyan:P.t3,padding:"8px 16px",fontSize:11.5,fontWeight:active?700:500,
+              cursor:"pointer",transition:"all 0.3s cubic-bezier(0.25,0.46,0.45,0.94)",whiteSpace:"nowrap",fontFamily:"inherit",
+              borderRadius:20,
+              backdropFilter:active?'blur(16px) saturate(1.5)':'none',
+              WebkitBackdropFilter:active?'blur(16px) saturate(1.5)':'none',
+              boxShadow:active?'0 4px 16px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 0 0 1px rgba(99,102,241,0.15)':'none',
+            }}><span style={{fontSize:8,opacity:0.4,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
+          );})}
         </div>
         </div>
       </div>
