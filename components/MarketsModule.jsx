@@ -90,27 +90,92 @@ const SCENARIOS=[{s:"Base Case",pr:50,sp:"7,200",btc:"$85K",desc:"Late-cycle gri
 {s:"Crisis",pr:10,sp:"5,500",btc:"$30K",desc:"Recession. Gilt crisis. Credit freeze. Forced selling across all risk assets.",col:T.negative}];
 
 // =========================================================================
-// UI COMPONENTS — DESIGN SYSTEM v2
+// UI COMPONENTS — LIQUID GLASS DARK SYSTEM
+// Playbook: shell + plate + content stack, 3 tiers, locked 135deg light,
+// edge discipline, tiered plate, graceful fallback
 // =========================================================================
-const Glass=({children,style={},glow=false,accent=T.accent})=>(<div style={{background:T.glass,backdropFilter:T.glassBlur,WebkitBackdropFilter:T.glassBlur,border:`1px solid ${T.glassBorder}`,borderRadius:T.glassRadius,padding:T.glassPad,boxShadow:glow?`${T.shadow}, ${GW(accent)}`:T.shadow,position:"relative",overflow:"hidden",marginBottom:T.glassGap,...style}}><div style={{position:"absolute",inset:0,background:T.shine,pointerEvents:"none",borderRadius:T.glassRadius}}/><div style={{position:"relative",zIndex:1}}>{children}</div></div>);
+const glassDark = (tier=2, accent=null) => {
+  const plate = tier===1?0.82:tier===3?0.50:0.65;
+  const blur = tier===1?16:tier===3?24:20;
+  const borderA = tier===1?0.08:tier===3?0.04:0.06;
+  const highlightA = tier===1?0.03:tier===3?0.08:0.05;
+  const insetA = tier===1?0.06:tier===3?0.03:0.04;
+  return {
+    plate:`rgba(8,12,28,${plate})`,
+    blur:`blur(${blur}px) saturate(1.2)`,
+    border:`1px solid rgba(255,255,255,${borderA})`,
+    highlight:`linear-gradient(135deg, rgba(255,255,255,${highlightA}), transparent 45%)${accent?`, ${accent}04`:''}`,
+    inset:`inset 0 1px 0 rgba(255,255,255,${insetA}), inset 0 0 0 1px rgba(255,255,255,${insetA*0.5})`,
+    shadow:`0 8px 32px rgba(0,0,0,0.35), 0 0 80px rgba(0,0,0,0.10)`,
+  };
+};
+const Glass=({children,style={},glow=false,accent=T.accent,tier=2})=>{
+  const g=glassDark(tier,glow?accent:null);
+  return(<div style={{position:'relative',borderRadius:T.glassRadius,overflow:'hidden',marginBottom:T.glassGap,...(style.flex?{flex:style.flex}:{}),
+    ...(style.minWidth?{minWidth:style.minWidth}:{}),
+    ...(style.textAlign?{}:{}),
+  }}>
+    {/* Shell: edges, highlight, blur */}
+    <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+      backdropFilter:g.blur,WebkitBackdropFilter:g.blur,
+      border:g.border,backgroundImage:g.highlight,
+      boxShadow:glow?`${g.shadow}, ${GW(accent)}, ${g.inset}`:`${g.shadow}, ${g.inset}`,
+      pointerEvents:'none',transition:'box-shadow 0.3s ease',
+    }}/>
+    {/* Plate: readability */}
+    <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:g.plate,pointerEvents:'none'}}/>
+    {/* Content */}
+    <div style={{position:'relative',zIndex:1,padding:style.padding||T.glassPad,
+      ...(style.textAlign?{textAlign:style.textAlign}:{}),
+      ...(style.borderTop?{borderTop:style.borderTop}:{}),
+      ...(style.borderLeft?{borderLeft:style.borderLeft}:{}),
+    }}>{children}</div>
+  </div>);
+};
 
-const KPI=({label,value,delta,dt="up",sub,ac})=>{const dc=dt==="up"?T.positive:dt==="down"?T.negative:T.neutral;const di=dt==="up"?"\u2191":dt==="down"?"\u2193":"\u2022";return(<Glass style={{flex:"1 1 145px",minWidth:130,padding:"13px 15px"}}><div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.06em",color:ac||T.t3,opacity:ac?0.9:0.45,marginBottom:4,fontWeight:700}}>{label}</div><div style={{fontSize:22,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.1}}>{value}</div>{delta&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,background:dc+"1A",color:dc,fontSize:10,fontWeight:600}}>{di} {delta}</div>}{sub&&<div style={{fontSize:9,color:T.t3,opacity:0.35,marginTop:2}}>{sub}</div>}</Glass>);};
+const KPI=({label,value,delta,dt="up",sub,ac})=>{const dc=dt==="up"?T.positive:dt==="down"?T.negative:T.neutral;const di=dt==="up"?"\u2191":dt==="down"?"\u2193":"\u2022";
+return(<div style={{position:'relative',borderRadius:T.glassRadius,overflow:'hidden',flex:"1 1 145px",minWidth:130,marginBottom:T.glassGap}}>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',border:'1px solid rgba(255,255,255,0.06)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%)',boxShadow:'0 6px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.68)',pointerEvents:'none'}}/>
+  {ac&&<div style={{position:'absolute',bottom:0,left:'10%',right:'10%',height:2,background:`linear-gradient(90deg, transparent, ${ac}35, transparent)`,borderRadius:2,pointerEvents:'none'}}/>}
+  <div style={{position:'relative',zIndex:1,padding:"13px 15px"}}>
+    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.06em",color:ac||T.t3,opacity:ac?0.9:0.45,marginBottom:4,fontWeight:700}}>{label}</div>
+    <div style={{fontSize:22,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.1}}>{value}</div>
+    {delta&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,background:dc+"1A",color:dc,fontSize:10,fontWeight:600}}>{di} {delta}</div>}
+    {sub&&<div style={{fontSize:9,color:T.t3,opacity:0.35,marginTop:2}}>{sub}</div>}
+  </div>
+</div>);};
 
 const Hd=({t,s,tag,ac=T.accent})=>(<div style={{marginBottom:16,marginTop:4}}><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><h2 style={{fontSize:19,fontWeight:700,color:T.t1,margin:0,letterSpacing:-0.3}}>{t}</h2>{tag&&<span style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,background:`${ac}18`,color:ac,textTransform:"uppercase",letterSpacing:0.8,border:`1px solid ${ac}25`}}>{tag}</span>}</div>{s&&<p style={{fontSize:11,color:T.t3,margin:"3px 0 0",lineHeight:1.5}}>{s}</p>}</div>);
 
-const Ins=({text,type="insight"})=>{const c={insight:T.blue,warning:T.amber,action:T.violet,risk:T.coral,opportunity:T.teal,regime:T.cyan,source:T.neutral}[type]||T.blue;return(<div style={{padding:"11px 15px",borderLeft:`3px solid ${c}`,background:`linear-gradient(90deg,${c}08,transparent 60%)`,borderRadius:`0 ${T.glassRadius}px ${T.glassRadius}px 0`,marginBottom:T.glassGap}}><div style={{fontSize:9,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:3}}>{type}</div><div style={{fontSize:11.5,color:T.t2,lineHeight:1.6}}>{text}</div></div>);};
+const Ins=({text,type="insight"})=>{const c={insight:T.blue,warning:T.amber,action:T.violet,risk:T.coral,opportunity:T.teal,regime:T.cyan,source:T.neutral}[type]||T.blue;return(
+<div style={{position:'relative',overflow:'hidden',borderRadius:`0 ${T.glassRadius}px ${T.glassRadius}px 0`,marginBottom:T.glassGap}}>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(12px) saturate(1.15)',WebkitBackdropFilter:'blur(12px) saturate(1.15)',background:`linear-gradient(90deg,${c}06,rgba(8,12,28,0.5) 60%)`,border:'1px solid rgba(255,255,255,0.03)',borderLeft:'none',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.55)',pointerEvents:'none'}}/>
+  <div style={{position:'relative',zIndex:1,padding:"11px 15px",borderLeft:`3px solid ${c}`}}>
+    <div style={{fontSize:9,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:3}}>{type}</div>
+    <div style={{fontSize:11.5,color:T.t2,lineHeight:1.6}}>{text}</div>
+  </div>
+</div>);};
 
 const Row=({children,gap=T.glassGap,style})=>(<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
 
 const Tbl=({h,r,hl})=>(<div style={{overflowX:"auto",borderRadius:T.glassRadius-2}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11.5}}><thead><tr>{h.map((x,i)=><th key={i} style={{textAlign:i===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:T.t3,fontWeight:600,fontSize:9.5,textTransform:"uppercase",letterSpacing:"0.05em",opacity:0.4}}>{x}</th>)}</tr></thead><tbody>{r.map((row,ri)=><tr key={ri}>{row.map((cell,ci)=>{const neg=typeof cell==="string"&&cell.startsWith("-");const pos=typeof cell==="string"&&cell.startsWith("+");return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:hl===ci?(neg?T.negative:pos?T.positive:T.t1):(ci===0?T.t1:T.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:11.5,fontFamily:ci>0?"'JetBrains Mono',monospace":"inherit"}}>{cell}</td>;})}</tr>)}</tbody></table></div>);
 
-const Tip=({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:"rgba(12,16,32,0.94)",backdropFilter:"blur(12px)",border:`1px solid ${T.glassBorder}`,borderRadius:10,padding:"7px 11px",boxShadow:T.shadow}}><div style={{fontSize:9,color:T.t3,marginBottom:2}}>{label}</div>{payload.filter(p=>p.value!=null).map((p,i)=><div key={i} style={{fontSize:10.5,fontWeight:600,color:p.color||T.t1,fontFamily:"'JetBrains Mono',monospace"}}>{p.name}: {typeof p.value==="number"?p.value.toLocaleString():p.value}</div>)}</div>);};
+const Tip=({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:"rgba(8,12,28,0.94)",backdropFilter:"blur(16px) saturate(1.2)",border:`1px solid rgba(255,255,255,0.06)`,borderRadius:10,padding:"7px 11px",boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)'}}><div style={{fontSize:9,color:T.t3,marginBottom:2}}>{label}</div>{payload.filter(p=>p.value!=null).map((p,i)=><div key={i} style={{fontSize:10.5,fontWeight:600,color:p.color||T.t1,fontFamily:"'JetBrains Mono',monospace"}}>{p.name}: {typeof p.value==="number"?p.value.toLocaleString():p.value}</div>)}</div>);};
 
 const RegimeCard=({label,conf,color})=>(<Glass glow accent={color} style={{textAlign:"center",padding:"18px 22px"}}><div style={{fontSize:9,color:T.t3,letterSpacing:1.5,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>MACRO REGIME CLASSIFIER</div><div style={{fontSize:17,fontWeight:800,color,letterSpacing:0.5}}>{label}</div><div style={{marginTop:8,display:"flex",justifyContent:"center",alignItems:"center",gap:8}}><div style={{height:5,flex:1,maxWidth:160,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}><div style={{width:`${conf}%`,height:"100%",background:`linear-gradient(90deg,${color},${color}99)`,borderRadius:4}}/></div><span style={{fontSize:11,fontWeight:700,color,fontFamily:"'JetBrains Mono',monospace"}}>{conf}%</span></div></Glass>);
 
 const Verdict=({label,imp,mon})=>(<Glass style={{borderTop:`2px solid ${T.accent}`}}><div style={{fontSize:9,color:T.accent,fontWeight:700,letterSpacing:1.5,marginBottom:6}}>TAB VERDICT</div><div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:10}}>{label}</div><div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginBottom:5}}>TOP 3 IMPLICATIONS</div>{imp.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"3px 0",borderBottom:`1px solid ${T.grid}`,display:"flex",gap:6,lineHeight:1.5}}><span style={{color:T.accent,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span>{x}</div>)}<div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginTop:10,marginBottom:5}}>MONITOR NEXT 7-30 DAYS</div>{mon.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"2px 0"}}>{"\u2022"} {x}</div>)}</Glass>);
 
-const MetricGrid=({items})=>(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(175px, 1fr))",gap:9}}>{items.map((s,i)=>(<div key={i} style={{padding:"9px 13px",background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${s.c||T.accent}`}}><div style={{fontSize:9.5,color:T.t3,letterSpacing:0.5,fontWeight:600}}>{s.l}</div><div style={{fontSize:15,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",margin:"3px 0"}}>{s.v}</div>{s.n&&<div style={{fontSize:9.5,color:s.c||T.t3}}>{s.n}</div>}</div>))}</div>);
+const MetricGrid=({items})=>(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(175px, 1fr))",gap:9}}>{items.map((s,i)=>(<div key={i} style={{position:'relative',overflow:'hidden',borderRadius:10}}>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.55)',border:'1px solid rgba(255,255,255,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
+  <div style={{position:'relative',zIndex:1,padding:"9px 13px",borderLeft:`3px solid ${s.c||T.accent}`}}>
+    <div style={{fontSize:9.5,color:T.t3,letterSpacing:0.5,fontWeight:600}}>{s.l}</div>
+    <div style={{fontSize:15,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",margin:"3px 0"}}>{s.v}</div>
+    {s.n&&<div style={{fontSize:9.5,color:s.c||T.t3}}>{s.n}</div>}
+  </div>
+</div>))}</div>);
 
 const SourceTag=({sources})=>(<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>{sources.map((s,i)=><span key={i} style={{fontSize:8.5,padding:"2px 6px",borderRadius:4,background:"rgba(59,130,246,0.08)",color:T.accent,fontWeight:600,border:`1px solid rgba(59,130,246,0.15)`}}>{s}</span>)}</div>);
 
@@ -600,7 +665,12 @@ return(<div style={{minHeight:"100vh",background:`linear-gradient(145deg,${T.bg}
 <div style={{position:"fixed",top:"-20%",right:"-10%",width:"60vw",height:"60vw",background:`radial-gradient(circle,${T.accent}06 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 <div style={{position:"fixed",bottom:"-20%",left:"-10%",width:"50vw",height:"50vw",background:`radial-gradient(circle,${T.cyan}04 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 
-{side&&<div style={{width:250,minWidth:250,background:"rgba(8,10,20,0.88)",backdropFilter:"blur(24px)",borderRight:`1px solid ${T.glassBorder}`,padding:"14px 0",overflowY:"auto",position:"sticky",top:0,height:"100vh",zIndex:10}}>
+{side&&<div style={{width:250,minWidth:250,position:"sticky",top:0,height:"100vh",zIndex:10,overflow:'hidden'}}>
+{/* Sidebar shell */}
+<div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.2)',WebkitBackdropFilter:'blur(24px) saturate(1.2)',borderRight:'1px solid rgba(255,255,255,0.05)',backgroundImage:'linear-gradient(180deg, rgba(255,255,255,0.03), transparent 30%)',boxShadow:'inset -1px 0 0 rgba(255,255,255,0.03)',pointerEvents:'none'}}/>
+{/* Sidebar plate */}
+<div style={{position:'absolute',inset:0,background:'rgba(6,8,18,0.88)',pointerEvents:'none'}}/>
+<div style={{position:'relative',zIndex:1,padding:"14px 0",overflowY:"auto",height:'100%'}}>
 <div style={{padding:"6px 16px 16px",borderBottom:`1px solid ${T.grid}`}}>
 <div style={{fontSize:10,color:T.accent,fontWeight:700,letterSpacing:2}}>LIFESTACK OS</div>
 <div style={{fontSize:15,fontWeight:700,color:T.t1,marginTop:1}}>Market & Research v2.0</div>
@@ -614,7 +684,7 @@ return(<div style={{minHeight:"100vh",background:`linear-gradient(145deg,${T.bg}
 <Ic size={13} color={a?T.accent:T.t3} strokeWidth={a?2.5:1.5}/>
 <div><div style={{fontSize:11.5,fontWeight:a?700:500,color:a?T.t1:T.t2}}>{t.n}</div><div style={{fontSize:8.5,color:T.t3,opacity:0.5}}>{t.id}</div></div>
 </div>);})}</div>))}
-</div>}
+</div></div>}
 
 <div style={{flex:1,padding:"18px 24px 36px",maxWidth:940,margin:"0 auto",position:"relative",zIndex:1}}>
 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>

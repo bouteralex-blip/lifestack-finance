@@ -22,20 +22,40 @@ const P = {
   b1:"rgba(0,0,0,0.08)",b2:"rgba(0,0,0,0.04)",b3:"rgba(0,0,0,0.02)",
 };
 
-// --- GLASS: Floating white glass with strong shadow depth ---
-const G = {
-  background:"rgba(255,255,255,0.72)",
-  backdropFilter:"blur(20px) saturate(1.6)",
-  WebkitBackdropFilter:"blur(20px) saturate(1.6)",
-  border:"1px solid rgba(255,255,255,0.9)",
-  borderRadius:20,
-  boxShadow:"0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), 0 1px 0 rgba(255,255,255,1) inset",
+// --- LIQUID GLASS SYSTEM: Layered stack (shell + plate + content + state) ---
+// Playbook rules: structure-first, blur is secondary, plate guarantees readability,
+// one locked light direction (135deg), tiered transparency, edge discipline.
+// Tier 1 = dense/readable, Tier 2 = default, Tier 3 = expressive/overlay.
+const glassLight = (tier=2, accent=null) => {
+  const plate = tier===1?0.74:tier===3?0.42:0.58;
+  const blur = tier===1?16:tier===3?24:20;
+  const borderA = tier===1?0.85:tier===3?0.55:0.7;
+  const highlightA = tier===1?0.04:tier===3?0.12:0.07;
+  const shadowInsetA = tier===1?0.5:tier===3?0.3:0.4;
+  const accentTint = accent ? `, ${accent}06` : '';
+  return {
+    background:`rgba(255,255,255,${plate})`,
+    backdropFilter:`blur(${blur}px) saturate(1.45)`,
+    WebkitBackdropFilter:`blur(${blur}px) saturate(1.45)`,
+    border:`1px solid rgba(255,255,255,${borderA})`,
+    borderRadius:20,
+    boxShadow:[
+      `0 4px 24px rgba(0,0,0,0.05)`,
+      `0 12px 48px rgba(0,0,0,0.025)`,
+      `inset 0 1px 0 rgba(255,255,255,${shadowInsetA})`,
+      `inset 0 0 0 1px rgba(255,255,255,${shadowInsetA * 0.6})`,
+    ].join(', '),
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${highlightA}), transparent 45%)${accentTint}`,
+  };
 };
+const G = glassLight(2);
+const G1 = glassLight(1);
+const G3 = glassLight(3);
 const GS = {
-  background:"rgba(15,23,42,0.92)",
-  backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",
-  border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,
-  boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
+  background:"rgba(15,23,42,0.94)",
+  backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)",
+  border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,
+  boxShadow:"0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 let PORT = {
   date:"7 March 2026",age:32,
@@ -255,35 +275,91 @@ let REF_DATA = {};
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
-const Card = ({children,style,glow,hover}) => {
+const Card = ({children,style,glow,hover,tier=2,accent}) => {
   const [hovered,setHovered] = useState(false);
+  const gSpec = glassLight(tier, accent);
+  const glowAccent = accent || P.cyan;
   return (
     <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
       style={{
-        ...G,padding:"24px 26px",marginBottom:16,
+        position:'relative', borderRadius:20, overflow:'hidden', marginBottom:16,
         transition:"all 0.35s cubic-bezier(0.25,0.46,0.45,0.94)",
-        transform:hovered&&hover?"translateY(-3px)":"none",
-        boxShadow:glow
-          ?`0 8px 40px rgba(99,102,241,0.12), 0 4px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,1) inset`
-          :hovered&&hover
-            ?"0 8px 40px rgba(0,0,0,0.10), 0 16px 56px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,1) inset"
-            :"0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), 0 1px 0 rgba(255,255,255,1) inset",
-        ...style
+        transform:hovered&&hover?"translateY(-3px) scale(1.003)":"none",
+        ...(style?.flex?{flex:style.flex}:{}),
+        ...(style?.minWidth?{minWidth:style.minWidth}:{}),
+        ...(style?.maxWidth?{maxWidth:style.maxWidth}:{}),
+        ...(style?.gridColumn?{gridColumn:style.gridColumn}:{}),
+        ...(style?.width?{width:style.width}:{}),
+        ...(style?.margin?{margin:style.margin}:{}),
+        ...(style?.marginBottom?{marginBottom:style.marginBottom}:style?.marginBottom===0?{marginBottom:0}:{}),
       }}
-    >{children}</div>
+    >
+      {/* SHELL: outer glass material — edges, highlight band, blur */}
+      <div style={{
+        position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:gSpec.backdropFilter, WebkitBackdropFilter:gSpec.WebkitBackdropFilter,
+        border:gSpec.border,
+        backgroundImage:gSpec.backgroundImage,
+        boxShadow: glow
+          ? `0 8px 40px rgba(${accent?hx2(glowAccent):'99,102,241'},0.10), ${gSpec.boxShadow}`
+          : hovered&&hover
+            ? `0 8px 40px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.03), ${gSpec.boxShadow}`
+            : gSpec.boxShadow,
+        pointerEvents:'none', transition:'box-shadow 0.35s ease',
+      }}/>
+      {/* PLATE: inner stabilised surface — readability guarantee */}
+      <div style={{
+        position:'absolute',inset:0,borderRadius:'inherit',
+        background:gSpec.background,
+        pointerEvents:'none',
+      }}/>
+      {/* CONTENT: sits above plate */}
+      <div style={{
+        position:'relative', zIndex:1,
+        padding:style?.padding||"24px 26px",
+        ...(style?.textAlign?{textAlign:style.textAlign}:{}),
+        ...(style?.borderLeft?{borderLeft:style.borderLeft}:{}),
+        ...(style?.borderTop?{borderTop:style.borderTop}:{}),
+      }}>
+        {children}
+      </div>
+    </div>
   );
 };
+const hx2 = c => { if(!c||c[0]!=="#") return "99,102,241"; c=c.replace("#",""); return [parseInt(c.substring(0,2),16),parseInt(c.substring(2,4),16),parseInt(c.substring(4,6),16)].join(","); };
 
 const K = ({l,v,s,c=P.cyan,sm}) => (
   <div style={{
-    ...G,padding:sm?"12px 14px":"18px 20px",textAlign:"center",
-    flex:sm?"1 1 110px":"1 1 155px",minWidth:sm?100:140,
-    background:"rgba(255,255,255,0.82)",
-    borderBottom:`3px solid ${c}22`,
+    position:'relative', borderRadius:20, overflow:'hidden', textAlign:"center",
+    flex:sm?"1 1 110px":"1 1 155px", minWidth:sm?100:140,
   }}>
-    <div style={{fontSize:12,color:P.t4,textTransform:"uppercase",letterSpacing:1.4,fontWeight:600,marginBottom:5}}>{l}</div>
-    <div style={{fontSize:sm?22:32,fontWeight:800,color:c,fontFamily:"'JetBrains Mono','SF Mono',monospace",letterSpacing:-0.5,lineHeight:1.1}}>{v}</div>
-    {s&&<div style={{fontSize:11,color:P.t4,marginTop:4,lineHeight:1.3}}>{s}</div>}
+    {/* Shell */}
+    <div style={{
+      position:'absolute',inset:0,borderRadius:'inherit',
+      backdropFilter:'blur(20px) saturate(1.45)',WebkitBackdropFilter:'blur(20px) saturate(1.45)',
+      border:'1px solid rgba(255,255,255,0.7)',
+      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.06), transparent 45%)`,
+      boxShadow:'inset 0 1px 0 rgba(255,255,255,0.4), inset 0 0 0 1px rgba(255,255,255,0.22), 0 4px 20px rgba(0,0,0,0.04), 0 10px 40px rgba(0,0,0,0.02)',
+      pointerEvents:'none',
+    }}/>
+    {/* Plate */}
+    <div style={{
+      position:'absolute',inset:0,borderRadius:'inherit',
+      background:'rgba(255,255,255,0.62)',
+      pointerEvents:'none',
+    }}/>
+    {/* Accent edge — bottom border glow */}
+    <div style={{
+      position:'absolute',bottom:0,left:'10%',right:'10%',height:3,
+      background:`linear-gradient(90deg, transparent, ${c}40, transparent)`,
+      borderRadius:2, pointerEvents:'none',
+    }}/>
+    {/* Content */}
+    <div style={{position:'relative',zIndex:1,padding:sm?"12px 14px":"18px 20px"}}>
+      <div style={{fontSize:12,color:P.t4,textTransform:"uppercase",letterSpacing:1.4,fontWeight:600,marginBottom:5}}>{l}</div>
+      <div style={{fontSize:sm?22:32,fontWeight:800,color:c,fontFamily:"'JetBrains Mono','SF Mono',monospace",letterSpacing:-0.5,lineHeight:1.1}}>{v}</div>
+      {s&&<div style={{fontSize:11,color:P.t4,marginTop:4,lineHeight:1.3}}>{s}</div>}
+    </div>
   </div>
 );
 
@@ -301,13 +377,21 @@ const Ins = ({text,type="insight"}) => {
   const c={insight:P.cyan,warning:P.amber,action:P.indigo,risk:P.red,opp:P.green}[type]||P.cyan;
   return (
     <div style={{
+      position:'relative',overflow:'hidden',
       padding:"16px 20px",borderLeft:`3px solid ${c}`,
-      background:`linear-gradient(135deg,${c}08,rgba(255,255,255,0.5) 70%)`,
       borderRadius:"0 16px 16px 0",marginBottom:14,
-      backdropFilter:"blur(12px)",
     }}>
-      <div style={{fontSize:11,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:6}}>{type}</div>
-      <div style={{fontSize:15,color:P.t2,lineHeight:1.7}}>{text}</div>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:'blur(14px) saturate(1.3)',WebkitBackdropFilter:'blur(14px) saturate(1.3)',
+        background:`linear-gradient(135deg,${c}06,rgba(255,255,255,0.45) 70%)`,
+        border:'1px solid rgba(255,255,255,0.5)',borderLeft:'none',
+        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.3)',
+        pointerEvents:'none',
+      }}/>
+      <div style={{position:'relative',zIndex:1}}>
+        <div style={{fontSize:11,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:6}}>{type}</div>
+        <div style={{fontSize:15,color:P.t2,lineHeight:1.7}}>{text}</div>
+      </div>
     </div>
   );
 };
@@ -2720,7 +2804,12 @@ export default function PortfolioVOS(){
         <div style={{position:"absolute",top:"40%",left:"30%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 60%)"}}/>
       </div>
       {/* Top header bar */}
-      <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(255,255,255,0.8)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:"1px solid rgba(0,0,0,0.06)",padding:"0 28px"}}>
+      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.6)"}}>
+        {/* Header shell */}
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.5)',WebkitBackdropFilter:'blur(24px) saturate(1.5)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.3)',pointerEvents:'none'}}/>
+        {/* Header plate */}
+        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.78)',pointerEvents:'none'}}/>
+        <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800}}>LS</div>
@@ -2745,6 +2834,7 @@ export default function PortfolioVOS(){
               borderRadius:"8px 8px 0 0",
             }}><span style={{fontSize:9,opacity:0.4,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
           ))}
+        </div>
         </div>
       </div>
       {/* Content area */}
