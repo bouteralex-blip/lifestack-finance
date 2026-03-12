@@ -22,30 +22,23 @@ const P = {
   b1:"rgba(0,0,0,0.08)",b2:"rgba(0,0,0,0.04)",b3:"rgba(0,0,0,0.02)",
 };
 
-// --- LIQUID GLASS SYSTEM: Layered stack (shell + plate + content + state) ---
-// Playbook rules: structure-first, blur is secondary, plate guarantees readability,
-// one locked light direction (135deg), tiered transparency, edge discipline.
-// Tier 1 = dense/readable, Tier 2 = default, Tier 3 = expressive/overlay.
-const glassLight = (tier=2, accent=null) => {
-  const plate = tier===1?0.74:tier===3?0.42:0.58;
-  const blur = tier===1?16:tier===3?24:20;
-  const borderA = tier===1?0.85:tier===3?0.55:0.7;
-  const highlightA = tier===1?0.04:tier===3?0.12:0.07;
-  const shadowInsetA = tier===1?0.5:tier===3?0.3:0.4;
-  const accentTint = accent ? `, ${accent}06` : '';
+// --- LIQUID GLASS SYSTEM: True transparency with stabilised plates ---
+// Playbook: shell communicates material via edge/blur, plate protects content
+// Background must be visible through tiles. Blur + edge = glass, not opacity.
+const glassLight = (tier=2) => {
+  const plate = tier===1?0.32:tier===3?0.10:0.18;
+  const blur = tier===1?18:tier===3?30:24;
+  const borderA = tier===1?0.40:tier===3?0.20:0.30;
+  const hlA = tier===1?0.06:tier===3?0.15:0.10;
+  const inA = tier===1?0.30:tier===3?0.15:0.22;
   return {
     background:`rgba(255,255,255,${plate})`,
-    backdropFilter:`blur(${blur}px) saturate(1.45)`,
-    WebkitBackdropFilter:`blur(${blur}px) saturate(1.45)`,
+    backdropFilter:`blur(${blur}px) saturate(1.6)`,
+    WebkitBackdropFilter:`blur(${blur}px) saturate(1.6)`,
     border:`1px solid rgba(255,255,255,${borderA})`,
     borderRadius:20,
-    boxShadow:[
-      `0 4px 24px rgba(0,0,0,0.05)`,
-      `0 12px 48px rgba(0,0,0,0.025)`,
-      `inset 0 1px 0 rgba(255,255,255,${shadowInsetA})`,
-      `inset 0 0 0 1px rgba(255,255,255,${shadowInsetA * 0.6})`,
-    ].join(', '),
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${highlightA}), transparent 45%)${accentTint}`,
+    boxShadow:`0 8px 32px rgba(0,0,0,0.08), 0 20px 60px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,${inA}), inset 0 0 0 1px rgba(255,255,255,${inA*0.5})`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${hlA}), transparent 50%)`,
   };
 };
 const G = glassLight(2);
@@ -397,9 +390,9 @@ const Ins = ({text,type="insight"}) => {
 };
 
 const Tbl = ({h,r,hl}) => (
-  <div style={{overflowX:"auto",borderRadius:14,border:`1px solid ${P.b1}`,background:"rgba(255,255,255,0.5)"}}>
+  <div style={{overflowX:"auto",borderRadius:14,border:`1px solid rgba(255,255,255,0.25)`,backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',background:"rgba(255,255,255,0.12)"}}>
     <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid ${P.b1}`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(248,250,252,0.95)"}}>{x}</th>)}</tr></thead>
+      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid ${P.b1}`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(255,255,255,0.08)"}}>{x}</th>)}</tr></thead>
       <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
         const neg=typeof cell==="string"&&cell.startsWith("-");
         const pos=typeof cell==="string"&&cell.startsWith("+");
@@ -478,7 +471,7 @@ const Bar2 = ({val,max=100,c=P.cyan,label}) => (<div style={{marginBottom:6}}>
 // SPRINT 1 — NEW UI COMPONENTS (Tab 01 enrichment)
 // =========================================================================
 const AlertPanel = ({items}) => (
-  <div style={{...G,padding:"16px 20px",marginBottom:16,borderLeft:`4px solid ${P.red}`,background:"rgba(255,255,255,0.85)"}}>
+  <div style={{...G,padding:"16px 20px",marginBottom:16,borderLeft:`4px solid ${P.red}`}}>
     <div style={{fontSize:11,fontWeight:700,color:P.red,letterSpacing:1.2,textTransform:"uppercase",marginBottom:10}}>ALERT PANEL — RULES BREACHED</div>
     {items.map((a,i) => {
       const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
@@ -520,7 +513,7 @@ const CalendarHeatmap = ({data}) => {
 const MiniWaterfall = ({data}) => {
   const total = data.reduce((a,d)=>a+d.val,0);
   return (
-    <div style={{...G,padding:"20px 24px",marginBottom:16,background:"rgba(255,255,255,0.78)"}}>
+    <div style={{...G,padding:"20px 24px",marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:700,color:P.t1,letterSpacing:0.5,marginBottom:4}}>RETURN DECOMPOSITION — WHAT DROVE THE {pc(nwReturn)} RETURN</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:14}}>Allocation, selection, and structural effects decomposed into decision-level attribution.</div>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -2978,7 +2971,7 @@ export default function PortfolioVOS(){
   }};
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:"linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 25%, #fff8e1 50%, #e0f7fa 75%, #ede7f6 100%)",
+      background:"url('/bg-finance.jpg') center/cover fixed",
     }}>
       <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
       {/* Ambient orbs for depth */}
@@ -2992,7 +2985,7 @@ export default function PortfolioVOS(){
         {/* Header shell */}
         <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.5)',WebkitBackdropFilter:'blur(24px) saturate(1.5)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.3)',pointerEvents:'none'}}/>
         {/* Header plate */}
-        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.78)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.20)',pointerEvents:'none'}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>

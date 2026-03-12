@@ -10,7 +10,7 @@ import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign,
 // Phase 2 MCP: FRED, Yahoo Finance, FMP, Octagon AI, Financial Datasets
 // Phase 2 Quant: Riskfolio-Lib (24 risk measures), skfolio (ML clustering)
 // =========================================================================
-const T={bg:"#060A14",surface:"#0C1020",glass:"rgba(255,255,255,0.04)",glassBorder:"rgba(255,255,255,0.07)",glassRadius:16,glassPad:18,glassGap:14,glassBlur:"blur(20px)",
+const T={bg:"#060A14",surface:"#0C1020",glass:"rgba(255,255,255,0.03)",glassBorder:"rgba(255,255,255,0.08)",glassRadius:16,glassPad:18,glassGap:14,glassBlur:"blur(24px) saturate(1.4)",
 shadow:"0 8px 32px rgba(0,0,0,0.35), 0 0 80px rgba(0,0,0,0.12)",shine:"linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%)",
 teal:"#00D4AA",violet:"#7C6FFF",amber:"#F5A623",coral:"#FF5C7A",blue:"#3B82F6",magenta:"#FF3BBD",cyan:"#06B6D4",
 positive:"#00D4AA",negative:"#FF5C7A",warning:"#F5A623",neutral:"#64748B",
@@ -95,7 +95,7 @@ const SCENARIOS=[{s:"Base Case",pr:50,sp:"7,200",btc:"$85K",desc:"Late-cycle gri
 // edge discipline, tiered plate, graceful fallback
 // =========================================================================
 const glassDark = (tier=2, accent=null) => {
-  const plate = tier===1?0.82:tier===3?0.50:0.65;
+  const plate = tier===1?0.45:tier===3?0.18:0.30;
   const blur = tier===1?16:tier===3?24:20;
   const borderA = tier===1?0.08:tier===3?0.04:0.06;
   const highlightA = tier===1?0.03:tier===3?0.08:0.05;
@@ -136,7 +136,7 @@ const Glass=({children,style={},glow=false,accent=T.accent,tier=2})=>{
 const KPI=({label,value,delta,dt="up",sub,ac})=>{const dc=dt==="up"?T.positive:dt==="down"?T.negative:T.neutral;const di=dt==="up"?"\u2191":dt==="down"?"\u2193":"\u2022";
 return(<div style={{position:'relative',borderRadius:T.glassRadius,overflow:'hidden',flex:"1 1 145px",minWidth:130,marginBottom:T.glassGap}}>
   <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',border:'1px solid rgba(255,255,255,0.06)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%)',boxShadow:'0 6px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.68)',pointerEvents:'none'}}/>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.28)',pointerEvents:'none'}}/>
   {ac&&<div style={{position:'absolute',bottom:0,left:'10%',right:'10%',height:2,background:`linear-gradient(90deg, transparent, ${ac}35, transparent)`,borderRadius:2,pointerEvents:'none'}}/>}
   <div style={{position:'relative',zIndex:1,padding:"13px 15px"}}>
     <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.06em",color:ac||T.t3,opacity:ac?0.9:0.45,marginBottom:4,fontWeight:700}}>{label}</div>
@@ -151,7 +151,7 @@ const Hd=({t,s,tag,ac=T.accent})=>(<div style={{marginBottom:16,marginTop:4}}><d
 const Ins=({text,type="insight"})=>{const c={insight:T.blue,warning:T.amber,action:T.violet,risk:T.coral,opportunity:T.teal,regime:T.cyan,source:T.neutral}[type]||T.blue;return(
 <div style={{position:'relative',overflow:'hidden',borderRadius:`0 ${T.glassRadius}px ${T.glassRadius}px 0`,marginBottom:T.glassGap}}>
   <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(12px) saturate(1.15)',WebkitBackdropFilter:'blur(12px) saturate(1.15)',background:`linear-gradient(90deg,${c}06,rgba(8,12,28,0.5) 60%)`,border:'1px solid rgba(255,255,255,0.03)',borderLeft:'none',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.55)',pointerEvents:'none'}}/>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.22)',pointerEvents:'none'}}/>
   <div style={{position:'relative',zIndex:1,padding:"11px 15px",borderLeft:`3px solid ${c}`}}>
     <div style={{fontSize:9,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:3}}>{type}</div>
     <div style={{fontSize:11.5,color:T.t2,lineHeight:1.6}}>{text}</div>
@@ -169,7 +169,7 @@ const RegimeCard=({label,conf,color})=>(<Glass glow accent={color} style={{textA
 const Verdict=({label,imp,mon})=>(<Glass style={{borderTop:`2px solid ${T.accent}`}}><div style={{fontSize:9,color:T.accent,fontWeight:700,letterSpacing:1.5,marginBottom:6}}>TAB VERDICT</div><div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:10}}>{label}</div><div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginBottom:5}}>TOP 3 IMPLICATIONS</div>{imp.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"3px 0",borderBottom:`1px solid ${T.grid}`,display:"flex",gap:6,lineHeight:1.5}}><span style={{color:T.accent,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span>{x}</div>)}<div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginTop:10,marginBottom:5}}>MONITOR NEXT 7-30 DAYS</div>{mon.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"2px 0"}}>{"\u2022"} {x}</div>)}</Glass>);
 
 const MetricGrid=({items})=>(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(175px, 1fr))",gap:9}}>{items.map((s,i)=>(<div key={i} style={{position:'relative',overflow:'hidden',borderRadius:10}}>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.55)',border:'1px solid rgba(255,255,255,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
+  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.22)',border:'1px solid rgba(255,255,255,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
   <div style={{position:'relative',zIndex:1,padding:"9px 13px",borderLeft:`3px solid ${s.c||T.accent}`}}>
     <div style={{fontSize:9.5,color:T.t3,letterSpacing:0.5,fontWeight:600}}>{s.l}</div>
     <div style={{fontSize:15,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",margin:"3px 0"}}>{s.v}</div>
@@ -661,7 +661,7 @@ const[open,setOpen]=useState({A:true,B:true});
 const Act=TABS.find(t=>t.id===tab)?.C||P1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 
-return(<div style={{minHeight:"100vh",background:`linear-gradient(145deg,${T.bg} 0%,#0A1028 50%,${T.bg} 100%)`,color:T.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
+return(<div style={{minHeight:"100vh",background:"url('/bg-markets.png') center/cover fixed",color:T.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
 <div style={{position:"fixed",top:"-20%",right:"-10%",width:"60vw",height:"60vw",background:`radial-gradient(circle,${T.accent}06 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 <div style={{position:"fixed",bottom:"-20%",left:"-10%",width:"50vw",height:"50vw",background:`radial-gradient(circle,${T.cyan}04 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 
@@ -669,7 +669,7 @@ return(<div style={{minHeight:"100vh",background:`linear-gradient(145deg,${T.bg}
 {/* Sidebar shell */}
 <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.2)',WebkitBackdropFilter:'blur(24px) saturate(1.2)',borderRight:'1px solid rgba(255,255,255,0.05)',backgroundImage:'linear-gradient(180deg, rgba(255,255,255,0.03), transparent 30%)',boxShadow:'inset -1px 0 0 rgba(255,255,255,0.03)',pointerEvents:'none'}}/>
 {/* Sidebar plate */}
-<div style={{position:'absolute',inset:0,background:'rgba(6,8,18,0.88)',pointerEvents:'none'}}/>
+<div style={{position:'absolute',inset:0,background:'rgba(6,8,18,0.40)',pointerEvents:'none'}}/>
 <div style={{position:'relative',zIndex:1,padding:"14px 0",overflowY:"auto",height:'100%'}}>
 <div style={{padding:"6px 16px 16px",borderBottom:`1px solid ${T.grid}`}}>
 <div style={{fontSize:10,color:T.accent,fontWeight:700,letterSpacing:2}}>LIFESTACK OS</div>
