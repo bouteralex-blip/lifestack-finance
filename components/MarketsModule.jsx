@@ -159,6 +159,7 @@ const Ins=({text,type="insight"})=>{const c={insight:T.blue,warning:T.amber,acti
 </div>);};
 
 const Row=({children,gap=T.glassGap,style})=>(<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
+const Grid=({children,cols="1fr 1fr",gap=T.glassGap,style={}})=>(<div style={{display:"grid",gridTemplateColumns:cols,gap,...style}}>{children}</div>);
 
 const Tbl=({h,r,hl})=>(<div style={{overflowX:"auto",borderRadius:T.glassRadius-2}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11.5}}><thead><tr>{h.map((x,i)=><th key={i} style={{textAlign:i===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:T.t3,fontWeight:600,fontSize:9.5,textTransform:"uppercase",letterSpacing:"0.05em",opacity:0.4}}>{x}</th>)}</tr></thead><tbody>{r.map((row,ri)=><tr key={ri}>{row.map((cell,ci)=>{const neg=typeof cell==="string"&&cell.startsWith("-");const pos=typeof cell==="string"&&cell.startsWith("+");return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:hl===ci?(neg?T.negative:pos?T.positive:T.t1):(ci===0?T.t1:T.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:11.5,fontFamily:ci>0?"'JetBrains Mono',monospace":"inherit"}}>{cell}</td>;})}</tr>)}</tbody></table></div>);
 
@@ -199,13 +200,14 @@ const P1=()=>(<div>
 <Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>MACRO INDICATOR PANEL</div>
 <MetricGrid items={[{l:"US GDP",v:"2.3%",n:"Slowing",c:T.amber},{l:"UK GDP QoQ",v:"0.1%",n:"Stagnant",c:T.coral},{l:"US Core CPI",v:"3.1%",n:"Sticky",c:T.coral},{l:"UK CPI",v:`${M.ukCPI}%`,n:"Falling but above target",c:T.amber},{l:"Fed Funds",v:`${M.fed}%`,n:"On hold",c:T.neutral},{l:"BoE Rate",v:`${M.boeRate}%`,n:"Cuts paused — Iran",c:T.amber},{l:"UK 10Y Gilt",v:`${M.gilt10y}%`,n:"40bp weekly surge",c:T.negative},{l:"MOVE Index",v:M.move.toString(),n:"Rate vol elevated (MacroMicro)",c:T.coral}]}/></Glass>
 
+<Grid cols="1fr 1fr">
 <Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>YIELD CURVE — UST vs UK GILT</div>
 <div style={{height:220}}><ResponsiveContainer><LineChart data={YIELD_CURVE}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="t" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} domain={[3.4,5.0]} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="us" stroke={T.blue} strokeWidth={2.5} dot={{fill:T.blue,r:3}} name="US Treasury"/><Line type="monotone" dataKey="uk" stroke={T.coral} strokeWidth={2.5} dot={{fill:T.coral,r:3}} name="UK Gilt"/></LineChart></ResponsiveContainer></div></Glass>
-
 <Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>LIQUIDITY DIVERGENCE METRIC — M2 Growth % minus S&P Growth %</div>
 <div style={{height:200}}><ResponsiveContainer><ComposedChart data={LIQ_DIV}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="m" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Bar dataKey="div" name="Divergence %" radius={[4,4,0,0]}>{LIQ_DIV.map((e,i)=><Cell key={i} fill={e.div>0?T.teal:T.coral}/>)}</Bar><ReferenceLine y={5} stroke={T.teal} strokeDasharray="6 3" strokeOpacity={0.5} label={{value:"Bullish >5%",fill:T.teal,fontSize:9}}/><ReferenceLine y={-5} stroke={T.coral} strokeDasharray="6 3" strokeOpacity={0.5} label={{value:"Bearish <-5%",fill:T.coral,fontSize:9}}/><ReferenceLine y={0} stroke={T.t3} strokeOpacity={0.3}/></ComposedChart></ResponsiveContainer></div>
 <Ins type="insight" text={`Liquidity divergence has turned positive and is now at +5.0% — right at the bullish threshold. Global M2 expanding at 5% while S&P is flat YTD means liquidity is building faster than asset prices. Historically, when this metric exceeds +5%, equities rally to close the gap. However, the Iran inflation shock could reverse the easing trend. Watch for central bank balance sheet changes.`}/>
 <SourceTag sources={["FRED M2SL","StreetStats Global M2","MacroMicro CB Balance Sheets"]}/></Glass>
+</Grid>
 
 <Verdict label="LATE CYCLE — INFLATION SCARE (68% confidence)" imp={[
 "Tighten risk budget 10-15%. Iran escalation is repricing the entire rate path. Gilt 40bp weekly move is crisis-level.",
@@ -220,13 +222,14 @@ const P2=()=>(<div>
 <Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS"/>
 <Row><KPI label="IG OAS" value={`${M.igOAS}bp`} delta="Contained" dt="neutral"/><KPI label="HY OAS" value={`${M.hyOAS}bp`} delta="Watching 400bp" dt="neutral" ac={T.amber}/><KPI label="BBB OAS" value={`${M.bbbOAS}bp`} delta="Stable" dt="neutral"/><KPI label="MOVE Index" value={M.move.toString()} delta="Rate vol elevated" dt="down" ac={T.coral}/><KPI label="Money Mkt Hurdle" value={`${M.bestSave}%`} delta="1Y fix best rate" dt="neutral"/><KPI label="STLFSI" value={M.stlfsi.toFixed(1)} delta="Mild stress" dt="neutral"/></Row>
 
+<Grid cols="1fr 1fr">
 <Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>CREDIT SPREAD TRAJECTORY — IG vs HY OAS (bp)</div>
 <div style={{height:200}}><ResponsiveContainer><LineChart data={CREDIT_TL}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="d" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="ig" stroke={T.blue} strokeWidth={2} name="IG OAS"/><Line type="monotone" dataKey="hy" stroke={T.coral} strokeWidth={2} name="HY OAS"/><ReferenceLine y={400} stroke={T.negative} strokeDasharray="8 4" strokeOpacity={0.4}/></LineChart></ResponsiveContainer></div>
 <Ins type="insight" text={`Credit is the calm in the storm. IG at 95bp and HY at 340bp are well below stress thresholds (400bp+ for HY would signal risk-off). This disconnect between rates stress (gilt 40bp weekly surge, MOVE at 118) and credit calm is unusual. Either credit is complacent or rates stress won't transmit to corporate funding. Watch HY closely — widening above 400bp would confirm contagion.`}/>
 <SourceTag sources={["FRED BAMLH0A0HYM2","FRED BAMLC0A0CM","MacroMicro MOVE","FRED STLFSI4"]}/></Glass>
-
 <Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>MONEY-MARKET HURDLE vs EQUITY EARNINGS YIELD</div>
 <MetricGrid items={[{l:"Best 1Y Fix",v:`${M.bestSave}%`,n:"MBNA/Lloyds",c:T.blue},{l:"Real Cash Yield",v:"~0.8%",n:"After 40% tax + 3% CPI",c:T.amber},{l:"S&P Earnings Yield",v:"~3.4%",n:"1/PE at 29x",c:T.coral},{l:"UK Equity Yield",v:"~5.5%",n:"1/PE at 18x FTSE",c:T.teal},{l:"HY Yield",v:"~7.5%",n:"But default risk rising",c:T.amber},{l:"Cash Hurdle",v:"MODERATE",n:"Cash competitive vs US equity ERP",c:T.amber}]}/></Glass>
+</Grid>
 
 <Verdict label="RATES STRESS ELEVATED — CREDIT CALM BUT DISCONNECT IS FRAGILE" imp={[
 "MOVE at 118 signals rate volatility hurting duration assets. Do not add long-dated gilts or treasuries.",
@@ -546,17 +549,17 @@ const P16=()=>(<div>
 {s:"Gold $5,280 — HALO trade dominates",d:"Hard Assets, Low Obsolescence. Defence + miners + energy.",c:T.amber}
 ].map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:10.5,color:T.t3,marginTop:2,paddingLeft:20}}>{x.d}</div></div>))}</Glass>
 
-<Row>
-<Glass style={{flex:"1 1 280px"}}><div style={{fontSize:11,fontWeight:700,color:T.coral,letterSpacing:1,marginBottom:8}}>THREE RISING RISKS</div>
+<Grid cols="1fr 1fr">
+<Glass><div style={{fontSize:11,fontWeight:700,color:T.coral,letterSpacing:1,marginBottom:8}}>THREE RISING RISKS</div>
 {["Iran forces BoE halt — gilt crisis, mortgage spike, FTSE 250 exposed",
 "AI capex $660-690B with 90% of firms seeing no productivity impact. Bubble risk real.",
 "Crypto-equity correlation rising. Zero diversification benefit from 13% crypto weight."
 ].map((r,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.coral,fontWeight:700}}>{i+1}.</span> {r}</div>))}</Glass>
-<Glass style={{flex:"1 1 280px"}}><div style={{fontSize:11,fontWeight:700,color:T.teal,letterSpacing:1,marginBottom:8}}>THREE OPPORTUNITIES</div>
+<Glass><div style={{fontSize:11,fontWeight:700,color:T.teal,letterSpacing:1,marginBottom:8}}>THREE OPPORTUNITIES</div>
 {["BTC accumulation at extreme fear — MVRV 0.49, RSI 27.5, whale buying confirms. Continue DCA.",
 "European equities + value rotation — JERE +22%, structural defence/bank/rotation tailwinds.",
 "ISA deployment: 29 days, \u00A30 deployed. 80-120bps structural alpha. Highest certainty action."
-].map((o,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.teal,fontWeight:700}}>{i+1}.</span> {o}</div>))}</Glass></Row>
+].map((o,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.teal,fontWeight:700}}>{i+1}.</span> {o}</div>))}</Glass></Grid>
 
 <Glass><div style={{fontSize:11,fontWeight:700,color:T.accent,letterSpacing:1,marginBottom:8}}>PORTFOLIO IMPLICATION BOARD</div>
 <Tbl h={["Sleeve","Signal","Action"]} r={[

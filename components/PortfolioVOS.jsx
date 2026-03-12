@@ -1001,7 +1001,7 @@ const T2 = ()=>{
     <Ins text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions = solid diversification. But 18+ positions below \u00A31k are symbolic clutter. Top 3 hold ${(top3/totalAssets*100).toFixed(0)}% \u2014 pension dominance is structural. The real concentration risk: crypto at 13% capital drives 32% of risk (2.5x ratio).`}/>
 
     {/* MAIN 2-COLUMN LAYOUT: Left (charts) + Right (holdings table) */}
-    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+    <Grid cols="7fr 5fr" gap={14}>
       {/* LEFT: Treemap + Sankey */}
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <Card hover>
@@ -1029,10 +1029,10 @@ const T2 = ()=>{
         <Tbl h={["Holding","Value","Wt%","Class","6mo","Geo"]}
           r={sorted.map(h=>[h.name.split("(")[0].trim(),fK(h.val),`${(h.val/totalAssets*100).toFixed(1)}%`,h.cls,h.prev?pc((h.val-h.prev)/h.prev*100):"---",h.geo])} hl={4}/>
       </Card>
-    </div>
+    </Grid>
 
     {/* GEO + CURRENCY + WRAPPER (3-column) */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:14}}>
+    <Grid cols="1fr 1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>GEOGRAPHIC EXPOSURE</div>
         <ResponsiveContainer width="100%" height={280}>
@@ -1064,7 +1064,7 @@ const T2 = ()=>{
           r={[["GIA (ETFs+Crypto)",fK(178000),"47%","Taxable"],["Pension",fK(82133),"22%","Free"],["FD / Cash",fK(61538),"16%","Mixed"],["ISA",fK(18085),"5%","Free"],["ZAR Accounts",fK(35914),"10%","Taxable"]]}/>
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>57% taxable. Est. annual drag: 1.5-2.0% of NAV (\u00A35.4-7.3k/yr).</div>
       </Card>
-    </div>
+    </Grid>
 
     {/* SECTOR EXPOSURE (full width) */}
     <Card hover>
@@ -1135,7 +1135,7 @@ const T3 = ()=>{
     </FlexRow>
 
     {/* ROW 2: NAV Bridge (left 7fr) + Sleeve Return (right 5fr) */}
-    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+    <Grid cols="7fr 5fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:6}}>NAV WATERFALL BRIDGE</div>
         <div style={{fontSize:11,color:P.t3,marginBottom:8}}>Start/End = absolute. Steps = contribution to change from {fK(PORT.nw6moAgo)} \u2192 {fK(PORT.netWorth)}.</div>
@@ -1176,12 +1176,12 @@ const T3 = ()=>{
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
-    </div>
+    </Grid>
 
     <Ins text={`The bridge reveals the core issue: +\u00A328.8k fresh capital but crypto destroyed -\u00A352.2k and cash drawn down -\u00A325.9k. Equity +\u00A313.6k and pension +\u00A316.8k were bright spots. Without crypto, portfolio would have grown +\u00A335k \u2014 instead it shrank -\u00A335k.`}/>
 
     {/* ROW 3: Cumulative Return + Contributors Table */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+    <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>CUMULATIVE RETURN PATH</div>
         <ResponsiveContainer width="100%" height={300}>
@@ -1200,10 +1200,10 @@ const T3 = ()=>{
         <Tbl h={["Holding","Start","End","P&L","Ret"]}
           r={HOLDINGS.filter(h=>h.prev).map(h=>({n:h.name.split("(")[0].split(" ").slice(0,3).join(" ").trim(),s:h.prev,e:h.val,pnl:h.val-h.prev,ret:(h.val-h.prev)/h.prev*100})).sort((a,b)=>b.pnl-a.pnl).map(h=>[h.n,fK(h.s),fK(h.e),`${h.pnl>=0?"+":""}${fK(h.pnl)}`,pc(h.ret)])} hl={3}/>
       </Card>
-    </div>
+    </Grid>
 
     {/* Decision Attribution + Up/Down Capture side-by-side */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+    <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>DECISION ATTRIBUTION</div>
         <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Market/allocation/selection/FX/structural decomposition.</div>
@@ -1255,7 +1255,9 @@ const T3 = ()=>{
           </div>);
         })()}
       </Card>
-    </div>
+    </Grid>
+
+    <Ins type="risk" text={`Sharpe of ${RISK.sharpe} is below institutional minimums. Excluding crypto, equity sleeve Sharpe is ~0.9-1.1. Skewness ${RISK.skew} + kurtosis ${RISK.kurt} = fat left tails. Risk budget dominated by a single asset class delivering negative returns.`}/>
   </div>);
 };
 // =========================================================================
@@ -1299,7 +1301,7 @@ const T4 = ()=>{
     </Card>
 
     {/* Factor Radar + Risk vs Capital (side-by-side) */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+    <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR EXPOSURE vs BENCHMARK</div>
         <ResponsiveContainer width="100%" height={320}>
@@ -1326,10 +1328,10 @@ const T4 = ()=>{
         </ResponsiveContainer>
         <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital \u2192 32% risk (2.5x). Cash/FD: 16% capital \u2192 2% risk (drag).</div>
       </Card>
-    </div>
+    </Grid>
 
     {/* Vol Trend + Factor Table (side-by-side) */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+    <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>ROLLING VOLATILITY & MONTHLY RETURN</div>
         <ResponsiveContainer width="100%" height={300}>
@@ -1350,10 +1352,10 @@ const T4 = ()=>{
           r={FACTORS.map(f=>[f.f,`${f.p}`,`${f.b}`,f.intent,`${f.ret>0?"+":""}${f.ret}%`,`${f.risk}%`])} hl={4}/>
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>Crypto Beta: 32% risk, -8.4% return. Only equity beta and UK domestic are compensated.</div>
       </Card>
-    </div>
+    </Grid>
 
     {/* Risk Budget + Correlation (side-by-side) */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+    <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
         <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{"Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag."}</div>
@@ -1390,7 +1392,7 @@ const T4 = ()=>{
         })()}
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>Equity-Crypto 0.52 = less diversification than perceived. Cash/FD is the only true diversifier.</div>
       </Card>
-    </div>
+    </Grid>
 
     <Ins type="risk" text={`Sharpe of ${RISK.sharpe} is below institutional minimums. Excluding crypto, equity sleeve Sharpe is ~0.9-1.1. Skewness ${RISK.skew} + kurtosis ${RISK.kurt} = fat left tails. Risk budget dominated by a single asset class delivering negative returns.`}/>
   </div>);
