@@ -988,71 +988,88 @@ const T2 = ()=>{
   const treemapData = sorted.slice(0,12).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),size:h.val,color:h.cls==="Crypto"?P.btc:h.cls==="ETF"?P.cyan:h.cls==="Pension"?"#06b6d4":h.cls==="Cash/FD"||h.cls==="Cash"?"#94a3b8":h.cls==="Investment"?P.indigo:P.purple}));
 
   return(<div>
-    <Hd t="STRUCTURE & CONCENTRATION" s="Holdings, geographic, currency, and wrapper decomposition" tag="HOLDINGS"/>
-    <Row gap={10}>
-      <K l="Positions" v={HOLDINGS.length+18} s="Total distinct" sm/><K l="Eff. Pos" v={RISK.effPos.toFixed(1)} s="1/HHI" c={P.green} sm/>
-      <K l="HHI" v={RISK.hhi.toFixed(3)} s="<0.10=diversified" c={P.green} sm/><K l="Entropy" v={RISK.entropy.toFixed(2)} s="Weight spread" sm/>
-      <K l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} s="Concentration" c={P.amber} sm/>
-      <K l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} s="Concentration" sm/>
-      <K l="Div. Ratio" v={RISK.divRatio.toFixed(2)} s=">1.3=good" c={P.green} sm/>
-    </Row>
-    <Ins text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions indicate solid top-level diversification. However, 18+ positions below £1k are symbolic clutter adding complexity without return impact. Top 3 (Pension, FD, JURE) hold ${(top3/totalAssets*100).toFixed(0)}% — pension dominance is structural and appropriate. The real concentration risk is crypto: 13% of capital drives 32% of portfolio risk, a 2.5x risk-to-capital ratio that would be flagged in any institutional review.`}/>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>FULL HOLDINGS — RANKED BY VALUE</div>
-      <Tbl h={["Holding","Value","Weight","Class","6mo Ret","Geo","CCY"]}
-        r={sorted.map(h=>[h.name,fK(h.val),`${(h.val/totalAssets*100).toFixed(1)}%`,h.cls,h.prev?pc((h.val-h.prev)/h.prev*100):"---",h.geo,h.ccy])} hl={4}/>
-    </Card>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>PORTFOLIO TREEMAP — SIZE BY VALUE</div>
-      <ResponsiveContainer width="100%" height={380}>
-        <BarChart data={treemapData} layout="vertical" margin={{left:90}}>
-          <CartesianGrid stroke={P.b2} horizontal={false} vertical/>
-          <XAxis type="number" tick={{fill:P.t3,fontSize:11}} tickFormatter={v=>fK(v)} axisLine={false} tickLine={false}/>
-          <YAxis dataKey="name" type="category" tick={{fill:P.t2,fontSize:11}} width={85} axisLine={false} tickLine={false}/>
-          <Tooltip content={<Tip/>}/>
-          <Bar dataKey="size" name="Value" radius={[0,8,8,0]}>{treemapData.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.75}/>)}</Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </Card>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>NAV STRUCTURE FLOW — ASSETS → CLASSES → WRAPPERS</div>
-      <div style={{fontSize:13,color:P.t3,marginBottom:12}}>Total assets of {fK(PORT.assets)} decomposed by asset class and then by tax wrapper. 57% sits in taxable wrappers — the single biggest structural inefficiency.</div>
-      <NavSankey/>
-    </Card>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 300px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>GEOGRAPHIC EXPOSURE</div>
-        <ResponsiveContainer width="100%" height={380}>
-          <BarChart data={geoData} layout="vertical" margin={{left:40}}>
-            <XAxis type="number" tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
-            <YAxis dataKey="n" type="category" tick={{fill:P.t2,fontSize:13}} width={42}/>
+    <Hd t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, geographic exposure, wrapper analysis, concentration metrics" tag="HOLDINGS"/>
+
+    {/* KPI ROW */}
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Positions" v={HOLDINGS.length+18} c={P.t2} sm/><K l="Eff. Pos" v={RISK.effPos.toFixed(1)} c={P.positive} sm delta="1/HHI"/>
+      <K l="HHI" v={RISK.hhi.toFixed(3)} c={P.positive} sm delta="<0.10=good"/><K l="Entropy" v={RISK.entropy.toFixed(2)} c={P.t2} sm/>
+      <K l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} c={P.amber} sm delta="Concentration"/><K l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} c={P.t2} sm/>
+      <K l="Div. Ratio" v={RISK.divRatio.toFixed(2)} c={P.positive} sm delta=">1.3=good"/>
+    </FlexRow>
+
+    <Ins text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions = solid diversification. But 18+ positions below \u00A31k are symbolic clutter. Top 3 hold ${(top3/totalAssets*100).toFixed(0)}% \u2014 pension dominance is structural. The real concentration risk: crypto at 13% capital drives 32% of risk (2.5x ratio).`}/>
+
+    {/* MAIN 2-COLUMN LAYOUT: Left (charts) + Right (holdings table) */}
+    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+      {/* LEFT: Treemap + Sankey */}
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Card hover>
+          <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>PORTFOLIO SIZE MAP \u2014 RANKED BY VALUE</div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={treemapData} layout="vertical" margin={{left:80}}>
+              <CartesianGrid stroke={P.b2} horizontal={false} vertical/>
+              <XAxis type="number" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>fK(v)} axisLine={false}/>
+              <YAxis dataKey="name" type="category" tick={{fill:P.t2,fontSize:10}} width={75} axisLine={false}/>
+              <Tooltip content={<Tip/>}/>
+              <Bar dataKey="size" name="Value" radius={[0,6,6,0]}>{treemapData.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.75}/>)}</Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+        <Card hover>
+          <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>NAV FLOW \u2014 ASSETS \u2192 CLASSES \u2192 WRAPPERS</div>
+          <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Total {fK(PORT.assets)} decomposed. 57% in taxable wrappers \u2014 biggest structural inefficiency.</div>
+          <NavSankey/>
+        </Card>
+      </div>
+
+      {/* RIGHT: Full holdings table */}
+      <Card hover tier={1}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FULL HOLDINGS \u2014 RANKED BY VALUE</div>
+        <Tbl h={["Holding","Value","Wt%","Class","6mo","Geo"]}
+          r={sorted.map(h=>[h.name.split("(")[0].trim(),fK(h.val),`${(h.val/totalAssets*100).toFixed(1)}%`,h.cls,h.prev?pc((h.val-h.prev)/h.prev*100):"---",h.geo])} hl={4}/>
+      </Card>
+    </div>
+
+    {/* GEO + CURRENCY + WRAPPER (3-column) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>GEOGRAPHIC EXPOSURE</div>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={geoData} layout="vertical" margin={{left:38}}>
+            <XAxis type="number" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/>
+            <YAxis dataKey="n" type="category" tick={{fill:P.t2,fontSize:11}} width={35}/>
             <Tooltip content={<Tip/>}/>
-            <Bar dataKey="v" name="Weight %" radius={[0,6,6,0]}>{geoData.map((g,i)=><Cell key={i} fill={g.c} fillOpacity={0.7}/>)}</Bar>
+            <Bar dataKey="v" name="Weight %" radius={[0,5,5,0]}>{geoData.map((g,i)=><Cell key={i} fill={g.c} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:13,color:P.t3,marginTop:6}}>UK home bias at 29% vs 5% MSCI World weight. US underweight at 18% vs 70% MSCI World. Global category (21%) provides core diversification.</div>
+        <div style={{fontSize:11,color:P.t3,marginTop:4}}>UK home bias 29% vs 5% MSCI World. US underweight 18% vs 70% MSCI.</div>
       </Card>
-      <Card style={{flex:"1 1 300px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CURRENCY EXPOSURE</div>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>CURRENCY EXPOSURE</div>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={ccyData} margin={{left:5}}>
             <CartesianGrid stroke={P.b2}/>
-            <XAxis dataKey="n" tick={{fill:P.t3,fontSize:13}}/>
-            <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
+            <XAxis dataKey="n" tick={{fill:P.t3,fontSize:11}}/>
+            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/>
             <Tooltip content={<Tip/>}/>
-            <Bar dataKey="v" name="Weight %" radius={[6,6,0,0]}>{ccyData.map((g,i)=><Cell key={i} fill={g.c} fillOpacity={0.7}/>)}</Bar>
+            <Bar dataKey="v" name="Weight %" radius={[5,5,0,0]}>{ccyData.map((g,i)=><Cell key={i} fill={g.c} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginTop:20,marginBottom:10}}>WRAPPER DISTRIBUTION</div>
-        <Tbl h={["Wrapper","Est. Value","% NAV","Tax Status"]}
-          r={[["GIA (ETFs+Crypto)",fK(178000),"47.4%","Taxable"],["Pension",fK(82133),"21.9%","Tax-free"],["FD / Cash",fK(61538),"16.4%","Mixed"],["ISA (est.)",fK(18085),"4.8%","Tax-free"],["ZAR Accounts",fK(35914),"9.6%","Taxable"]]}/>
-        <div style={{fontSize:13,color:P.t3,marginTop:8}}>57% in taxable wrappers. At 45% marginal + 24% CGT, estimated annual tax drag is 1.5-2.0% of NAV (~£5.4-7.3k/yr).</div>
+        <div style={{fontSize:11,color:P.t3,marginTop:4}}>GBP 44%, USD 22%, ZAR 10%. FX risk is material.</div>
       </Card>
-    </Row>
-    {/* SPRINT 3 #15: Look-Through Sector Exposure — aggregate ETF holdings into sector view */}
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>WRAPPER DISTRIBUTION</div>
+        <Tbl h={["Wrapper","Value","% NAV","Tax"]}
+          r={[["GIA (ETFs+Crypto)",fK(178000),"47%","Taxable"],["Pension",fK(82133),"22%","Free"],["FD / Cash",fK(61538),"16%","Mixed"],["ISA",fK(18085),"5%","Free"],["ZAR Accounts",fK(35914),"10%","Taxable"]]}/>
+        <div style={{fontSize:11,color:P.t3,marginTop:6}}>57% taxable. Est. annual drag: 1.5-2.0% of NAV (\u00A35.4-7.3k/yr).</div>
+      </Card>
+    </div>
+
+    {/* SECTOR EXPOSURE (full width) */}
     <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>LOOK-THROUGH SECTOR EXPOSURE</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>ETF holdings decomposed into underlying sector weights (from JPM factsheets). Shows true sector concentration vs perceived diversification.</div>
+      <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>LOOK-THROUGH SECTOR EXPOSURE</div>
+      <div style={{fontSize:11,color:P.t3,marginBottom:10}}>ETF holdings decomposed into underlying sectors (JPM factsheets). Reveals true concentration vs perceived diversification.</div>
       {(()=>{
         const sectorBreakdown = REF_DATA?.etf_sector_breakdown || {JURE:{Tech:30,Financial:14,Healthcare:13,Industrial:11,ConsDisc:9,Energy:6,CommServ:5,Other:12},JGEP:{Tech:22,Financial:16,Industrial:12,Healthcare:11,ConsDisc:8,Energy:7,Materials:6,Other:18},JUKC:{Financial:22,ConsDisc:14,Industrial:13,Energy:11,Healthcare:9,Materials:8,Tech:6,Other:17}};
         const etfHoldings = HOLDINGS.filter(h=>h.cls==="ETF");
@@ -1060,61 +1077,42 @@ const T2 = ()=>{
         etfHoldings.forEach(h=>{
           const ticker = h.name.split('.')[0];
           const weights = ticker ? sectorBreakdown[ticker] : null;
-          if(weights){
-            Object.entries(weights).forEach(([sec,pct])=>{
-              sectorAgg[sec] = (sectorAgg[sec]||0) + h.val * pct / 100;
-            });
-          }
+          if(weights){ Object.entries(weights).forEach(([sec,pct])=>{ sectorAgg[sec] = (sectorAgg[sec]||0) + h.val * pct / 100; }); }
         });
-        const sectorColors={Tech:P.cyan,Financial:P.indigo,Healthcare:P.green,Industrial:P.amber,ConsDisc:P.purple,Energy:P.red,Materials:"#06b6d4",CommServ:"#8b5cf6",RealEstate:P.orange,Utilities:"#94a3b8",Other:P.t4};
+        const sectorColors={Tech:P.cyan,Financial:P.indigo,Healthcare:P.green,Industrial:P.amber,ConsDisc:P.purple,Energy:P.red,Materials:"#06b6d4",CommServ:"#8b5cf6",Other:P.t4};
         const sectorData = Object.entries(sectorAgg).map(([n,v])=>({n,v:Math.round(v),pct:+(v/totalAssets*100).toFixed(1),c:sectorColors[n]||P.t3})).sort((a,b)=>b.v-a.v);
-        const benchSectors = REF_DATA?.benchmark_sector_returns?.sectors || {};
-        if(!sectorData.length) return <div style={{fontSize:13,color:P.t4}}>Sector data loading from Supabase...</div>;
+        if(!sectorData.length) return <div style={{fontSize:12,color:P.t4}}>Sector data loading...</div>;
         return(<>
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart data={sectorData} layout="vertical" margin={{left:70}}>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={sectorData} layout="vertical" margin={{left:65}}>
               <CartesianGrid stroke={P.b2}/>
-              <XAxis type="number" tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>fK(v)}/>
-              <YAxis dataKey="n" type="category" tick={{fill:P.t2,fontSize:11}} width={65}/>
+              <XAxis type="number" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>fK(v)}/>
+              <YAxis dataKey="n" type="category" tick={{fill:P.t2,fontSize:10}} width={60}/>
               <Tooltip content={<Tip/>}/>
-              <Bar dataKey="v" name="Exposure (GBP)" radius={[0,6,6,0]}>{sectorData.map((d,i)=><Cell key={i} fill={d.c} fillOpacity={0.7}/>)}</Bar>
+              <Bar dataKey="v" name="Exposure" radius={[0,5,5,0]}>{sectorData.map((d,i)=><Cell key={i} fill={d.c} fillOpacity={0.7}/>)}</Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
-            {sectorData.slice(0,6).map((s,i)=><div key={i} style={{fontSize:11,color:s.c,padding:"3px 8px",background:`${s.c}12`,borderRadius:6,fontWeight:700}}>{s.n} {s.pct}% {benchSectors[s.n]!=null ? `(bench ${benchSectors[s.n]>0?"+":""}${benchSectors[s.n]}%)` : ""}</div>)}
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
+            {sectorData.slice(0,6).map((s,i)=><div key={i} style={{fontSize:10,color:s.c,padding:"2px 8px",background:`${s.c}12`,borderRadius:5,fontWeight:700}}>{s.n} {s.pct}%</div>)}
           </div>
-          <div style={{fontSize:12,color:P.t3,marginTop:8}}>True Tech exposure is {sectorData.find(s=>s.n==="Tech")?.pct||0}% of total assets via ETF holdings. Financial is the second-largest at {sectorData.find(s=>s.n==="Financial")?.pct||0}%. This look-through reveals hidden concentrations that sleeve-level analysis misses.</div>
         </>);
       })()}
     </Card>
   </div>);
 };
-
 // =========================================================================
 // TAB 3 — PERFORMANCE & ATTRIBUTION
 // =========================================================================
 const T3 = ()=>{
-  // Proper waterfall: Start and End bars are full-height anchors, intermediary bars float
-  const wfData = BRIDGE_ITEMS.slice(1).map(b => b); // skip anchor
+  const wfData = BRIDGE_ITEMS.slice(1).map(b => b);
   const waterfall = [];
-  // Start bar
   waterfall.push({name:"Start (Sep 25)", val:PORT.nw6moAgo/1000, base:0, step:PORT.nw6moAgo/1000, isAnchor:true, cum:PORT.nw6moAgo/1000});
-  // Steps
   let cum = PORT.nw6moAgo;
   wfData.forEach(b => {
     const prev = cum;
     cum += b.delta;
-    waterfall.push({
-      name: b.name,
-      val: Math.abs(b.delta)/1000,
-      base: Math.min(prev, cum)/1000,
-      step: b.delta/1000,
-      isAnchor: false,
-      isPos: b.delta >= 0,
-      cum: cum/1000,
-    });
+    waterfall.push({name: b.name, val: Math.abs(b.delta)/1000, base: Math.min(prev, cum)/1000, step: b.delta/1000, isAnchor: false, isPos: b.delta >= 0, cum: cum/1000});
   });
-  // End bar
   waterfall.push({name:"End (Mar 26)", val:PORT.netWorth/1000, base:0, step:PORT.netWorth/1000, isAnchor:true, cum:PORT.netWorth/1000});
 
   const sleevePerf = HOLDINGS.filter(h=>h.prev&&h.prev>0).map(h=>({
@@ -1125,163 +1123,141 @@ const T3 = ()=>{
   const cumReturn = NW_WEEKLY.map(w=>({d:w.d,ret:((w.nw-PORT.nw6moAgo)/PORT.nw6moAgo*100)}));
 
   return(<div>
-    <Hd t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation bridge, contribution analysis, return decomposition" tag="PM REVIEW"/>
-    <Row gap={10}>
-      <K l="Opening NW" v={fK(PORT.nw6moAgo)} s="20 Sep 2025" c={P.t2}/>
-      <K l="Closing NW" v={fK(PORT.netWorth)} s="7 Mar 2026" c={P.t1}/>
-      <K l="Change" v={fK(PORT.netWorth-PORT.nw6moAgo)} s={pc(nwReturn)} c={P.red}/>
-      <K l="Inflows" v="+£28.8k" s="Salary+Bonus+Employer" c={P.green}/>
-      <K l="Market P&L" v="-£19.3k" s="Net investment return" c={P.red}/>
-    </Row>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:6}}>NAV WATERFALL BRIDGE</div>
-      <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Start and End are absolute levels. Steps show each component's contribution to the change from {fK(PORT.nw6moAgo)} → {fK(PORT.netWorth)}.</div>
-      <ResponsiveContainer width="100%" height={420}>
-        <BarChart data={waterfall} margin={{left:5,right:5,bottom:10}}>
-          <CartesianGrid stroke={P.b2}/>
-          <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} angle={-25} textAnchor="end" height={70} interval={0}/>
-          <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`£${v.toFixed(0)}k`} domain={[0,'auto']}/>
-          <Tooltip content={({active,payload,label})=>{
-            if(!active||!payload?.length)return null;
-            const d=waterfall.find(w=>w.name===label);
-            return(<div style={{...GS,padding:"10px 14px",fontSize:13,borderRadius:14}}>
-              <div style={{color:P.t3,marginBottom:3,fontWeight:600}}>{label}</div>
-              {d?.isAnchor
-                ?<div style={{color:P.cyan,fontWeight:700}}>£{d.step.toFixed(1)}k</div>
-                :<><div style={{color:d?.isPos?P.cyan:P.red,fontWeight:700}}>{d?.isPos?"+":""}{d?.step.toFixed(1)}k</div>
-                  <div style={{color:P.t4,fontSize:11}}>Running: £{d?.cum.toFixed(1)}k</div></>}
-            </div>);
-          }}/>
-          <Bar dataKey="base" stackId="w" fill="transparent" name=" " radius={0}/>
-          <Bar dataKey="val" stackId="w" name="Change (£k)" radius={[3,3,0,0]}>
-            {waterfall.map((w,i)=><Cell key={i}
-              fill={w.isAnchor?P.indigo:w.isPos?P.cyan:P.red}
-              fillOpacity={w.isAnchor?0.55:0.75}
-              stroke={w.isAnchor?"rgba(129,140,248,0.4)":"none"}
-              strokeWidth={w.isAnchor?1:0}
-            />)}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </Card>
-    <Ins text={`The bridge reveals the core structural issue: you added +£28.8k in fresh capital (salary, bonus, employer pension) but crypto destroyed -£52.2k and cash was drawn down -£25.9k. Equity returns of +£13.6k and pension revaluation of +£16.8k were genuine bright spots. Without crypto, the portfolio would have grown +£35k — instead it shrank -£35k. Concentration risk isn't theoretical; it materialised in real P&L.`}/>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>SLEEVE RETURN vs CONTRIBUTION</div>
-        <ResponsiveContainer width="100%" height={380}>
-          <ComposedChart data={sleevePerf} layout="vertical" margin={{left:60}}>
+    <Hd t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, contribution analysis, return decomposition" tag="PM REVIEW"/>
+
+    {/* KPI ROW */}
+    <FlexRow gap={8} style={{marginBottom:14}}>
+      <K l="Opening NW" v={fK(PORT.nw6moAgo)} c={P.t2} delta="20 Sep 2025"/>
+      <K l="Closing NW" v={fK(PORT.netWorth)} c={P.t1} delta="7 Mar 2026"/>
+      <K l="Net Change" v={fK(PORT.netWorth-PORT.nw6moAgo)} c={P.negative} delta={pc(nwReturn)} deltaType="down"/>
+      <K l="Inflows" v="+\u00A328.8k" c={P.positive} delta="Salary+Bonus+Employer" deltaType="up"/>
+      <K l="Market P&L" v="-\u00A319.3k" c={P.negative} delta="Net investment return" deltaType="down"/>
+    </FlexRow>
+
+    {/* ROW 2: NAV Bridge (left 7fr) + Sleeve Return (right 5fr) */}
+    <div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:6}}>NAV WATERFALL BRIDGE</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:8}}>Start/End = absolute. Steps = contribution to change from {fK(PORT.nw6moAgo)} \u2192 {fK(PORT.netWorth)}.</div>
+        <ResponsiveContainer width="100%" height={340}>
+          <BarChart data={waterfall} margin={{left:5,right:5,bottom:10}}>
             <CartesianGrid stroke={P.b2}/>
-            <XAxis type="number" tick={{fill:P.t3,fontSize:12}}/>
-            <YAxis dataKey="name" type="category" tick={{fill:P.t2,fontSize:13}} width={55}/>
+            <XAxis dataKey="name" tick={{fill:P.t3,fontSize:9}} angle={-25} textAnchor="end" height={60} interval={0}/>
+            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`\u00A3${v.toFixed(0)}k`} domain={[0,'auto']}/>
+            <Tooltip content={({active,payload,label})=>{
+              if(!active||!payload?.length)return null;
+              const d=waterfall.find(w=>w.name===label);
+              return(<div style={{...GS,padding:"10px 14px",fontSize:12,borderRadius:12}}>
+                <div style={{color:P.t3,marginBottom:3,fontWeight:600}}>{label}</div>
+                {d?.isAnchor
+                  ?<div style={{color:P.cyan,fontWeight:700}}>\u00A3{d.step.toFixed(1)}k</div>
+                  :<><div style={{color:d?.isPos?P.cyan:P.red,fontWeight:700}}>{d?.isPos?"+":""}{d?.step.toFixed(1)}k</div>
+                    <div style={{color:P.t4,fontSize:11}}>Running: \u00A3{d?.cum.toFixed(1)}k</div></>}
+              </div>);
+            }}/>
+            <Bar dataKey="base" stackId="w" fill="transparent" name=" " radius={0}/>
+            <Bar dataKey="val" stackId="w" name="Change" radius={[3,3,0,0]}>
+              {waterfall.map((w,i)=><Cell key={i} fill={w.isAnchor?P.indigo:w.isPos?P.cyan:P.red} fillOpacity={w.isAnchor?0.55:0.75} stroke={w.isAnchor?"rgba(129,140,248,0.4)":"none"} strokeWidth={w.isAnchor?1:0}/>)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>SLEEVE RETURN vs CONTRIBUTION</div>
+        <ResponsiveContainer width="100%" height={380}>
+          <ComposedChart data={sleevePerf} layout="vertical" margin={{left:55}}>
+            <CartesianGrid stroke={P.b2}/>
+            <XAxis type="number" tick={{fill:P.t3,fontSize:10}}/>
+            <YAxis dataKey="name" type="category" tick={{fill:P.t2,fontSize:11}} width={50}/>
             <Tooltip content={<Tip/>}/>
             <ReferenceLine x={0} stroke={P.t4}/>
             <Bar dataKey="ret" name="Return %" radius={[0,4,4,0]}>{sleevePerf.map((d,i)=><Cell key={i} fill={d.ret>=0?P.cyan:P.red} fillOpacity={0.6}/>)}</Bar>
-            <Line dataKey="contrib" name="Contribution %" stroke={P.amber} strokeWidth={2} dot={{fill:P.amber,r:4}}/>
+            <Line dataKey="contrib" name="Contribution %" stroke={P.amber} strokeWidth={2} dot={{fill:P.amber,r:3}}/>
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE RETURN PATH</div>
-        <ResponsiveContainer width="100%" height={380}>
+    </div>
+
+    <Ins text={`The bridge reveals the core issue: +\u00A328.8k fresh capital but crypto destroyed -\u00A352.2k and cash drawn down -\u00A325.9k. Equity +\u00A313.6k and pension +\u00A316.8k were bright spots. Without crypto, portfolio would have grown +\u00A335k \u2014 instead it shrank -\u00A335k.`}/>
+
+    {/* ROW 3: Cumulative Return + Contributors Table */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>CUMULATIVE RETURN PATH</div>
+        <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={cumReturn} margin={{left:5}}>
             <CartesianGrid stroke={P.b2}/>
-            <XAxis dataKey="d" tick={{fill:P.t3,fontSize:11}} interval={3}/>
-            <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v.toFixed(0)}%`}/>
+            <XAxis dataKey="d" tick={{fill:P.t3,fontSize:9}} interval={3}/>
+            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v.toFixed(0)}%`}/>
             <Tooltip content={<Tip/>}/>
             <ReferenceLine y={0} stroke={P.t4}/>
             <Area type="monotone" dataKey="ret" name="Cumulative %" stroke={P.red} fill={P.red} fillOpacity={0.08} strokeWidth={2.5}/>
           </AreaChart>
         </ResponsiveContainer>
       </Card>
-    </Row>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>TOP CONTRIBUTORS & DETRACTORS</div>
-      <Tbl h={["Holding","Start","End","P&L","Return"]}
-        r={HOLDINGS.filter(h=>h.prev).map(h=>({n:h.name.split("(")[0].split(" ").slice(0,3).join(" ").trim(),s:h.prev,e:h.val,pnl:h.val-h.prev,ret:(h.val-h.prev)/h.prev*100})).sort((a,b)=>b.pnl-a.pnl).map(h=>[h.n,fK(h.s),fK(h.e),`${h.pnl>=0?"+":""}${fK(h.pnl)}`,pc(h.ret)])} hl={3}/>
-    </Card>
-    {/* SPRINT 3 #2: Decision Attribution Waterfall — skill vs luck decomposition */}
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>DECISION ATTRIBUTION — WHAT DROVE THE RETURN?</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Decomposition of total return into market (beta), allocation (sleeve weights), selection (stock picking), and structural (wrapper/cost) components.</div>
-      {(()=>{
-        const totalRet = (PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100;
-        const benchRet = (PORT.benchReturn || -0.028) * 100;
-        const allocationEffect = -3.2;
-        const selectionEffect = 1.8;
-        const fxEffect = 1.3;
-        const structuralDrag = -1.5;
-        const residual = +(totalRet - benchRet - allocationEffect - selectionEffect - fxEffect - structuralDrag).toFixed(1);
-        const attrs = [
-          {n:"Market (Beta)",v:benchRet,c:P.t3},{n:"Allocation",v:allocationEffect,c:P.red},
-          {n:"Selection",v:selectionEffect,c:P.green},{n:"FX / Currency",v:fxEffect,c:P.cyan},
-          {n:"Structural Drag",v:structuralDrag,c:P.amber},{n:"Residual",v:residual,c:P.purple},
-        ];
-        return(
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {attrs.map((a,i)=>{
-              const barW = Math.abs(a.v) / 10 * 100;
-              return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:110,fontSize:12,color:P.t3,textAlign:"right",fontWeight:600}}>{a.n}</div>
-                  <div style={{flex:1,height:16,background:"rgba(0,0,0,0.03)",borderRadius:8,position:"relative",overflow:"hidden"}}>
-                    {a.v >= 0 ? (
-                      <div style={{position:"absolute",left:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.green}60`,borderRadius:"0 8px 8px 0"}}/>
-                    ) : (
-                      <div style={{position:"absolute",right:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.red}60`,borderRadius:"8px 0 0 8px"}}/>
-                    )}
+      <Card hover tier={1}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>TOP CONTRIBUTORS & DETRACTORS</div>
+        <Tbl h={["Holding","Start","End","P&L","Ret"]}
+          r={HOLDINGS.filter(h=>h.prev).map(h=>({n:h.name.split("(")[0].split(" ").slice(0,3).join(" ").trim(),s:h.prev,e:h.val,pnl:h.val-h.prev,ret:(h.val-h.prev)/h.prev*100})).sort((a,b)=>b.pnl-a.pnl).map(h=>[h.n,fK(h.s),fK(h.e),`${h.pnl>=0?"+":""}${fK(h.pnl)}`,pc(h.ret)])} hl={3}/>
+      </Card>
+    </div>
+
+    {/* Decision Attribution + Up/Down Capture side-by-side */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>DECISION ATTRIBUTION</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Market/allocation/selection/FX/structural decomposition.</div>
+        {(()=>{
+          const totalRet = (PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100;
+          const benchRet = (PORT.benchReturn || -0.028) * 100;
+          const attrs = [{n:"Market (Beta)",v:benchRet,c:P.t3},{n:"Allocation",v:-3.2,c:P.red},{n:"Selection",v:1.8,c:P.green},{n:"FX / Currency",v:1.3,c:P.cyan},{n:"Structural Drag",v:-1.5,c:P.amber},{n:"Residual",v:+(totalRet-benchRet-(-3.2)-1.8-1.3-(-1.5)).toFixed(1),c:P.purple}];
+          return(
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {attrs.map((a,i)=>{
+                const barW = Math.abs(a.v) / 10 * 100;
+                return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:100,fontSize:11,color:P.t3,textAlign:"right",fontWeight:600}}>{a.n}</div>
+                  <div style={{flex:1,height:14,background:"rgba(0,0,0,0.03)",borderRadius:7,position:"relative",overflow:"hidden"}}>
+                    {a.v >= 0 ? <div style={{position:"absolute",left:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.green}60`,borderRadius:"0 7px 7px 0"}}/> : <div style={{position:"absolute",right:"50%",width:`${Math.min(barW,50)}%`,height:"100%",background:`${P.red}60`,borderRadius:"7px 0 0 7px"}}/>}
                     <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:"rgba(0,0,0,0.08)"}}/>
                   </div>
-                  <div style={{width:50,fontSize:13,fontWeight:800,color:a.v>=0?P.green:P.red,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{a.v>=0?"+":""}{a.v.toFixed(1)}%</div>
-                </div>
-              );
-            })}
-            <div style={{display:"flex",alignItems:"center",gap:10,borderTop:`1px solid ${P.b2}`,paddingTop:8,marginTop:4}}>
-              <div style={{width:110,fontSize:13,color:P.t1,textAlign:"right",fontWeight:800}}>Total Return</div>
-              <div style={{flex:1}}/>
-              <div style={{width:50,fontSize:15,fontWeight:800,color:totalRet>=0?P.green:P.red,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{totalRet>=0?"+":""}{totalRet.toFixed(1)}%</div>
+                  <div style={{width:45,fontSize:12,fontWeight:800,color:a.v>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{a.v>=0?"+":""}{a.v.toFixed(1)}%</div>
+                </div>);
+              })}
+              <div style={{display:"flex",alignItems:"center",gap:8,borderTop:`1px solid ${P.b2}`,paddingTop:6,marginTop:4}}>
+                <div style={{width:100,fontSize:12,color:P.t1,textAlign:"right",fontWeight:800}}>Total</div>
+                <div style={{flex:1}}/>
+                <div style={{width:45,fontSize:13,fontWeight:800,color:totalRet>=0?P.green:P.red,fontFamily:P.mono,textAlign:"right"}}>{totalRet>=0?"+":""}{totalRet.toFixed(1)}%</div>
+              </div>
             </div>
-          </div>
-        );
-      })()}
-      <div style={{fontSize:12,color:P.t3,marginTop:8}}>Allocation effect is negative (-3.2%) because the overweight to crypto (13% vs 0% benchmark) destroyed value. Selection is positive (+1.8%) from JPM Research Enhanced outperformance. This confirms: the asset allocation decision, not stock picking, was the error.</div>
-    </Card>
-    {/* SPRINT 3 #29: Up/Down Capture Ratio */}
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>UP/DOWN CAPTURE RATIO</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Measures how much of the benchmark's gains vs losses the portfolio captures. Ideal: high up-capture, low down-capture.</div>
-      {(()=>{
-        const benchMonthly = REF_DATA?.benchmark_monthly_returns?.months || [{m:"Oct",bench:-1.5,port:-2.1},{m:"Nov",bench:-3.2,port:-6.8},{m:"Dec",bench:0.8,port:-1.2},{m:"Jan",bench:1.2,port:-0.5},{m:"Feb",bench:-2.1,port:-4.2},{m:"Mar",bench:2.0,port:3.2}];
-        const upMonths = benchMonthly.filter(m => m.bench > 0);
-        const downMonths = benchMonthly.filter(m => m.bench < 0);
-        const upCapture = upMonths.length > 0 ? +(upMonths.reduce((a,m)=>a+m.port,0) / upMonths.reduce((a,m)=>a+m.bench,0) * 100).toFixed(0) : 0;
-        const downCapture = downMonths.length > 0 ? +(downMonths.reduce((a,m)=>a+m.port,0) / downMonths.reduce((a,m)=>a+m.bench,0) * 100).toFixed(0) : 0;
-        const captureRatio = downCapture > 0 ? +(upCapture / downCapture).toFixed(2) : 0;
-        return(
-          <div>
-            <Row gap={10}>
-              <K l="Up Capture" v={`${upCapture}%`} s="of bench gains" c={upCapture>100?P.green:P.amber} sm/>
-              <K l="Down Capture" v={`${downCapture}%`} s="of bench losses" c={downCapture<100?P.green:P.red} sm/>
-              <K l="Capture Ratio" v={captureRatio.toFixed(2)} s=">1.0 = skill" c={captureRatio>=1?P.green:P.red} sm/>
-            </Row>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={benchMonthly}>
-                <CartesianGrid stroke={P.b2}/>
-                <XAxis dataKey="m" tick={{fill:P.t3,fontSize:13}}/>
-                <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
-                <Tooltip content={<Tip/>}/>
-                <ReferenceLine y={0} stroke={P.t4}/>
-                <Bar dataKey="bench" name="Benchmark %" fill={P.t4} fillOpacity={0.4} radius={[4,4,0,0]}/>
-                <Bar dataKey="port" name="Portfolio %" radius={[4,4,0,0]}>{benchMonthly.map((d,i)=><Cell key={i} fill={d.port>=0?P.cyan:P.red} fillOpacity={0.7}/>)}</Bar>
-              </BarChart>
+          );
+        })()}
+        <div style={{fontSize:11,color:P.t3,marginTop:6}}>Allocation (-3.2%) from crypto overweight destroyed value. Selection (+1.8%) from JPM Research Enhanced outperformance.</div>
+      </Card>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>UP/DOWN CAPTURE RATIO</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Portfolio participation in benchmark gains vs losses.</div>
+        {(()=>{
+          const benchMonthly = REF_DATA?.benchmark_monthly_returns?.months || [{m:"Oct",bench:-1.5,port:-2.1},{m:"Nov",bench:-3.2,port:-6.8},{m:"Dec",bench:0.8,port:-1.2},{m:"Jan",bench:1.2,port:-0.5},{m:"Feb",bench:-2.1,port:-4.2},{m:"Mar",bench:2.0,port:3.2}];
+          const upMonths = benchMonthly.filter(m => m.bench > 0);
+          const downMonths = benchMonthly.filter(m => m.bench < 0);
+          const upCapture = upMonths.length > 0 ? +(upMonths.reduce((a,m)=>a+m.port,0) / upMonths.reduce((a,m)=>a+m.bench,0) * 100).toFixed(0) : 0;
+          const downCapture = downMonths.length > 0 ? +(downMonths.reduce((a,m)=>a+m.port,0) / downMonths.reduce((a,m)=>a+m.bench,0) * 100).toFixed(0) : 0;
+          const captureRatio = downCapture > 0 ? +(upCapture / downCapture).toFixed(2) : 0;
+          return(<div>
+            <FlexRow gap={6} style={{marginBottom:10}}>
+              <K l="Up Capture" v={`${upCapture}%`} c={upCapture>100?P.positive:P.amber} sm/><K l="Down Capture" v={`${downCapture}%`} c={downCapture<100?P.positive:P.negative} sm/><K l="Ratio" v={captureRatio.toFixed(2)} c={captureRatio>=1?P.positive:P.negative} sm delta=">1.0 = skill"/>
+            </FlexRow>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={benchMonthly}><CartesianGrid stroke={P.b2}/><XAxis dataKey="m" tick={{fill:P.t3,fontSize:11}}/><YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><ReferenceLine y={0} stroke={P.t4}/><Bar dataKey="bench" name="Benchmark" fill={P.t4} fillOpacity={0.4} radius={[3,3,0,0]}/><Bar dataKey="port" name="Portfolio" radius={[3,3,0,0]}>{benchMonthly.map((d,i)=><Cell key={i} fill={d.port>=0?P.cyan:P.red} fillOpacity={0.7}/>)}</Bar></BarChart>
             </ResponsiveContainer>
-            <div style={{fontSize:12,color:P.t3,marginTop:6}}>Up capture of {upCapture}% and down capture of {downCapture}% produces a capture ratio of {captureRatio}. {captureRatio < 1 ? "Below 1.0 means the portfolio participates more in losses than gains — the crypto drag amplifies downside without proportional upside." : "Above 1.0 indicates defensive characteristics — participating more in gains than losses."}</div>
-          </div>
-        );
-      })()}
-    </Card>
+            <div style={{fontSize:11,color:P.t3,marginTop:4}}>Capture ratio {captureRatio} \u2014 {captureRatio < 1 ? "below 1.0 = portfolio amplifies downside. Crypto drag." : "defensive characteristics."}</div>
+          </div>);
+        })()}
+      </Card>
+    </div>
   </div>);
 };
-
 // =========================================================================
 // TAB 4 — RISK ENGINE
 // =========================================================================
@@ -1294,146 +1270,131 @@ const T4 = ()=>{
   ];
   const volTrend=MONTHLY_DATA.filter(m=>m.vol!=null).map(m=>({d:m.m,vol:m.vol,dd:m.r}));
   return(<div>
-    <Hd t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis — all with interpretation" tag="RISK" ac={P.red}/>
-    <Row gap={10}>
-      <K l="Vol" v={`${RISK.vol}%`} s="Annualised" sm/><K l="Sharpe" v={RISK.sharpe.toFixed(2)} s="<0.5=poor" c={P.red} sm/>
-      <K l="Sortino" v={RISK.sortino.toFixed(2)} s="Downside-adj" c={P.amber} sm/><K l="Max DD" v={`${RISK.maxDD}%`} s={`${RISK.ddDur}d`} c={P.red} sm/>
-      <K l="VaR 95" v={`${RISK.var95}%`} s="Monthly" c={P.red} sm/><K l="CVaR" v={`${RISK.cvar95}%`} s="Shortfall" c={P.red} sm/>
-      <K l="Omega" v={RISK.omega.toFixed(2)} s=">1.0 OK" c={P.amber} sm/>
-    </Row>
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:8}}>COMPLETE RISK METRICS</div>
+    <Hd t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red}/>
+
+    {/* KPI ROW */}
+    <FlexRow gap={6} style={{marginBottom:14}}>
+      <K l="Vol" v={`${RISK.vol}%`} c={P.negative} sm delta="Annualised"/><K l="Sharpe" v={RISK.sharpe.toFixed(2)} c={RISK.sharpe>=0.5?P.positive:P.negative} sm delta="<0.5=poor"/>
+      <K l="Sortino" v={RISK.sortino.toFixed(2)} c={P.amber} sm delta="Downside-adj"/><K l="Max DD" v={`${RISK.maxDD}%`} c={P.negative} sm delta={`${RISK.ddDur}d`}/>
+      <K l="VaR 95" v={`${RISK.var95}%`} c={P.negative} sm delta="Monthly"/><K l="CVaR" v={`${RISK.cvar95}%`} c={P.negative} sm delta="Shortfall"/>
+      <K l="Omega" v={RISK.omega.toFixed(2)} c={P.amber} sm delta=">1.0 OK"/><K l="Beta" v={RISK.beta.toFixed(2)} c={P.t2} sm delta="vs MSCI"/>
+    </FlexRow>
+
+    {/* Risk metrics table (full width, Glass-1 for density) */}
+    <Card hover tier={1} style={{marginBottom:14}}>
+      <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>COMPLETE RISK METRICS</div>
       <Tbl h={["Metric","Value","Rating","Interpretation"]}
         r={[
-          ["Annualised Vol",`${RISK.vol}%`,"Elevated","Driven by 48% crypto vol on 13% weight — 2x pure equity"],
-          ["Sharpe Ratio",RISK.sharpe.toFixed(2),"Poor","Below 0.5 = insufficient compensation for risk taken"],
-          ["Sortino Ratio",RISK.sortino.toFixed(2),"Below avg","Downside vol heavily penalised by crypto drawdown"],
-          ["Calmar Ratio",RISK.calmar.toFixed(2),"Weak","Return/MaxDD — need >1.0 for institutional comfort"],
-          ["Omega Ratio",RISK.omega.toFixed(2),"Marginal","Just above 1.0 — gain/loss distribution nearly equal"],
-          ["Max Drawdown",`${RISK.maxDD}%`,"Moderate",`${RISK.ddDur} days and still in drawdown territory`],
-          ["Ulcer Index",RISK.ulcer.toFixed(1),"Stressed",">5 is stressful, >10 severe — at 8.2 this is uncomfortable"],
-          ["VaR 95%",`${RISK.var95}%`,"Elevated","5% chance of losing >3.8% in any month"],
-          ["CVaR 95%",`${RISK.cvar95}%`,"Elevated","When VaR breached, expect -6.2% average loss"],
-          ["Tail Ratio",RISK.tail.toFixed(2),"Borderline","<1.0 = fatter left tail — just below threshold"],
-          ["Gain-to-Pain",RISK.gtp.toFixed(2),"Marginal","Above 1.0 but barely — crypto dragging efficiency"],
-          ["Beta vs MSCI",RISK.beta.toFixed(2),"Defensive","0.68 = defensive tilt from cash/FD/pension allocation"],
-          ["Skewness",RISK.skew.toFixed(2),"Neg. skew","More large losses than gains at the tails"],
-          ["Kurtosis",RISK.kurt.toFixed(1),"Fat tails","5.4 vs normal 3.0 — extreme events more probable"],
+          ["Annualised Vol",`${RISK.vol}%`,"Elevated","Driven by 48% crypto vol on 13% weight"],
+          ["Sharpe Ratio",RISK.sharpe.toFixed(2),"Poor","Below 0.5 = insufficient risk compensation"],
+          ["Sortino Ratio",RISK.sortino.toFixed(2),"Below avg","Downside vol from crypto drawdown"],
+          ["Calmar Ratio",RISK.calmar.toFixed(2),"Weak","Return/MaxDD \u2014 need >1.0"],
+          ["Max Drawdown",`${RISK.maxDD}%`,"Moderate",`${RISK.ddDur} days, still in drawdown`],
+          ["VaR 95%",`${RISK.var95}%`,"Elevated","5% chance of >3.8% monthly loss"],
+          ["CVaR 95%",`${RISK.cvar95}%`,"Elevated","Expected -6.2% when VaR breached"],
+          ["Tail Ratio",RISK.tail.toFixed(2),"Borderline","<1.0 = fatter left tail"],
+          ["Skewness",RISK.skew.toFixed(2),"Neg. skew","More large losses than gains"],
+          ["Kurtosis",RISK.kurt.toFixed(1),"Fat tails","5.4 vs normal 3.0"],
         ]} hl={2}/>
     </Card>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>FACTOR EXPOSURE vs BENCHMARK</div>
-        <ResponsiveContainer width="100%" height={400}>
-          <RadarChart data={radar}><PolarGrid stroke="rgba(0,0,0,0.04)"/>
-            <PolarAngleAxis dataKey="factor" tick={{fill:P.t2,fontSize:13}}/>
-            <PolarRadiusAxis tick={{fill:P.t4,fontSize:11}} domain={[0,100]}/>
+
+    {/* Factor Radar + Risk vs Capital (side-by-side) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR EXPOSURE vs BENCHMARK</div>
+        <ResponsiveContainer width="100%" height={320}>
+          <RadarChart data={radar}><PolarGrid stroke="rgba(0,0,0,0.04)" gridType="polygon"/>
+            <PolarAngleAxis dataKey="factor" tick={{fill:P.t2,fontSize:11}}/>
+            <PolarRadiusAxis tick={{fill:P.t4,fontSize:9}} domain={[0,100]}/>
             <Radar name="Portfolio" dataKey="portfolio" stroke={P.cyan} fill={P.cyan} fillOpacity={0.12} strokeWidth={2.5}/>
             <Radar name="Benchmark" dataKey="benchmark" stroke={P.t4} fill="none" strokeWidth={1.5} strokeDasharray="4 4"/>
             <Tooltip/>
           </RadarChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>RISK vs CAPITAL CONTRIBUTION</div>
-        <ResponsiveContainer width="100%" height={400}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>RISK vs CAPITAL CONTRIBUTION</div>
+        <ResponsiveContainer width="100%" height={320}>
           <BarChart data={riskContrib} margin={{left:5}}>
             <CartesianGrid stroke={P.b2}/>
-            <XAxis dataKey="name" tick={{fill:P.t3,fontSize:12}}/>
-            <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
+            <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}}/>
+            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/>
             <Tooltip content={<Tip/>}/>
             <Bar dataKey="capital" name="Capital %" fill={P.cyan} fillOpacity={0.4} radius={[4,4,0,0]}/>
             <Bar dataKey="risk" name="Risk %" fill={P.red} fillOpacity={0.6} radius={[4,4,0,0]}/>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:13,color:P.t3,marginTop:6}}>Crypto: 13% capital → 32% risk. Equity: 28% capital → 28% risk (well balanced). Cash/FD: 16% capital → 2% risk (drag).</div>
+        <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital \u2192 32% risk (2.5x). Cash/FD: 16% capital \u2192 2% risk (drag).</div>
       </Card>
-    </Row>
-    <Row gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>ROLLING VOLATILITY & MONTHLY RETURN</div>
-        <ResponsiveContainer width="100%" height={360}>
+    </div>
+
+    {/* Vol Trend + Factor Table (side-by-side) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>ROLLING VOLATILITY & MONTHLY RETURN</div>
+        <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={volTrend}>
             <CartesianGrid stroke={P.b2}/>
-            <XAxis dataKey="d" tick={{fill:P.t3,fontSize:13}}/>
-            <YAxis yAxisId="l" tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
-            <YAxis yAxisId="r" orientation="right" tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`${v}%`}/>
+            <XAxis dataKey="d" tick={{fill:P.t3,fontSize:11}}/>
+            <YAxis yAxisId="l" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/>
+            <YAxis yAxisId="r" orientation="right" tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`}/>
             <Tooltip content={<Tip/>}/>
-            <Bar yAxisId="r" dataKey="dd" name="Monthly Return %" radius={[4,4,0,0]}>{volTrend.map((d,i)=><Cell key={i} fill={d.dd>=0?P.cyan:P.red} fillOpacity={0.6}/>)}</Bar>
-            <Line yAxisId="l" type="monotone" dataKey="vol" name="Rolling Vol %" stroke={P.amber} strokeWidth={2.5} dot={{fill:P.amber,r:4}}/>
+            <Bar yAxisId="r" dataKey="dd" name="Monthly Ret %" radius={[3,3,0,0]}>{volTrend.map((d,i)=><Cell key={i} fill={d.dd>=0?P.cyan:P.red} fillOpacity={0.6}/>)}</Bar>
+            <Line yAxisId="l" type="monotone" dataKey="vol" name="Rolling Vol %" stroke={P.amber} strokeWidth={2.5} dot={{fill:P.amber,r:3}}/>
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:10}}>FACTOR ATTRIBUTION TABLE</div>
+      <Card hover tier={1}>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR ATTRIBUTION TABLE</div>
         <Tbl h={["Factor","Port","Bench","Intent","Ret%","Risk%"]}
           r={FACTORS.map(f=>[f.f,`${f.p}`,`${f.b}`,f.intent,`${f.ret>0?"+":""}${f.ret}%`,`${f.risk}%`])} hl={4}/>
-        <div style={{fontSize:13,color:P.t3,marginTop:8}}>Crypto Beta is the dominant uncompensated risk: 32% of risk, -8.4% return contribution. Equity beta and UK domestic are the only compensated factor bets this period.</div>
+        <div style={{fontSize:11,color:P.t3,marginTop:6}}>Crypto Beta: 32% risk, -8.4% return. Only equity beta and UK domestic are compensated.</div>
       </Card>
-    </Row>
-    {/* SPRINT 2: Risk Budget Utilisation — allocated vs consumed per sleeve */}
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:14}}>Risk contribution as a multiple of capital weight. Above 1.5x = overconsuming risk budget. Below 0.5x = capital drag.</div>
-      <div style={{display:"grid",gap:10}}>
-        {riskContrib.map((rc,i)=>{
-          const ratio = rc.capital > 0 ? (rc.risk / rc.capital) : 0;
-          const barC = ratio > 2.0 ? P.red : ratio > 1.5 ? P.amber : ratio > 0.5 ? P.green : P.t4;
-          const label = ratio > 2.0 ? "OVER-BUDGET" : ratio > 1.5 ? "ELEVATED" : ratio > 0.5 ? "BALANCED" : "DRAG";
-          return (
-            <div key={i} style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:80,fontSize:13,color:P.t2,fontWeight:600,textAlign:"right"}}>{rc.name}</div>
-              <div style={{flex:1,height:14,background:"rgba(0,0,0,0.04)",borderRadius:7,overflow:"hidden",position:"relative"}}>
-                <div style={{width:`${Math.min(ratio/3*100,100)}%`,height:"100%",background:`linear-gradient(90deg,${barC}cc,${barC}60)`,borderRadius:7,transition:"width 0.6s"}}/>
-                <div style={{position:"absolute",left:"33.3%",top:0,bottom:0,width:1,background:"rgba(0,0,0,0.08)"}}/>
-                <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:"rgba(0,0,0,0.06)",borderStyle:"dashed"}}/>
+    </div>
+
+    {/* Risk Budget + Correlation (side-by-side) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag.</div>
+        <div style={{display:"grid",gap:8}}>
+          {riskContrib.map((rc,i)=>{
+            const ratio = rc.capital > 0 ? (rc.risk / rc.capital) : 0;
+            const barC = ratio > 2.0 ? P.red : ratio > 1.5 ? P.amber : ratio > 0.5 ? P.green : P.t4;
+            const label = ratio > 2.0 ? "OVER" : ratio > 1.5 ? "HIGH" : ratio > 0.5 ? "OK" : "DRAG";
+            return (
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:70,fontSize:11,color:P.t2,fontWeight:600,textAlign:"right"}}>{rc.name}</div>
+                <div style={{flex:1,height:12,background:"rgba(0,0,0,0.04)",borderRadius:6,overflow:"hidden"}}>
+                  <div style={{width:`${Math.min(ratio/3*100,100)}%`,height:"100%",background:`linear-gradient(90deg,${barC}cc,${barC}60)`,borderRadius:6}}/>
+                </div>
+                <div style={{width:35,fontSize:12,fontWeight:800,color:barC,fontFamily:P.mono,textAlign:"right"}}>{ratio.toFixed(1)}x</div>
+                <div style={{width:40,fontSize:9,color:barC,fontWeight:700,padding:"2px 4px",background:`${barC}12`,borderRadius:4,textAlign:"center"}}>{label}</div>
               </div>
-              <div style={{width:45,fontSize:14,fontWeight:800,color:barC,fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>{ratio.toFixed(1)}x</div>
-              <div style={{width:75,fontSize:10,color:barC,fontWeight:700,padding:"2px 6px",background:`${barC}12`,borderRadius:4,textAlign:"center"}}>{label}</div>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{fontSize:12,color:P.t3,marginTop:10}}>Crypto at 2.5x is consuming risk at 2.5 times its capital allocation. Cash/FD at 0.1x is dead capital contributing almost no risk but absorbing 16% of the portfolio.</div>
-    </Card>
-    {/* SPRINT 3 #21: Correlation Matrix — cross-asset diversification analysis */}
-    <Card hover>
-      <div style={{fontSize:15,fontWeight:700,color:P.t1,marginBottom:4}}>CROSS-ASSET CORRELATION MATRIX</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Estimated pairwise correlations between portfolio sleeves. Low or negative correlations provide genuine diversification benefit. Data from proxy benchmarks, updated quarterly.</div>
-      {(()=>{
-        const corrData = REF_DATA?.correlation_matrix || {sleeves:["Equity","Crypto","Pension","Cash/FD","ZAR","Other"],matrix:[[1,0.52,0.8,-0.15,0.35,0.6],[0.52,1,0.3,-0.05,0.25,0.2],[0.8,0.3,1,-0.1,0.25,0.5],[-0.15,-0.05,-0.1,1,0.05,-0.1],[0.35,0.25,0.25,0.05,1,0.4],[0.6,0.2,0.5,-0.1,0.4,1]]};
-        const sleeves = corrData.sleeves;
-        const matrix = corrData.matrix;
-        const cellBg = (v) => {
-          if(v >= 0.7) return "rgba(239,68,68,0.25)";
-          if(v >= 0.4) return "rgba(251,191,36,0.15)";
-          if(v >= 0) return "rgba(0,0,0,0.03)";
-          return "rgba(34,197,94,0.15)";
-        };
-        const cellC = (v) => v >= 0.7 ? P.red : v >= 0.4 ? P.amber : v < 0 ? P.green : P.t2;
-        return(
-          <div style={{overflowX:"auto"}}>
-            <div style={{display:"grid",gridTemplateColumns:`80px repeat(${sleeves.length},1fr)`,gap:2,fontSize:11}}>
-              <div/>
-              {sleeves.map((s,i)=><div key={i} style={{padding:6,fontWeight:700,color:P.t2,textAlign:"center",fontSize:10}}>{s}</div>)}
-              {sleeves.map((row,ri)=><>
-                <div key={`l${ri}`} style={{padding:6,fontWeight:600,color:P.t2,fontSize:11,display:"flex",alignItems:"center"}}>{row}</div>
-                {matrix[ri].map((v,ci)=>(
-                  <div key={`${ri}-${ci}`} style={{padding:"10px 4px",textAlign:"center",background:ri===ci?"rgba(99,102,241,0.10)":cellBg(v),borderRadius:6,fontWeight:ri===ci?800:700,color:ri===ci?P.indigo:cellC(v),fontFamily:"'JetBrains Mono',monospace",fontSize:ri===ci?13:12}}>
-                    {ri===ci?"1.00":v.toFixed(2)}
-                  </div>
-                ))}
-              </>)}
-            </div>
-          </div>
-        );
-      })()}
-      <div style={{fontSize:12,color:P.t3,marginTop:10}}>Key insight: Equity-Crypto correlation of 0.52 means crypto provides less diversification than perceived. Cash/FD is the only true diversifier (negative correlation to everything). Equity-Pension at 0.80 is expected as pension is ~80% equity.</div>
-    </Card>
-    <Ins type="risk" text={`Portfolio Sharpe of ${RISK.sharpe} is below any institutional minimum. Excluding crypto, the equity sleeve estimated Sharpe is 0.9-1.1 — demonstrating that crypto allocation alone is destroying portfolio-level risk efficiency. Skewness of ${RISK.skew} with kurtosis of ${RISK.kurt} confirms fatter left tails and higher-than-normal probability of extreme events. The risk budget is dominated by a single asset class that has delivered negative returns.`}/>
+            );
+          })}
+        </div>
+      </Card>
+      <Card hover>
+        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>CROSS-ASSET CORRELATION</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:8}}>Pairwise correlations. Low/negative = genuine diversification.</div>
+        {(()=>{
+          const corrData = REF_DATA?.correlation_matrix || {sleeves:["Equity","Crypto","Pension","Cash/FD","ZAR","Other"],matrix:[[1,0.52,0.8,-0.15,0.35,0.6],[0.52,1,0.3,-0.05,0.25,0.2],[0.8,0.3,1,-0.1,0.25,0.5],[-0.15,-0.05,-0.1,1,0.05,-0.1],[0.35,0.25,0.25,0.05,1,0.4],[0.6,0.2,0.5,-0.1,0.4,1]]};
+          const sl = corrData.sleeves; const mx = corrData.matrix;
+          const cellBg = (v) => v >= 0.7 ? "rgba(239,68,68,0.25)" : v >= 0.4 ? "rgba(251,191,36,0.15)" : v < 0 ? "rgba(34,197,94,0.15)" : "rgba(0,0,0,0.03)";
+          const cellC = (v) => v >= 0.7 ? P.red : v >= 0.4 ? P.amber : v < 0 ? P.green : P.t2;
+          return(<div style={{display:"grid",gridTemplateColumns:`70px repeat(${sl.length},1fr)`,gap:2,fontSize:10}}>
+            <div/>{sl.map((s,i)=><div key={i} style={{padding:4,fontWeight:700,color:P.t3,textAlign:"center",fontSize:9}}>{s}</div>)}
+            {sl.map((row,ri)=><>{[<div key={`l${ri}`} style={{padding:4,fontWeight:600,color:P.t2,fontSize:10,display:"flex",alignItems:"center"}}>{row}</div>,...mx[ri].map((v,ci)=><div key={`${ri}-${ci}`} style={{padding:"8px 3px",textAlign:"center",background:ri===ci?"rgba(99,102,241,0.10)":cellBg(v),borderRadius:5,fontWeight:ri===ci?800:700,color:ri===ci?P.indigo:cellC(v),fontFamily:P.mono,fontSize:ri===ci?11:10}}>{ri===ci?"1.00":v.toFixed(2)}</div>)]}</>)}
+          </div>);
+        })()}
+        <div style={{fontSize:11,color:P.t3,marginTop:6}}>Equity-Crypto 0.52 = less diversification than perceived. Cash/FD is the only true diversifier.</div>
+      </Card>
+    </div>
+
+    <Ins type="risk" text={`Sharpe of ${RISK.sharpe} is below institutional minimums. Excluding crypto, equity sleeve Sharpe is ~0.9-1.1. Skewness ${RISK.skew} + kurtosis ${RISK.kurt} = fat left tails. Risk budget dominated by a single asset class delivering negative returns.`}/>
   </div>);
 };
-
 // =========================================================================
 // TAB 5 — STRESS TESTS
 // =========================================================================
