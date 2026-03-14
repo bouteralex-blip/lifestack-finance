@@ -1,0 +1,90 @@
+﻿<!-- Liquid glass surface: structure-first, effect-second -->
+<div class="glass">
+  <div class="glass__shell"></div>      <!-- outer shell: border + highlight -->
+  <div class="glass__plate"></div>      <!-- inner plate: scrim under content -->
+  <div class="glass__content">
+    <!-- text, icons, controls -->
+  </div>
+  <div class="glass__state"></div>      <!-- focus ring / error outline / pressed overlay -->
+</div>
+
+
+/* Base container */
+.glass {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+
+/* Outer shell: edges, thickness cues, highlight discipline */
+.glass__shell {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+
+  /* edge discipline */
+  border: 1px solid rgba(0,0,0,.08);
+
+
+  /* highlight band, locked light direction */
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,.55),
+    rgba(255,255,255,0) 40%
+  );
+
+
+  /* optional: inner stroke hint via inset shadow */
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.22);
+  pointer-events: none;
+}
+
+
+/* Optional blur effect: degrade gracefully if unsupported */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass__shell {
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+    backdrop-filter: blur(18px) saturate(1.1);
+  }
+}
+
+
+/* Inner plate: the real readability guarantee */
+.glass__plate {
+  position: absolute;
+  inset: 10px; /* controls “plate coverage” */
+  border-radius: calc(16px - 10px);
+  background: rgba(255,255,255,.42); /* tier-dependent */
+  pointer-events: none;
+}
+
+
+/* Content sits above plate */
+.glass__content {
+  position: relative;
+  padding: 16px;
+}
+
+
+/* States live above the material cues */
+.glass__state {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+
+/* Example: focus as independent ring (not inside blur) */
+.glass.is-focus .glass__state {
+  box-shadow: 0 0 0 2px rgba(60,130,255,.9);
+}
+
+
+/* Example tiers: scale plate first, not whole surface */
+.glass.tier-1 .glass__plate { background: rgba(255,255,255,.55); }
+.glass.tier-2 .glass__plate { background: rgba(255,255,255,.42); }
+.glass.tier-3 .glass__plate { background: rgba(255,255,255,.30); }
