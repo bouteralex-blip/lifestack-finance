@@ -11,32 +11,36 @@ const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 // Pure visual reskin of v5.4 — zero data/analytics changes
 // =========================================================================
 
-// --- PALETTE: Dark mode — Teal/Green wallpaper accent system ---
+// --- PALETTE: Deep Navy-Teal Spectrum (Pinterest #05161A → #0F969C → #6DA5C0) ---
 const P = {
-  bg:"#0a1628",
-  cyan:"#6366f1",cyanD:"rgba(99,102,241,0.10)",cyanG:"rgba(99,102,241,0.04)",
-  indigo:"#818cf8",indigoD:"rgba(129,140,248,0.10)",
+  bg:"#05161A",
+  // Primary accent — bright teal from Pinterest swatch #4
+  cyan:"#0F969C",cyanD:"rgba(15,150,156,0.12)",cyanG:"rgba(15,150,156,0.05)",
+  // Secondary — light blue-teal from Pinterest swatch #5
+  indigo:"#6DA5C0",indigoD:"rgba(109,165,192,0.12)",
   amber:"#f59e0b",amberD:"rgba(245,158,11,0.08)",
   red:"#ef4444",redD:"rgba(239,68,68,0.08)",
   green:"#22c55e",greenD:"rgba(34,197,94,0.08)",
   purple:"#a855f7",orange:"#fb923c",btc:"#f7931a",pink:"#ec4899",
-  teal:"#14b8a6",sky:"#0ea5e9",
-  positive:"#14b8a6",negative:"#f43f5e",
-  // Dark mode typography — bright on dark
-  t1:"#f1f5f9",t2:"#cbd5e1",t3:"#94a3b8",t4:"rgba(255,255,255,0.55)",t5:"rgba(255,255,255,0.35)",
-  // Border / separator system — light on dark
-  b1:"rgba(255,255,255,0.08)",b2:"rgba(255,255,255,0.05)",b3:"rgba(255,255,255,0.03)",
+  teal:"#0F969C",sky:"#6DA5C0",
+  positive:"#0F969C",negative:"#f43f5e",
+  // Typography — slightly warmer whites on teal-dark
+  t1:"#e8f4f5",t2:"#b0cdd4",t3:"#7a9da6",t4:"rgba(255,255,255,0.55)",t5:"rgba(255,255,255,0.35)",
+  // Border / separator system
+  b1:"rgba(15,150,156,0.18)",b2:"rgba(15,150,156,0.10)",b3:"rgba(15,150,156,0.05)",
   mono:"'JetBrains Mono','SF Mono','Cascadia Code',monospace",
-  accentFinance:"#f59e0b",
+  accentFinance:"#0F969C",
+  // Pinterest teal depth layers (for layered luxury effect)
+  l0:"#05161A",l1:"#072E33",l2:"#0C7075",l3:"#0F969C",l4:"#6DA5C0",l5:"#294D61",
 };
 
-// --- MATERIAL TILE STYLES: Solid gradient accent cards (no glass) ---
+// --- MATERIAL TILE STYLES: Solid gradient accent cards — teal-navy spectrum ---
 const MAT = {
-  teal:{background:'linear-gradient(135deg, #0d9488, #065f46)',boxShadow:'0 8px 32px rgba(13,148,136,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
-  indigo:{background:'linear-gradient(135deg, #4f46e5, #3730a3)',boxShadow:'0 8px 32px rgba(79,70,229,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(15,150,156,0.30)',borderRadius:14,border:'1px solid rgba(15,150,156,0.35)'},
+  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(109,165,192,0.20)',borderRadius:14,border:'1px solid rgba(109,165,192,0.25)'},
   amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
-  red:{background:'linear-gradient(135deg, #dc2626, #991b1b)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
-  dark:{background:'linear-gradient(135deg, #1e293b, #0f172a)',boxShadow:'0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.08)',borderRadius:14,border:'1px solid rgba(255,255,255,0.10)'},
+  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 0 0 1px rgba(15,150,156,0.18)',borderRadius:14,border:'1px solid rgba(15,150,156,0.20)'},
 };
 
 // --- LIQUID GLASS SYSTEM: True refraction over teal/green wallpaper ---
@@ -48,45 +52,47 @@ const GLASS_BASE = {
   padding: 18,
 };
 
-// Dark glass plates over vibrant wallpaper — wallpaper bends through
-// Reduced plate opacity for wallpaper visibility + stronger specular highlights for glossy feel
-// SVG feTurbulence + feDisplacementMap refraction applied via url(#glass-refract) in backdrop-filter
+// Dark teal-navy glass plates over wallpaper — teal spectrum bends through
+// Pinterest palette: #05161A (deep) → #072E33 (surface) → #0C7075 (mid) → #0F969C (accent)
+// Teal-tinted borders + warm glass sheen for luxury depth
 const glassLight = (tier=2) => {
-  const plate = tier===1 ? 'rgba(15,23,42,0.58)' : tier===3 ? 'rgba(15,23,42,0.32)' : 'rgba(15,23,42,0.48)';
-  const blur = tier===1 ? 28 : tier===3 ? 10 : 22;
-  const sat = tier===1 ? 1.9 : tier===3 ? 1.4 : 1.6;
-  const specular = tier===1 ? 0.18 : tier===3 ? 0.10 : 0.14;
-  const sheen = tier===3 ? 0.10 : tier===1 ? 0.08 : 0.07;
+  const plate = tier===1 ? 'rgba(7,46,51,0.72)' : tier===3 ? 'rgba(5,22,26,0.35)' : 'rgba(7,46,51,0.58)';
+  const blur = tier===1 ? 30 : tier===3 ? 12 : 24;
+  const sat = tier===1 ? 2.0 : tier===3 ? 1.4 : 1.7;
+  const specular = tier===1 ? 0.22 : tier===3 ? 0.12 : 0.16;
+  const sheen = tier===3 ? 0.11 : tier===1 ? 0.09 : 0.07;
+  const bdr = tier===1 ? 'rgba(15,150,156,0.32)' : tier===3 ? 'rgba(15,150,156,0.10)' : 'rgba(15,150,156,0.22)';
   return {
     background: plate,
     backdropFilter:`blur(${blur}px) saturate(${sat}) url(#glass-refract)`,
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
-    border:`1px solid rgba(255,255,255,${tier===1?0.16:tier===3?0.08:0.12})`,
+    border:`1px solid ${bdr}`,
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 16px 48px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 -1px 0 rgba(255,255,255,0.04)`,
-    backgroundImage:`linear-gradient(145deg, rgba(255,255,255,${sheen}) 0%, rgba(255,255,255,0.02) 40%, transparent 60%, rgba(255,255,255,0.03) 100%)`,
+    boxShadow:`0 20px 56px rgba(0,0,0,0.45), 0 4px 16px rgba(5,22,26,0.35), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 0 0 1px rgba(15,150,156,0.06), inset 0 -1px 0 rgba(255,255,255,0.03)`,
+    backgroundImage:`linear-gradient(145deg, rgba(255,255,255,${sheen}) 0%, rgba(15,150,156,0.04) 35%, transparent 60%, rgba(255,255,255,0.03) 100%)`,
   };
 };
 const G = glassLight(2);
 const G1 = glassLight(1);
 const G3 = glassLight(3);
 const GS = {
-  background:"rgba(15,23,42,0.88)",
-  backdropFilter:"blur(28px) saturate(1.4)",WebkitBackdropFilter:"blur(28px) saturate(1.4)",
-  border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,
-  boxShadow:"0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.03)",
-  backgroundImage:"linear-gradient(145deg, rgba(255,255,255,0.06), transparent 50%)",
+  background:"rgba(7,46,51,0.92)",
+  backdropFilter:"blur(30px) saturate(1.6)",WebkitBackdropFilter:"blur(30px) saturate(1.6)",
+  border:"1px solid rgba(15,150,156,0.28)",borderRadius:14,
+  boxShadow:"0 14px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 0 0 1px rgba(15,150,156,0.08), inset 0 -1px 0 rgba(255,255,255,0.03)",
+  backgroundImage:"linear-gradient(145deg, rgba(255,255,255,0.08), rgba(15,150,156,0.04) 40%, transparent 60%)",
 };
-// Panel header banner style — dark opaque strip with bold white text
+// Panel header banner — deep teal-dark strip, teal accent shimmer
 const HEADER_BANNER = {
-  background:'rgba(10,16,32,0.78)',padding:'10px 16px',borderRadius:'14px 14px 0 0',
+  background:'linear-gradient(90deg, rgba(5,22,26,0.92), rgba(7,46,51,0.80) 70%)',
+  padding:'10px 16px',borderRadius:'14px 14px 0 0',
   marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
-  backgroundImage:'linear-gradient(90deg, rgba(255,255,255,0.03), transparent 70%)',
-  borderBottom:'1px solid rgba(255,255,255,0.06)',
+  backgroundImage:'linear-gradient(90deg, rgba(15,150,156,0.10), transparent 70%)',
+  borderBottom:'1px solid rgba(15,150,156,0.16)',
 };
-const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#fff',letterSpacing:1.5,textTransform:'uppercase'};
-const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.45)',marginTop:1};
-const HEADER_DOTS = {fontSize:16,color:'rgba(255,255,255,0.35)',cursor:'pointer',letterSpacing:2};
+const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#e8f4f5',letterSpacing:1.5,textTransform:'uppercase'};
+const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(232,244,245,0.45)',marginTop:1};
+const HEADER_DOTS = {fontSize:16,color:'rgba(255,255,255,0.30)',cursor:'pointer',letterSpacing:2};
 let PORT = {
   date:"7 March 2026",age:32,
   netWorth:362072, assets:375670, debts:13598,
@@ -465,24 +471,87 @@ const GlassCard = (props) => <Card {...props} />;
 const KpiTile = (props) => <K {...props} />;
 const SectionHeader = (props) => <Hd {...props} />;
 const InsightCallout = (props) => <Ins {...props} />;
-const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,...cardProps}) => (
-  <GlassCard hover tier={tier} {...cardProps} style={{...cardProps.style,padding:0}}>
-    {(title||metric) && <div style={{...HEADER_BANNER}}>
-      <div>
-        {title && <div style={{...HEADER_TITLE}}>{title}</div>}
-        {subtitle && <div style={{...HEADER_SUB}}>{subtitle}</div>}
-      </div>
-      <div style={{display:'flex',alignItems:'center',gap:10}}>
-        {metric && <div style={{fontSize:18,fontWeight:800,color:metricColor||P.cyan,fontFamily:P.mono,letterSpacing:-0.5}}>{metric}</div>}
-        <span style={{...HEADER_DOTS}}>{"\u2022\u2022\u2022"}</span>
-      </div>
-    </div>}
-    <div style={{padding:GLASS_BASE.padding}}>
-      {children}
-      {takeaway && <div style={{fontSize:10,fontStyle:'italic',color:'rgba(255,255,255,0.38)',borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:6,marginTop:10,lineHeight:1.5}}>{takeaway}</div>}
+
+// ── Chip ─ Interactive glass pill badge (image-1 style highlights) ──────────
+const Chip = ({label,value,color,icon,onClick}) => {
+  color = color||P.cyan;
+  const [hov,setHov]=useState(false);
+  return (
+    <div onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:999,
+        cursor:onClick?'pointer':'default',userSelect:'none',
+        background:hov?`${color}28`:`${color}14`,
+        border:`1px solid ${hov?color+'55':color+'28'}`,
+        backdropFilter:'blur(12px) saturate(1.3)',WebkitBackdropFilter:'blur(12px) saturate(1.3)',
+        boxShadow:hov?`0 0 14px ${color}30, inset 0 1px 0 rgba(255,255,255,0.14)`:`inset 0 1px 0 rgba(255,255,255,0.08)`,
+        transition:'all 0.18s ease',
+      }}>
+      {icon&&<span style={{fontSize:9}}>{icon}</span>}
+      {label&&<span style={{fontSize:9,color:'rgba(255,255,255,0.50)',fontWeight:700,letterSpacing:0.6,textTransform:'uppercase'}}>{label}</span>}
+      {value&&<span style={{fontSize:11,color,fontWeight:800,fontFamily:P.mono}}>{value}</span>}
     </div>
-  </GlassCard>
-);
+  );
+};
+
+// ── GlassAction ─ Small interactive glass button for tile action bars ────────
+const GlassAction = ({icon,label,onClick,color}) => {
+  color = color||P.t3;
+  const [hov,setHov]=useState(false);
+  return (
+    <button onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{display:'inline-flex',alignItems:'center',gap:4,padding:'5px 10px',
+        background:hov?'rgba(15,150,156,0.18)':'rgba(255,255,255,0.05)',
+        border:`1px solid ${hov?'rgba(15,150,156,0.45)':'rgba(255,255,255,0.10)'}`,
+        borderRadius:8,cursor:'pointer',color:hov?P.cyan:color,fontSize:11,fontWeight:600,
+        transition:'all 0.15s ease',backdropFilter:'blur(8px)',
+        boxShadow:hov?'0 4px 14px rgba(15,150,156,0.20)':'none',fontFamily:'inherit',
+      }}>
+      {icon}{label&&<span style={{fontSize:9,letterSpacing:0.5,textTransform:'uppercase'}}>{label}</span>}
+    </button>
+  );
+};
+
+// ── PanelShell ─ Core tile wrapper: SM/MD/LG sizes, shimmer, chips, takeaway ─
+const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,size='md',chips,badge,...cardProps}) => {
+  const [expanded,setExpanded]=useState(true);
+  const cfg = size==='sm'
+    ? {pad:12,titleSz:11,hpad:'7px 13px',accentH:1.5}
+    : size==='lg'
+    ? {pad:22,titleSz:14,hpad:'12px 20px',accentH:2.5}
+    : {pad:18,titleSz:13,hpad:'10px 16px',accentH:2};
+  const ac = metricColor||P.cyan;
+  return (
+    <GlassCard hover tier={tier} {...cardProps} style={{...cardProps.style,padding:0}}>
+      {/* Top glass shimmer highlight — bright edge like image 1 */}
+      <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.20) 32%,${ac}60 50%,rgba(255,255,255,0.20) 68%,transparent 92%)`,borderRadius:'14px 14px 0 0',flexShrink:0}}/>
+      {(title||metric||badge) && <div style={{...HEADER_BANNER,padding:cfg.hpad}}>
+        <div style={{flex:1}}>
+          {title && <div style={{...HEADER_TITLE,fontSize:cfg.titleSz}}>{title}</div>}
+          {subtitle && <div style={{...HEADER_SUB}}>{subtitle}</div>}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {(metric||badge) && <div style={{fontSize:size==='sm'?15:18,fontWeight:800,color:ac,fontFamily:P.mono,letterSpacing:-0.5}}>{metric||badge}</div>}
+          <button onClick={()=>setExpanded(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',
+            color:'rgba(255,255,255,0.28)',fontSize:11,padding:'2px 4px',lineHeight:1,fontFamily:'inherit',
+            transition:'transform 0.2s ease',transform:expanded?'rotate(0deg)':'rotate(-90deg)'}}>▾</button>
+        </div>
+      </div>}
+      {/* Teal accent line under header */}
+      {(title||metric||badge) && <div style={{height:cfg.accentH,background:`linear-gradient(90deg,${ac}80,${ac}35 50%,transparent)`,flexShrink:0}}/>}
+      {expanded && <div style={{padding:cfg.pad}}>
+        {chips?.length>0 && <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:10}}>{chips.map((ch,i)=><Chip key={i} {...ch}/>)}</div>}
+        {children}
+        {takeaway && <div style={{marginTop:11,padding:'9px 13px',borderRadius:10,
+          background:'linear-gradient(135deg,rgba(15,150,156,0.13),rgba(5,22,26,0.60))',
+          border:'1px solid rgba(15,150,156,0.22)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',
+        }}>
+          <div style={{fontSize:9,fontWeight:800,color:ac,letterSpacing:1.2,textTransform:'uppercase',marginBottom:2}}>TAKEAWAY</div>
+          <div style={{fontSize:11,color:'rgba(232,244,245,0.65)',lineHeight:1.65}}>{takeaway}</div>
+        </div>}
+      </div>}
+    </GlassCard>
+  );
+};
 
 const Tbl = ({h,r,hl}) => (
   <div style={{overflowX:"auto",borderRadius:14,border:'1px solid rgba(255,255,255,0.08)',background:"rgba(15,23,42,0.50)",boxShadow:'0 8px 32px rgba(0,0,0,0.30)'}}>
@@ -570,8 +639,8 @@ const PeriodSelector = ({periods=['1M','3M','6M','YTD','1Y','ALL'],active='6M',o
       <button key={p} onClick={()=>onChange&&onChange(p)} style={{
         padding:'5px 12px',borderRadius:8,border:'none',cursor:'pointer',
         fontSize:10,fontWeight:700,letterSpacing:0.5,
-        background:p===active?'rgba(20,184,166,0.25)':'transparent',
-        color:p===active?P.cyan:'rgba(255,255,255,0.4)',
+        background:p===active?'rgba(15,150,156,0.22)':'transparent',
+        color:p===active?P.cyan:'rgba(232,244,245,0.38)',
         transition:'all 0.15s ease',
       }}>{p}</button>
     ))}
@@ -4031,12 +4100,12 @@ export default function PortfolioVOS(){
   const [showMenu,setShowMenu]=useState(false);
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:`linear-gradient(135deg, #0f3d36 0%, #145c4e 15%, #12534a 25%, #0e4440 35%, #156455 45%, #18705e 55%, #145c4e 65%, #0c3a35 75%, #156050 85%, #0f3d36 100%)`,
+      background:`linear-gradient(160deg, #05161A 0%, #072E33 18%, #0A3040 30%, #072E33 44%, #05161A 56%, #091F28 70%, #072E33 82%, #05161A 100%)`,
       backgroundAttachment:'fixed',
     }}>
-      {/* Animated wallpaper overlay for teal/green wave depth */}
+      {/* Deep teal depth layers — Pinterest swatch spectrum */}
       <div style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',
-        background:'radial-gradient(ellipse at 30% 20%, rgba(13,148,136,0.40) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(6,128,90,0.45) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(20,184,166,0.30) 0%, transparent 40%), radial-gradient(ellipse at 20% 70%, rgba(16,120,80,0.40) 0%, transparent 45%), radial-gradient(ellipse at 85% 30%, rgba(20,184,166,0.20) 0%, transparent 35%)',
+        background:'radial-gradient(ellipse at 25% 15%, rgba(15,150,156,0.28) 0%, transparent 45%), radial-gradient(ellipse at 78% 65%, rgba(12,112,117,0.32) 0%, transparent 50%), radial-gradient(ellipse at 52% 88%, rgba(109,165,192,0.12) 0%, transparent 40%), radial-gradient(ellipse at 12% 78%, rgba(41,77,97,0.30) 0%, transparent 45%), radial-gradient(ellipse at 90% 22%, rgba(15,150,156,0.16) 0%, transparent 35%), radial-gradient(ellipse at 50% 45%, rgba(7,46,51,0.55) 0%, transparent 60%)',
       }}/>
       {/* SVG refraction filter for glass elements */}
       <svg style={{position:'absolute',width:0,height:0}} aria-hidden="true">
@@ -4059,62 +4128,64 @@ export default function PortfolioVOS(){
           </filter>
         </defs>
       </svg>
-      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes glassSheen{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}html{scroll-behavior:smooth}`}</style>
-      {/* Top header bar — frosted glass */}
-      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(32px) saturate(1.8) url(#glass-refract)',WebkitBackdropFilter:'blur(32px) saturate(1.8)',background:'rgba(10,16,32,0.60)',boxShadow:'0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10)',backgroundImage:'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 50%)',pointerEvents:'none'}}/>
+      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(15,150,156,0.30);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:rgba(15,150,156,0.55)}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes glassSheen{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}@keyframes tealPulse{0%,100%{opacity:0.7}50%{opacity:1}}html{scroll-behavior:smooth}`}</style>
+      {/* Top header bar — deep teal frosted glass */}
+      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(15,150,156,0.20)"}}>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(36px) saturate(2.0) url(#glass-refract)',WebkitBackdropFilter:'blur(36px) saturate(2.0)',background:'rgba(5,22,26,0.80)',boxShadow:'0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(15,150,156,0.22), inset 0 -1px 0 rgba(15,150,156,0.08)',backgroundImage:'linear-gradient(180deg, rgba(15,150,156,0.08), transparent 60%)',pointerEvents:'none'}}/>
+        {/* Teal shimmer line at very top of header */}
+        <div style={{position:'absolute',top:0,left:0,right:0,height:1,background:'linear-gradient(90deg,transparent 5%,rgba(15,150,156,0.60) 30%,rgba(109,165,192,0.80) 50%,rgba(15,150,156,0.60) 70%,transparent 95%)',zIndex:2}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0d9488,#065f46)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 12px rgba(13,148,136,0.4)'}}>LS</div>
+            <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0F969C,#072E33)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 16px rgba(15,150,156,0.50), inset 0 1px 0 rgba(255,255,255,0.20)'}}>LS</div>
             <div>
-              <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#14b8a6',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
-              <div style={{fontSize:10,color:'rgba(255,255,255,0.45)'}}>Institutional Review — {source==="supabase"?<span style={{color:'#4ade80'}}>{"●"} Live Data</span>:<span>Real Data</span>}</div>
+              <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#0F969C',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
+              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}</div>
             </div>
           </div>
           {/* Search + Notifications + Account */}
           <div style={{display:'flex',alignItems:'center',gap:14}}>
-            <div style={{position:'relative',display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.06)',borderRadius:9999,padding:'6px 14px',border:'1px solid rgba(255,255,255,0.08)'}}>
-              <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>Search metrics...</span>
+            <div style={{position:'relative',display:'flex',alignItems:'center',gap:6,background:'rgba(7,46,51,0.70)',borderRadius:9999,padding:'6px 16px',border:'1px solid rgba(15,150,156,0.22)',backdropFilter:'blur(12px)'}}>
+              <span style={{fontSize:11,color:'rgba(232,244,245,0.30)'}}>Search metrics...</span>
             </div>
             <div style={{position:'relative',cursor:'pointer'}} title="Notifications">
-              <span style={{fontSize:16,color:'rgba(255,255,255,0.5)'}}>&#128276;</span>
-              <div style={{position:'absolute',top:-2,right:-2,width:8,height:8,borderRadius:'50%',background:P.red,border:'2px solid rgba(10,16,32,0.9)'}}/>
+              <span style={{fontSize:16,color:'rgba(232,244,245,0.45)'}}>&#128276;</span>
+              <div style={{position:'absolute',top:-2,right:-2,width:8,height:8,borderRadius:'50%',background:P.red,border:'2px solid rgba(5,22,26,0.9)'}}/>
             </div>
             <div style={{position:'relative'}}>
               <div onClick={()=>setShowMenu(!showMenu)} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-                <div style={{width:28,height:28,borderRadius:10,background:'linear-gradient(135deg,#0d9488,#14b8a6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:11,fontWeight:800}}>A</div>
+                <div style={{width:28,height:28,borderRadius:10,background:'linear-gradient(135deg,#0F969C,#0C7075)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:11,fontWeight:800,boxShadow:'0 2px 10px rgba(15,150,156,0.40)'}}>A</div>
                 <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:11,color:'#f1f5f9',fontWeight:600}}>A. Bouter</div>
-                  <div style={{fontSize:9,color:'rgba(255,255,255,0.40)'}}>{PORT.date} · NW {fmt(PORT.netWorth)}</div>
+                  <div style={{fontSize:11,color:'#e8f4f5',fontWeight:600}}>A. Bouter</div>
+                  <div style={{fontSize:9,color:'rgba(232,244,245,0.38)'}}>{PORT.date} · NW {fmt(PORT.netWorth)}</div>
                 </div>
               </div>
               {showMenu&&<div style={{position:'absolute',top:'100%',right:0,marginTop:8,width:200,...GS,borderRadius:14,padding:'8px 0',zIndex:100}}>
-                {[{l:'Profile',i:'👤',action:null},{l:'Settings',i:'⚙️',action:()=>{setTab('settings');setShowMenu(false);}},{l:'Storage',i:'📁',action:()=>{setTab('storage');setShowMenu(false);}},{l:'Theme',i:'🎨',action:null}].map((m,i)=><div key={i} onClick={m.action} style={{padding:'8px 16px',fontSize:12,color:'#cbd5e1',cursor:'pointer',display:'flex',gap:8,alignItems:'center'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><span>{m.i}</span>{m.l}</div>)}
-                <div style={{height:1,background:'rgba(255,255,255,0.06)',margin:'4px 0'}}/>
+                {[{l:'Profile',i:'👤',action:null},{l:'Settings',i:'⚙️',action:()=>{setTab('settings');setShowMenu(false);}},{l:'Storage',i:'📁',action:()=>{setTab('storage');setShowMenu(false);}},{l:'Theme',i:'🎨',action:null}].map((m,i)=><div key={i} onClick={m.action} style={{padding:'8px 16px',fontSize:12,color:P.t2,cursor:'pointer',display:'flex',gap:8,alignItems:'center'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(15,150,156,0.10)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><span>{m.i}</span>{m.l}</div>)}
+                <div style={{height:1,background:'rgba(15,150,156,0.12)',margin:'4px 0'}}/>
                 <div style={{padding:'8px 16px',fontSize:12,color:P.red,cursor:'pointer'}}>Logout</div>
               </div>}
             </div>
           </div>
         </div>
         {/* Breadcrumb */}
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginBottom:2}}>LifeStack OS / Wealth Engine / {TABS.find(t=>t.k===tab)?.l||'Executive Summary'}</div>
-        {/* Tab bar */}
-        <div style={{display:"flex",gap:4,overflowX:"auto",whiteSpace:"nowrap",padding:"6px 0",scrollbarWidth:'none'}}>
+        <div style={{fontSize:10,color:'rgba(232,244,245,0.30)',marginBottom:2}}>LifeStack OS / Wealth Engine / {TABS.find(t=>t.k===tab)?.l||'Executive Summary'}</div>
+        {/* Tab bar — pill-style active state (image 1 + 3 reference) */}
+        <div style={{display:"flex",gap:3,overflowX:"auto",whiteSpace:"nowrap",padding:"6px 0 8px",scrollbarWidth:'none'}}>
           {TABS.map((t,i) => {
             const active = tab===t.k;
             return (
             <button key={t.k} onClick={()=>setTab(t.k)} style={{
               position:'relative',overflow:'hidden',
-              background:active?"rgba(20,184,166,0.15)":"transparent",
-              border:"none",
-              color:active?'#14b8a6':'rgba(255,255,255,0.45)',padding:"8px 16px",fontSize:13,fontWeight:active?700:500,
+              background:active?'rgba(15,150,156,0.18)':"transparent",
+              border:active?'1px solid rgba(15,150,156,0.45)':'1px solid transparent',
+              color:active?'#0F969C':'rgba(232,244,245,0.38)',padding:"7px 15px",fontSize:12,fontWeight:active?700:500,
               cursor:"pointer",transition:"all 0.2s ease",whiteSpace:"nowrap",fontFamily:"inherit",
-              borderRadius:20,
-              backdropFilter:active?'blur(16px) saturate(1.5)':'none',
-              WebkitBackdropFilter:active?'blur(16px) saturate(1.5)':'none',
-              boxShadow:active?'0 4px 16px rgba(20,184,166,0.20), inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(20,184,166,0.3)':'none',
-            }}><span style={{fontSize:8,opacity:0.4,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
+              borderRadius:999,
+              backdropFilter:active?'blur(16px) saturate(1.6)':'none',
+              WebkitBackdropFilter:active?'blur(16px) saturate(1.6)':'none',
+              boxShadow:active?'0 4px 18px rgba(15,150,156,0.22), inset 0 1px 0 rgba(255,255,255,0.14), 0 0 0 1px rgba(15,150,156,0.15)':'none',
+            }}><span style={{fontSize:8,opacity:0.35,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
           );})}
         </div>
         </div>
@@ -4124,9 +4195,9 @@ export default function PortfolioVOS(){
         {render()}
       </div>
       {/* Footer */}
-      <div style={{position:'relative',overflow:'hidden',textAlign:"center",padding:"16px 28px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(20px) saturate(1.5) url(#glass-refract)',WebkitBackdropFilter:'blur(20px) saturate(1.5)',background:'rgba(10,16,32,0.55)',backgroundImage:'linear-gradient(0deg, rgba(255,255,255,0.04), transparent 50%)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
-        <span style={{position:'relative',zIndex:1,fontSize:9,color:'rgba(255,255,255,0.35)'}}>CONFIDENTIAL · Personal use only · Not investment advice · Data from Kubera {PORT.date} + £100k pro-rata correction · LifeStack OS vOS · BadgerBrain Intelligence Engine</span>
+      <div style={{position:'relative',overflow:'hidden',textAlign:"center",padding:"16px 28px",borderTop:"1px solid rgba(15,150,156,0.15)"}}>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.6) url(#glass-refract)',WebkitBackdropFilter:'blur(24px) saturate(1.6)',background:'rgba(5,22,26,0.70)',backgroundImage:'linear-gradient(0deg, rgba(15,150,156,0.06), transparent 50%)',boxShadow:'inset 0 1px 0 rgba(15,150,156,0.10)',pointerEvents:'none'}}/>
+        <span style={{position:'relative',zIndex:1,fontSize:9,color:'rgba(232,244,245,0.30)'}}>CONFIDENTIAL · Personal use only · Not investment advice · Data from Kubera {PORT.date} + £100k pro-rata correction · LifeStack OS vOS · BadgerBrain Intelligence Engine</span>
       </div>
     </div>
   );
