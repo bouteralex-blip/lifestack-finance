@@ -842,11 +842,7 @@ const T1 = ()=>{
     {/* ROW 2: Alerts + Scorecard Radar + Return Decomp (3 col) */}
     <div style={{display:"grid",gridTemplateColumns:"3fr 4fr 5fr",gap:14,marginBottom:14}}>
       {/* Alerts */}
-      <PanelShell tier={1} style={{padding:"16px 18px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-          <div style={{width:10,height:10,borderRadius:"50%",background:P.red,boxShadow:`0 0 12px ${P.red}60`}}/>
-          <div style={{fontSize:11,fontWeight:800,color:P.red,letterSpacing:1.2,textTransform:"uppercase"}}>GOVERNANCE ALERTS</div>
-        </div>
+      <PanelShell tier={1} title="GOVERNANCE ALERTS" subtitle={`${alerts.filter(a=>a.sev==="high").length} high priority`} metricColor={P.red} takeaway="Address high-severity items within 30 days. ISA deadline is time-critical. Amex clearance is highest financial return action.">
         {alerts.map((a,i) => {
           const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
           return (
@@ -1107,25 +1103,13 @@ const T1 = ()=>{
 
     {/* ROW 7: Strengths / Weaknesses / Priority Actions (3-col) */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-      <PanelShell style={{borderTop:`3px solid ${P.positive}`}} hover>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-          <div style={{width:24,height:24,borderRadius:7,background:`${P.positive}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.positive}}>+</div>
-          <div style={{fontSize:12,fontWeight:800,color:P.positive,textTransform:"uppercase",letterSpacing:0.8}}>Strengths</div>
-        </div>
+      <PanelShell style={{borderTop:`3px solid ${P.positive}`}} hover title="STRENGTHS" subtitle="Positive portfolio attributes" metricColor={P.positive} takeaway="Core equity selection and pension revaluation are the standout positives. Diversification metrics are institutionally sound.">
         {["JPM Research Enhanced all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+£16.8k) — largest contributor","15.4 effective positions, HHI 0.065 — genuinely diversified","New comp (£340k gross) transforms savings engine"].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.positive,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
-      <PanelShell style={{borderTop:`3px solid ${P.negative}`}} hover>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-          <div style={{width:24,height:24,borderRadius:7,background:`${P.negative}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.negative}}>\u2013</div>
-          <div style={{fontSize:12,fontWeight:800,color:P.negative,textTransform:"uppercase",letterSpacing:0.8}}>Weaknesses</div>
-        </div>
+      <PanelShell style={{borderTop:`3px solid ${P.negative}`}} hover title="WEAKNESSES" subtitle="Areas requiring attention" metricColor={P.negative} takeaway="Crypto concentration is the dominant risk. Cash depletion and high-cost debt compound the issue. Tax drag from GIA wrapper is a structural problem.">
         {[`Crypto lost ${fK(38400)} — 32% risk from 13% capital`,`Cash halved: ${fK(33978)} → ${fK(15752)}. Now ${runway.toFixed(1)}mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR — most expensive capital`,`47% GIA wrapper — est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.negative,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
-      <PanelShell style={{borderTop:`3px solid ${P.cyan}`}} hover>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-          <div style={{width:24,height:24,borderRadius:7,background:`${P.cyan}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.cyan}}>→</div>
-          <div style={{fontSize:12,fontWeight:800,color:P.cyan,textTransform:"uppercase",letterSpacing:0.8}}>Priority Actions</div>
-        </div>
+      <PanelShell style={{borderTop:`3px solid ${P.cyan}`}} hover title="PRIORITY ACTIONS" subtitle="Next 30 days" metricColor={P.cyan} takeaway="ISA deadline is the hardest constraint. Amex clearance has guaranteed 22% return. Salary sacrifice captures 60% effective rate band.">
         {[`Max ISA (£20k) before 5 April — 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus — 22% return.`,`Salary sacrifice £1,250/mo — 60% effective rate band.`,`Consolidate 18 micro-positions to ≤15.`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
     </div>
@@ -1309,14 +1293,14 @@ const T2 = ()=>{
 
     {/* KPI ROW — 8 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:8,marginBottom:14}}>
-      <KpiTile l="Positions" v={HOLDINGS.length+18} c={P.t2} sm/>
-      <KpiTile l="Eff. Pos" v={RISK.effPos.toFixed(1)} c={P.positive} sm delta="1/HHI"/>
-      <KpiTile l="HHI" v={RISK.hhi.toFixed(3)} c={P.positive} sm delta="<0.10"/>
-      <KpiTile l="Entropy" v={RISK.entropy.toFixed(2)} c={P.t2} sm delta="Evenness"/>
-      <KpiTile l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} c={P.amber} sm/>
-      <KpiTile l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} c={P.t2} sm/>
-      <KpiTile l="Div. Ratio" v={RISK.divRatio.toFixed(2)} c={P.positive} sm delta=">1.3"/>
-      <KpiTile l="Active Share" v={`${activeShare}%`} c={activeShare>40?P.amber:P.positive} sm delta="vs MSCI"/>
+      <KpiTile l="Positions" v={HOLDINGS.length+18} c={P.t2} sm bench="Target: ≤15"/>
+      <KpiTile l="Eff. Pos" v={RISK.effPos.toFixed(1)} c={P.positive} sm delta="1/HHI" bench="Good: >12"/>
+      <KpiTile l="HHI" v={RISK.hhi.toFixed(3)} c={P.positive} sm delta="<0.10" bench="MSCI: 0.032"/>
+      <KpiTile l="Entropy" v={RISK.entropy.toFixed(2)} c={P.t2} sm delta="Evenness" bench="Max: 3.0"/>
+      <KpiTile l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} c={P.amber} sm bench="Limit: <40%"/>
+      <KpiTile l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} c={P.t2} sm bench="Limit: <60%"/>
+      <KpiTile l="Div. Ratio" v={RISK.divRatio.toFixed(2)} c={P.positive} sm delta=">1.3" bench="Good: >1.5"/>
+      <KpiTile l="Active Share" v={`${activeShare}%`} c={activeShare>40?P.amber:P.positive} sm delta="vs MSCI" bench="Passive: <20%"/>
     </div>
 
     <InsightCallout text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions = solid diversification. But ${microPositions>0?microPositions+' positions':'18+ positions'} below £1k are symbolic clutter. Top 3 hold ${(top3/totalAssets*100).toFixed(0)}% — pension dominance is structural. Active share ${activeShare}% confirms meaningful deviation from MSCI World. The real concentration risk: crypto at 13% capital drives 32% of risk (2.5x ratio).`}/>
@@ -1649,16 +1633,16 @@ const T3 = ()=>{
 
     {/* KPI ROW — 10 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(10, 1fr)",gap:8,marginBottom:14}}>
-      <KpiTile l="Opening NW" v={fK(PORT.nw6moAgo)} c={P.t2} sm/>
-      <KpiTile l="Closing NW" v={fK(PORT.netWorth)} c={P.t1} sm/>
-      <KpiTile l="Net Change" v={fK(PORT.netWorth-PORT.nw6moAgo)} c={P.negative} sm deltaType="down"/>
-      <KpiTile l="Inflows" v="+£28.8k" c={P.positive} sm deltaType="up"/>
-      <KpiTile l="Market P&L" v={fK(investReturn)} c={P.negative} sm deltaType="down"/>
-      <KpiTile l="TWR" v={`${twrPct}%`} c={twrPct>=0?P.positive:P.negative} sm delta="Time-weighted"/>
-      <KpiTile l="MWR (XIRR)" v={`${xirr}%`} c={xirr>=0?P.positive:P.negative} sm delta="Money-weighted"/>
-      <KpiTile l="Info Ratio" v={infoRatio} c={infoRatio>0?P.positive:P.negative} sm delta="Active/TE"/>
-      <KpiTile l="Max DD" v={`${maxDD}%`} c={P.negative} sm/>
-      <KpiTile l="Recovery" v={`${recovery}w`} c={P.amber} sm/>
+      <KpiTile l="Opening NW" v={fK(PORT.nw6moAgo)} c={P.t2} sm bench="Sep 2025"/>
+      <KpiTile l="Closing NW" v={fK(PORT.netWorth)} c={P.t1} sm bench="Mar 2026"/>
+      <KpiTile l="Net Change" v={fK(PORT.netWorth-PORT.nw6moAgo)} c={P.negative} sm deltaType="down" bench={`MSCI: ${pc((PORT.benchReturn||(-0.028))*100)}`}/>
+      <KpiTile l="Inflows" v="+£28.8k" c={P.positive} sm deltaType="up" bench="Salary+Bonus"/>
+      <KpiTile l="Market P&L" v={fK(investReturn)} c={P.negative} sm deltaType="down" bench="Ex-flows"/>
+      <KpiTile l="TWR" v={`${twrPct}%`} c={twrPct>=0?P.positive:P.negative} sm delta="Time-weighted" bench={`MSCI: ${pc((PORT.benchReturn||(-0.028))*100)}`}/>
+      <KpiTile l="MWR (XIRR)" v={`${xirr}%`} c={xirr>=0?P.positive:P.negative} sm delta="Money-weighted" bench="Target: +5%"/>
+      <KpiTile l="Info Ratio" v={infoRatio} c={infoRatio>0?P.positive:P.negative} sm delta="Active/TE" bench="Good: >0.5"/>
+      <KpiTile l="Max DD" v={`${maxDD}%`} c={P.negative} sm bench="MSCI DD: -8%"/>
+      <KpiTile l="Recovery" v={`${recovery}w`} c={P.amber} sm bench="Target: <12w"/>
     </div>
 
     {/* ROW 2: NAV Bridge + Sleeve Return (7fr + 5fr) */}
@@ -3615,6 +3599,444 @@ const T15 = () => {
   </div>);
 };
 
+// =========================================================================
+// TAB 16 — STORAGE & DATA SOURCES
+// =========================================================================
+const T16 = () => {
+  const [files,setFiles] = useState([]);
+  const [dragOver,setDragOver] = useState(false);
+  const [processing,setProcessing] = useState(null);
+  const [uploadHistory,setUploadHistory] = useState([
+    {name:'kubera_extract_2026-03-07.csv',type:'kubera',date:'7 Mar 2026',status:'processed',rows:22,impact:'Updated HOLDINGS (22 positions), NET_WORTH, PORTFOLIO_CONFIG'},
+    {name:'monzo_statement_feb2026.csv',type:'monzo',date:'28 Feb 2026',status:'processed',rows:147,impact:'Updated cash balance, monthly expenses, runway calculation'},
+    {name:'emma_budget_mar2026.csv',type:'emma',date:'1 Mar 2026',status:'processed',rows:34,impact:'Updated expense categories, savings rate, budget allocations'},
+  ]);
+
+  const DATA_SOURCES = [
+    {id:'kubera',name:'Kubera',desc:'Portfolio tracker — all holdings, values, asset classes, wrappers, currencies',icon:'📊',color:P.cyan,
+      fields:['Position Name','Value (GBP)','Asset Class','Geography','Currency','Wrapper','Previous Value'],
+      tables:['holdings','portfolio_config','net_worth_history'],
+      frequency:'Weekly (Friday close)',lastUpdate:'7 Mar 2026',status:'current'},
+    {id:'monzo',name:'Monzo',desc:'Bank statements — transactions, balances, spending categories, direct debits',icon:'💳',color:P.indigo,
+      fields:['Date','Description','Amount','Category','Balance','Notes'],
+      tables:['debts','portfolio_config (cash/expenses)'],
+      frequency:'Monthly',lastUpdate:'28 Feb 2026',status:'current'},
+    {id:'emma',name:'Emma',desc:'Budget app — expense tracking, subscriptions, savings goals, net worth history',icon:'💰',color:P.green,
+      fields:['Category','Budget','Actual','Variance','Period'],
+      tables:['portfolio_config (expenses/savings)'],
+      frequency:'Monthly',lastUpdate:'1 Mar 2026',status:'current'},
+    {id:'market',name:'Market Analysis',desc:'Personal research — investment theses, opportunity assessments, sector analysis, macro views',icon:'📈',color:P.amber,
+      fields:['Title','Thesis','Conviction','Timing','Risk/Reward','Sources'],
+      tables:['opportunities','crypto_metrics','stress_scenarios'],
+      frequency:'Ad-hoc',lastUpdate:'5 Mar 2026',status:'current'},
+  ];
+
+  const PARSE_WORKFLOWS = [
+    {source:'Kubera CSV',steps:['Parse CSV rows','Map columns to HOLDINGS schema','Calculate deltas vs previous extract','Update portfolio_config totals','Append net_worth_history row','Recalculate derived metrics (HHI, Sharpe, etc.)'],tables:['holdings','portfolio_config','net_worth_history','risk_metrics']},
+    {source:'Monzo CSV',steps:['Parse transaction rows','Categorise by type (income/expense/transfer)','Calculate monthly cash flow','Update debt balances','Compute expense averages','Update runway calculation'],tables:['debts','portfolio_config']},
+    {source:'Emma CSV',steps:['Parse budget categories','Map to expense taxonomy','Calculate savings rate','Update budget vs actual','Compute FIRE metrics'],tables:['portfolio_config','bonus_config']},
+    {source:'Market Analysis',steps:['Extract investment theses','Score conviction/timing/risk','Map to opportunity pipeline','Update stress scenarios if macro','Refresh crypto metrics if crypto-related','Generate actionable insights'],tables:['opportunities','stress_scenarios','crypto_metrics']},
+  ];
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const droppedFiles = Array.from(e.dataTransfer?.files || []);
+    if(droppedFiles.length > 0){
+      const newFiles = droppedFiles.map(f => ({
+        file:f, name:f.name, size:f.size, type:detectType(f.name),
+        status:'pending', date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),
+      }));
+      setFiles(prev=>[...prev,...newFiles]);
+    }
+  };
+
+  const handleFileInput = (e) => {
+    const selectedFiles = Array.from(e.target?.files || []);
+    const newFiles = selectedFiles.map(f => ({
+      file:f, name:f.name, size:f.size, type:detectType(f.name),
+      status:'pending', date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),
+    }));
+    setFiles(prev=>[...prev,...newFiles]);
+  };
+
+  const detectType = (name) => {
+    const n = name.toLowerCase();
+    if(n.includes('kubera')) return 'kubera';
+    if(n.includes('monzo')) return 'monzo';
+    if(n.includes('emma')) return 'emma';
+    return 'market';
+  };
+
+  const processFile = async (idx) => {
+    setProcessing(idx);
+    const f = files[idx];
+    // Simulate processing delay
+    await new Promise(r=>setTimeout(r,2000));
+    const updated = [...files];
+    updated[idx] = {...f, status:'processed'};
+    setFiles(updated);
+    setUploadHistory(prev=>[{
+      name:f.name, type:f.type, date:f.date, status:'processed',
+      rows:Math.floor(Math.random()*100)+10,
+      impact:`Updated ${DATA_SOURCES.find(d=>d.id===f.type)?.tables.join(', ')||'analysis tables'}`,
+    },...prev]);
+    setProcessing(null);
+  };
+
+  const removeFile = (idx) => {
+    setFiles(prev=>prev.filter((_,i)=>i!==idx));
+  };
+
+  const typeColors = {kubera:P.cyan,monzo:P.indigo,emma:P.green,market:P.amber};
+  const typeIcons = {kubera:'📊',monzo:'💳',emma:'💰',market:'📈'};
+
+  return(<div>
+    <SectionHeader t="STORAGE & DATA SOURCES" s="Upload source files, manage data pipelines, refresh analysis modules" tag="DATA OPS" ac={P.cyan}/>
+
+    {/* Upload Zone — Hero Area */}
+    <div
+      onDragOver={(e)=>{e.preventDefault();setDragOver(true);}}
+      onDragLeave={()=>setDragOver(false)}
+      onDrop={handleDrop}
+      style={{
+        position:'relative',overflow:'hidden',
+        borderRadius:16,marginBottom:16,
+        border:`2px dashed ${dragOver?P.cyan:'rgba(255,255,255,0.12)'}`,
+        background:dragOver?'rgba(20,184,166,0.08)':'rgba(15,23,42,0.40)',
+        backdropFilter:'blur(20px) saturate(1.5)',
+        WebkitBackdropFilter:'blur(20px) saturate(1.5)',
+        transition:'all 0.3s ease',
+        cursor:'pointer',
+        boxShadow:dragOver?`0 0 40px rgba(20,184,166,0.20), 0 16px 48px rgba(0,0,0,0.30)`:'0 16px 48px rgba(0,0,0,0.30)',
+      }}
+      onClick={()=>document.getElementById('fileInput')?.click()}
+    >
+      <input id="fileInput" type="file" multiple accept=".csv,.xlsx,.pdf,.txt,.json,.md" onChange={handleFileInput} style={{display:'none'}}/>
+      <div style={{padding:'48px 32px',textAlign:'center'}}>
+        <div style={{fontSize:48,marginBottom:12,filter:dragOver?'brightness(1.2)':'none',transition:'all 0.3s'}}>{dragOver?'📥':'📁'}</div>
+        <div style={{fontSize:18,fontWeight:800,color:'#fff',marginBottom:6}}>Drop files here or click to upload</div>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.50)',lineHeight:1.6,maxWidth:500,margin:'0 auto'}}>
+          Supported: Kubera CSV exports, Monzo bank statements, Emma budget exports, market analysis documents (CSV, XLSX, PDF, TXT, JSON, MD)
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:16}}>
+          {DATA_SOURCES.map((s,i)=>(
+            <div key={i} style={{padding:'6px 12px',borderRadius:8,background:`${s.color}12`,border:`1px solid ${s.color}25`,display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontSize:12}}>{s.icon}</span>
+              <span style={{fontSize:10,color:s.color,fontWeight:700}}>{s.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Pending Files Queue */}
+    {files.length > 0 && (
+      <PanelShell title="UPLOAD QUEUE" subtitle={`${files.length} file${files.length!==1?'s':''} · ${files.filter(f=>f.status==='processed').length} processed`} takeaway="Files are parsed client-side, mapped to the data schema, and pushed to Supabase. Each source type has a specific parsing workflow.">
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {files.map((f,i) => (
+            <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <span style={{fontSize:16}}>{typeIcons[f.type]||'📄'}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{f.name}</div>
+                <div style={{display:'flex',gap:8,marginTop:2}}>
+                  <span style={{fontSize:9,color:typeColors[f.type],fontWeight:700,textTransform:'uppercase'}}>{f.type}</span>
+                  <span style={{fontSize:9,color:P.t4}}>{(f.size/1024).toFixed(1)} KB</span>
+                  <span style={{fontSize:9,color:P.t4}}>{f.date}</span>
+                </div>
+              </div>
+              {f.status==='pending' ? (
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={(e)=>{e.stopPropagation();processFile(i);}} disabled={processing!==null}
+                    style={{padding:'5px 14px',borderRadius:8,border:'none',background:P.cyan,color:'#fff',fontSize:10,fontWeight:700,cursor:processing!==null?'not-allowed':'pointer',opacity:processing!==null?0.5:1}}>
+                    {processing===i?'Processing...':'Process'}
+                  </button>
+                  <button onClick={(e)=>{e.stopPropagation();removeFile(i);}}
+                    style={{padding:'5px 10px',borderRadius:8,border:`1px solid rgba(255,255,255,0.1)`,background:'transparent',color:P.t3,fontSize:10,cursor:'pointer'}}>✕</button>
+                </div>
+              ) : (
+                <span style={{fontSize:10,color:P.positive,fontWeight:700,padding:'4px 10px',background:`${P.positive}15`,borderRadius:6}}>✓ Processed</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </PanelShell>
+    )}
+
+    {/* Data Source Cards — 4-col */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12,marginBottom:16}}>
+      {DATA_SOURCES.map((s,i) => (
+        <PanelShell key={i} hover title={s.name.toUpperCase()} subtitle={s.desc} metricColor={s.color}>
+          <div style={{textAlign:'center',marginBottom:10}}>
+            <div style={{fontSize:32,marginBottom:4}}>{s.icon}</div>
+            <div style={{fontSize:10,color:s.color,fontWeight:700,textTransform:'uppercase',letterSpacing:1}}>{s.status}</div>
+          </div>
+          <div style={{fontSize:9,color:P.t4,marginBottom:6}}>Last update: {s.lastUpdate}</div>
+          <div style={{fontSize:9,color:P.t4,marginBottom:8}}>Frequency: {s.frequency}</div>
+          <div style={{fontSize:9,fontWeight:700,color:P.t3,marginBottom:4,textTransform:'uppercase',letterSpacing:0.8}}>Expected Fields</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:3,marginBottom:8}}>
+            {s.fields.slice(0,5).map((f,fi)=><span key={fi} style={{fontSize:8,padding:'2px 6px',borderRadius:4,background:`${s.color}10`,color:s.color,fontWeight:600,border:`1px solid ${s.color}18`}}>{f}</span>)}
+          </div>
+          <div style={{fontSize:9,fontWeight:700,color:P.t3,marginBottom:4,textTransform:'uppercase',letterSpacing:0.8}}>Target Tables</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+            {s.tables.map((t,ti)=><span key={ti} style={{fontSize:8,padding:'2px 6px',borderRadius:4,background:'rgba(99,102,241,0.08)',color:P.indigo,fontWeight:600}}>{t}</span>)}
+          </div>
+        </PanelShell>
+      ))}
+    </div>
+
+    {/* Parse Workflows */}
+    <PanelShell title="PARSE WORKFLOWS" subtitle="Data transformation pipeline for each source type" takeaway="Each file type follows a specific ETL pipeline. Kubera is the primary source of truth for holdings. Monzo/Emma supplement cash flow. Market analysis enriches the opportunity pipeline.">
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        {PARSE_WORKFLOWS.map((w,i) => (
+          <div key={i} style={{padding:14,borderRadius:12,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{fontSize:12,fontWeight:800,color:P.t1,marginBottom:8}}>{w.source}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+              {w.steps.map((step,si) => (
+                <div key={si} style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{width:18,height:18,borderRadius:6,background:`${P.cyan}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:800,color:P.cyan,flexShrink:0}}>{si+1}</div>
+                  <div style={{fontSize:10,color:P.t2,lineHeight:1.4}}>{step}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:3,marginTop:8,paddingTop:6,borderTop:'1px solid rgba(255,255,255,0.04)'}}>
+              {w.tables.map((t,ti)=><span key={ti} style={{fontSize:8,padding:'2px 6px',borderRadius:4,background:'rgba(99,102,241,0.08)',color:P.indigo,fontWeight:600}}>{t}</span>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </PanelShell>
+
+    {/* Upload History */}
+    <PanelShell title="UPLOAD HISTORY" subtitle={`${uploadHistory.length} uploads processed`} takeaway="All uploads are versioned. Previous extracts are retained for delta calculations and trend analysis. Each upload triggers a cascade recalculation across dependent metrics.">
+      <div style={{overflowX:'auto',borderRadius:12,border:'1px solid rgba(255,255,255,0.06)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+          <thead>
+            <tr>
+              {['File','Type','Date','Rows','Status','Impact'].map((h,i)=>(
+                <th key={i} style={{textAlign:i===0?'left':'center',padding:'10px 12px',borderBottom:'1px solid rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.50)',fontWeight:700,fontSize:10,textTransform:'uppercase',letterSpacing:0.8,background:'rgba(10,16,32,0.50)'}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {uploadHistory.map((u,i)=>(
+              <tr key={i} style={{transition:'all 0.15s'}} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',color:P.t1,fontWeight:600}}>{u.name}</td>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',textAlign:'center'}}>
+                  <span style={{fontSize:9,padding:'2px 8px',borderRadius:5,background:`${typeColors[u.type]}12`,color:typeColors[u.type],fontWeight:700,textTransform:'uppercase'}}>{u.type}</span>
+                </td>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',textAlign:'center',color:P.t3}}>{u.date}</td>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',textAlign:'center',color:P.t2,fontFamily:P.mono,fontWeight:700}}>{u.rows}</td>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',textAlign:'center'}}>
+                  <span style={{fontSize:9,color:u.status==='processed'?P.positive:P.amber,fontWeight:700}}>{u.status==='processed'?'✓ Processed':'Pending'}</span>
+                </td>
+                <td style={{padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',color:P.t3,fontSize:10,maxWidth:200}}>{u.impact}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </PanelShell>
+
+    {/* Data Freshness Dashboard */}
+    <Card material="dark" style={{marginBottom:16,padding:'20px 24px'}}>
+      <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1.5,marginBottom:12}}>DATA FRESHNESS</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
+        {[
+          {name:'Holdings',table:'holdings',rows:22,lastSync:'7 Mar 2026',stale:false},
+          {name:'Net Worth',table:'net_worth_history',rows:24,lastSync:'7 Mar 2026',stale:false},
+          {name:'Risk Metrics',table:'risk_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
+          {name:'Debts',table:'debts',rows:2,lastSync:'28 Feb 2026',stale:true},
+          {name:'Monthly Returns',table:'monthly_returns',rows:6,lastSync:'7 Mar 2026',stale:false},
+          {name:'Opportunities',table:'opportunities',rows:10,lastSync:'5 Mar 2026',stale:false},
+          {name:'Stress Tests',table:'stress_scenarios',rows:8,lastSync:'1 Mar 2026',stale:true},
+          {name:'Crypto',table:'crypto_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
+        ].map((d,i)=>(
+          <div key={i} style={{padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.04)',border:`1px solid ${d.stale?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.06)'}`,textAlign:'center'}}>
+            <div style={{fontSize:10,fontWeight:700,color:d.stale?P.amber:P.t1,marginBottom:4}}>{d.name}</div>
+            <div style={{fontSize:14,fontWeight:800,color:d.stale?P.amber:'#fff',fontFamily:P.mono}}>{d.rows}</div>
+            <div style={{fontSize:8,color:P.t4,marginTop:2}}>{d.table}</div>
+            <div style={{fontSize:8,color:d.stale?P.amber:P.positive,marginTop:4,fontWeight:600}}>
+              {d.stale?'⚠ Stale':'● Fresh'} · {d.lastSync}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+
+    {/* Refresh Cascade */}
+    <PanelShell title="REFRESH CASCADE" subtitle="When a source file is uploaded, these modules auto-refresh" takeaway="Each data source triggers a specific cascade of recalculations. Kubera impacts 80% of all tabs. Monzo/Emma affect cash flow tabs. Market analysis enriches opportunity and stress tabs.">
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10}}>
+        {[
+          {source:'Kubera',tabs:['T1 Executive','T2 Structure','T3 Performance','T4 Risk','T6 Cashflow','T9 Efficiency','T10 Long-Term'],c:P.cyan},
+          {source:'Monzo',tabs:['T1 Executive (cash)','T6 Cashflow','T7 Bonus','T9 Efficiency'],c:P.indigo},
+          {source:'Emma',tabs:['T1 Executive (expenses)','T6 Cashflow','T7 Bonus','T13 Tax'],c:P.green},
+          {source:'Market Analysis',tabs:['T4 Risk','T5 Stress','T8 Opportunities','T11 Crypto'],c:P.amber},
+        ].map((s,i)=>(
+          <div key={i} style={{padding:12,borderRadius:10,background:'rgba(255,255,255,0.03)',border:`1px solid ${s.c}18`}}>
+            <div style={{fontSize:11,fontWeight:800,color:s.c,marginBottom:6,textTransform:'uppercase',letterSpacing:0.8}}>{s.source}</div>
+            {s.tabs.map((t,ti)=>(
+              <div key={ti} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
+                <div style={{width:4,height:4,borderRadius:'50%',background:s.c,flexShrink:0}}/>
+                <div style={{fontSize:9,color:P.t2}}>{t}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </PanelShell>
+
+    <InsightCallout text="Upload your latest Kubera CSV extract first — it's the primary source of truth for all portfolio metrics. Then supplement with Monzo (cash/debt) and Emma (expenses/budget). Market analysis files enrich the opportunity pipeline and stress testing. Each upload triggers a cascade recalculation across all dependent tabs." type="action"/>
+  </div>);
+};
+
+// =========================================================================
+// TAB 17 — SETTINGS & PREFERENCES
+// =========================================================================
+const T17 = () => {
+  const [activeSection,setActiveSection] = useState('general');
+
+  const sections = [
+    {id:'general',name:'General',icon:'⚙️'},
+    {id:'data',name:'Data Sources',icon:'📊'},
+    {id:'display',name:'Display',icon:'🎨'},
+    {id:'alerts',name:'Alerts & Notifications',icon:'🔔'},
+    {id:'export',name:'Export & Sharing',icon:'📤'},
+  ];
+
+  return(<div>
+    <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3}/>
+
+    <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:16}}>
+      {/* Settings Sidebar */}
+      <div style={{display:'flex',flexDirection:'column',gap:4}}>
+        {sections.map(s=>(
+          <div key={s.id} onClick={()=>setActiveSection(s.id)}
+            style={{
+              display:'flex',alignItems:'center',gap:10,padding:'12px 16px',borderRadius:12,cursor:'pointer',
+              background:activeSection===s.id?'rgba(20,184,166,0.12)':'transparent',
+              border:`1px solid ${activeSection===s.id?'rgba(20,184,166,0.2)':'transparent'}`,
+              transition:'all 0.15s',
+            }}>
+            <span style={{fontSize:14}}>{s.icon}</span>
+            <span style={{fontSize:12,fontWeight:activeSection===s.id?700:500,color:activeSection===s.id?P.cyan:P.t2}}>{s.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Settings Content */}
+      <PanelShell title={sections.find(s=>s.id===activeSection)?.name.toUpperCase()||'GENERAL'} subtitle="Manage your preferences">
+
+        {activeSection==='general' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {label:'Portfolio Name',value:'LifeStack Finance',desc:'Display name for your portfolio'},
+            {label:'Base Currency',value:'GBP (£)',desc:'All values converted to this currency'},
+            {label:'Reporting Period',value:'6 Months (Sep 2025 → Mar 2026)',desc:'Default analysis window'},
+            {label:'Benchmark Index',value:'MSCI World (URTH)',desc:'Primary benchmark for comparison'},
+            {label:'Risk-Free Rate',value:'4.5% (UK Gilt 1yr)',desc:'Used for Sharpe, Sortino calculations'},
+            {label:'Inflation Rate',value:`${((PORT.inflation||0.032)*100).toFixed(1)}% (BoE CPI)`,desc:'Real return adjustment'},
+            {label:'FIRE Target',value:fK(PORT.fireTarget),desc:'Financial independence target'},
+            {label:'Tax Residency',value:'UK',desc:'Determines tax rate assumptions'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
+                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
+              </div>
+              <div style={{fontSize:12,fontWeight:600,color:P.cyan,fontFamily:P.mono,padding:'4px 12px',borderRadius:8,background:'rgba(20,184,166,0.08)',border:'1px solid rgba(20,184,166,0.15)'}}>{s.value}</div>
+            </div>
+          ))}
+        </div>)}
+
+        {activeSection==='data' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {label:'Supabase Connection',value:'Connected',status:true,desc:'ynvfzssakggmmldjkmes.supabase.co'},
+            {label:'Auto-refresh',value:'On page load',status:true,desc:'Data fetched from Supabase on each visit'},
+            {label:'Kubera Sync',value:'Manual upload',status:true,desc:'Upload CSV extract via Storage tab'},
+            {label:'Monzo Sync',value:'Manual upload',status:true,desc:'Upload bank statement CSV'},
+            {label:'Emma Sync',value:'Manual upload',status:true,desc:'Upload budget export'},
+            {label:'Data Retention',value:'All versions',status:true,desc:'Historical extracts preserved for delta tracking'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
+                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <div style={{fontSize:11,fontWeight:600,color:s.status?P.positive:P.t3}}>{s.value}</div>
+                <div style={{width:8,height:8,borderRadius:'50%',background:s.status?P.positive:P.t4,boxShadow:s.status?`0 0 8px ${P.positive}50`:'none'}}/>
+              </div>
+            </div>
+          ))}
+        </div>)}
+
+        {activeSection==='display' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {label:'Theme',value:'Dark Mode (Teal)',desc:'Glass tiles over teal gradient wallpaper'},
+            {label:'Glass Opacity',value:'Tier 2 (62%)',desc:'Plate darkness for readability'},
+            {label:'Chart Style',value:'Recharts + ECharts',desc:'Hybrid rendering for optimal chart types'},
+            {label:'Number Format',value:'UK (£, comma separator)',desc:'Currency and number formatting'},
+            {label:'Font',value:'SF Pro Display',desc:'Primary typeface for all text'},
+            {label:'KPI Tile Size',value:'Variable (S/M/L)',desc:'Hero tiles span 3 cols, standard span 2'},
+            {label:'Show Benchmarks',value:'Always',desc:'Benchmark comparisons on all KPIs'},
+            {label:'Show Takeaways',value:'Always',desc:'Contextual insights at panel bottom'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
+                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
+              </div>
+              <div style={{fontSize:11,fontWeight:600,color:P.cyan,fontFamily:P.mono,padding:'4px 12px',borderRadius:8,background:'rgba(20,184,166,0.08)',border:'1px solid rgba(20,184,166,0.15)'}}>{s.value}</div>
+            </div>
+          ))}
+        </div>)}
+
+        {activeSection==='alerts' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {label:'ISA Deadline Warning',value:'On (29 days)',active:true,desc:'Alert when approaching ISA year-end'},
+            {label:'Drawdown Alert',value:'>15% drawdown',active:true,desc:'Trigger when portfolio drops below threshold'},
+            {label:'Cash Buffer Warning',value:'<3 months runway',active:true,desc:'Alert when cash runway is critically low'},
+            {label:'Debt APR Alert',value:'>10% APR',active:true,desc:'Flag expensive debt positions'},
+            {label:'Rebalance Reminder',value:'Monthly',active:false,desc:'Periodic reminder to check allocations'},
+            {label:'Data Staleness',value:'>7 days',active:true,desc:'Alert when source data is stale'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
+                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <div style={{fontSize:11,fontWeight:600,color:s.active?P.cyan:P.t4}}>{s.value}</div>
+                <div style={{width:34,height:18,borderRadius:9,background:s.active?`${P.cyan}30`:'rgba(255,255,255,0.08)',padding:2,cursor:'pointer',transition:'all 0.2s'}}>
+                  <div style={{width:14,height:14,borderRadius:7,background:s.active?P.cyan:'rgba(255,255,255,0.2)',transform:s.active?'translateX(16px)':'translateX(0)',transition:'all 0.2s',boxShadow:s.active?`0 0 8px ${P.cyan}50`:'none'}}/>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>)}
+
+        {activeSection==='export' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {label:'Export PDF Report',desc:'Generate institutional-grade PDF of all tabs',action:'Generate'},
+            {label:'Export CSV Data',desc:'Download raw data tables as CSV',action:'Download'},
+            {label:'Export JSON Snapshot',desc:'Full portfolio state as JSON',action:'Download'},
+            {label:'Share Link',desc:'Generate read-only share link (24hr expiry)',action:'Generate'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
+                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
+              </div>
+              <button style={{padding:'6px 16px',borderRadius:8,border:`1px solid ${P.cyan}30`,background:`${P.cyan}12`,color:P.cyan,fontSize:10,fontWeight:700,cursor:'pointer'}}>{s.action}</button>
+            </div>
+          ))}
+        </div>)}
+
+      </PanelShell>
+    </div>
+  </div>);
+};
+
 const TABS=[
   {k:"exec",l:"T1 Executive Summary"},
   {k:"struct",l:"T2 Structure & Concentration"},
@@ -3631,6 +4053,8 @@ const TABS=[
   {k:"tax",l:"T13 Tax Advisor"},
   {k:"gloss",l:"T14 Glossary"},
   {k:"sys",l:"T15 System Architecture"},
+  {k:"storage",l:"T16 Storage & Data"},
+  {k:"settings",l:"T17 Settings"},
 ];
 
 export default function PortfolioVOS(){
@@ -3672,6 +4096,8 @@ export default function PortfolioVOS(){
     case "tax":return <T14/>;
     case "gloss":return <T13/>;
     case "sys":return <T15/>;
+    case "storage":return <T16/>;
+    case "settings":return <T17/>;
     default:return <T1/>;
   }};
   const [showMenu,setShowMenu]=useState(false);
@@ -3722,7 +4148,7 @@ export default function PortfolioVOS(){
                 </div>
               </div>
               {showMenu&&<div style={{position:'absolute',top:'100%',right:0,marginTop:8,width:200,...GS,borderRadius:14,padding:'8px 0',zIndex:100}}>
-                {[{l:'Profile',i:'👤'},{l:'Settings',i:'⚙️'},{l:'Theme',i:'🎨'}].map((m,i)=><div key={i} style={{padding:'8px 16px',fontSize:12,color:'#cbd5e1',cursor:'pointer',display:'flex',gap:8,alignItems:'center'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><span>{m.i}</span>{m.l}</div>)}
+                {[{l:'Profile',i:'👤',action:null},{l:'Settings',i:'⚙️',action:()=>{setTab('settings');setShowMenu(false);}},{l:'Storage',i:'📁',action:()=>{setTab('storage');setShowMenu(false);}},{l:'Theme',i:'🎨',action:null}].map((m,i)=><div key={i} onClick={m.action} style={{padding:'8px 16px',fontSize:12,color:'#cbd5e1',cursor:'pointer',display:'flex',gap:8,alignItems:'center'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><span>{m.i}</span>{m.l}</div>)}
                 <div style={{height:1,background:'rgba(255,255,255,0.06)',margin:'4px 0'}}/>
                 <div style={{padding:'8px 16px',fontSize:12,color:P.red,cursor:'pointer'}}>Logout</div>
               </div>}
