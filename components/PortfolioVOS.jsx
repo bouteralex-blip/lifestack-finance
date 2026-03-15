@@ -4100,7 +4100,7 @@ export default function PortfolioVOS(){
   const [showMenu,setShowMenu]=useState(false);
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:`linear-gradient(160deg, #05161A 0%, #072E33 18%, #0A3040 30%, #072E33 44%, #05161A 56%, #091F28 70%, #072E33 82%, #05161A 100%)`,
+      background:`url('/bg-waves.svg') center/cover fixed, linear-gradient(160deg, #05161A 0%, #072E33 18%, #05161A 100%)`,
       backgroundAttachment:'fixed',
     }}>
       {/* Deep teal depth layers — Pinterest swatch spectrum */}

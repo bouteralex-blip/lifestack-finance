@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="1440" height="900">
+  <defs>
+    <!-- Shadow filter for paper-cut depth effect -->
+    <filter id="shadow1" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="shadow2" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#000" flood-opacity="0.50"/>
+    </filter>
+    <filter id="shadow3" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <filter id="shadow4" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.40"/>
+    </filter>
+    <filter id="shadow5" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="shadow6" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.30"/>
+    </filter>
+    <!-- Shimmer/highlight gradient for top edge of each wave -->
+    <linearGradient id="shimmer1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shimmer2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.02"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shimmer3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.09"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.02"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background fill — darkest navy -->
+  <rect width="1440" height="900" fill="#010B16"/>
+
+  <!-- Layer 0: Deep base gradient fill -->
+  <rect width="1440" height="900" fill="url(#bgGrad)"/>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#010B16"/>
+      <stop offset="40%" stop-color="#021520"/>
+      <stop offset="100%" stop-color="#031E28"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ===== WAVE BAND 1 — Dark navy blue (#03243A) ===== -->
+  <!-- Peak ~y=320, trough ~y=370, fills to bottom -->
+  <g filter="url(#shadow1)">
+    <path d="
+      M0,340
+      C120,290 240,380 360,335
+      C480,290 600,375 720,330
+      C840,285 960,370 1080,325
+      C1200,280 1320,365 1440,320
+      L1440,900 L0,900 Z
+    " fill="#03243A"/>
+    <!-- Shimmer highlight on wave crest -->
+    <path d="
+      M0,340
+      C120,290 240,380 360,335
+      C480,290 600,375 720,330
+      C840,285 960,370 1080,325
+      C1200,280 1320,365 1440,320
+      L1440,345
+      C1320,390 1200,305 1080,350
+      C960,395 840,310 720,355
+      C600,400 480,315 360,360
+      C240,405 120,315 0,365 Z
+    " fill="url(#shimmer1)" opacity="0.8"/>
+  </g>
+
+  <!-- ===== WAVE BAND 2 — Teal-navy (#04374F) ===== -->
+  <g filter="url(#shadow2)">
+    <path d="
+      M0,420
+      C120,368 240,460 360,415
+      C480,370 600,455 720,408
+      C840,362 960,448 1080,402
+      C1200,356 1320,442 1440,396
+      L1440,900 L0,900 Z
+    " fill="#04374F"/>
+    <path d="
+      M0,420
+      C120,368 240,460 360,415
+      C480,370 600,455 720,408
+      C840,362 960,448 1080,402
+      C1200,356 1320,442 1440,396
+      L1440,422
+      C1320,468 1200,382 1080,428
+      C960,474 840,388 720,434
+      C600,480 480,394 360,440
+      C240,486 120,394 0,446 Z
+    " fill="url(#shimmer2)" opacity="0.7"/>
+  </g>
+
+  <!-- ===== WAVE BAND 3 — Mid teal (#064F68) ===== -->
+  <g filter="url(#shadow3)">
+    <path d="
+      M0,498
+      C120,445 240,538 360,492
+      C480,446 600,532 720,485
+      C840,439 960,525 1080,479
+      C1200,433 1320,519 1440,472
+      L1440,900 L0,900 Z
+    " fill="#064F68"/>
+    <path d="
+      M0,498
+      C120,445 240,538 360,492
+      C480,446 600,532 720,485
+      C840,439 960,525 1080,479
+      C1200,433 1320,519 1440,472
+      L1440,500
+      C1320,547 1200,459 1080,505
+      C960,551 840,463 720,509
+      C600,555 480,467 360,513
+      C240,559 120,466 0,524 Z
+    " fill="url(#shimmer3)" opacity="0.6"/>
+  </g>
+
+  <!-- ===== WAVE BAND 4 — Cyan-teal (#0C7075) ===== -->
+  <g filter="url(#shadow4)">
+    <path d="
+      M0,572
+      C120,518 240,612 360,566
+      C480,520 600,608 720,560
+      C840,514 960,602 1080,555
+      C1200,508 1320,596 1440,548
+      L1440,900 L0,900 Z
+    " fill="#0C7075"/>
+    <path d="
+      M0,572
+      C120,518 240,612 360,566
+      C480,520 600,608 720,560
+      C840,514 960,602 1080,555
+      C1200,508 1320,596 1440,548
+      L1440,575
+      C1320,623 1200,533 1080,581
+      C960,629 840,539 720,587
+      C600,635 480,545 360,593
+      C240,641 120,546 0,598 Z
+    " fill="rgba(255,255,255,0.07)" opacity="0.8"/>
+  </g>
+
+  <!-- ===== WAVE BAND 5 — Bright teal (#0F969C) ===== -->
+  <g filter="url(#shadow5)">
+    <path d="
+      M0,645
+      C120,590 240,686 360,638
+      C480,591 600,680 720,632
+      C840,584 960,674 1080,626
+      C1200,578 1320,668 1440,620
+      L1440,900 L0,900 Z
+    " fill="#0F969C"/>
+    <path d="
+      M0,645
+      C120,590 240,686 360,638
+      C480,591 600,680 720,632
+      C840,584 960,674 1080,626
+      C1200,578 1320,668 1440,620
+      L1440,648
+      C1320,696 1200,604 1080,652
+      C960,700 840,608 720,656
+      C600,704 480,612 360,660
+      C240,708 120,614 0,672 Z
+    " fill="rgba(255,255,255,0.08)" opacity="0.9"/>
+  </g>
+
+  <!-- ===== WAVE BAND 6 — Emerald-teal (#08C4A0) ===== -->
+  <g filter="url(#shadow6)">
+    <path d="
+      M0,718
+      C120,662 240,758 360,710
+      C480,662 600,752 720,704
+      C840,656 960,746 1080,698
+      C1200,650 1320,740 1440,692
+      L1440,900 L0,900 Z
+    " fill="#08C4A0"/>
+    <path d="
+      M0,718
+      C120,662 240,758 360,710
+      C480,662 600,752 720,704
+      C840,656 960,746 1080,698
+      C1200,650 1320,740 1440,692
+      L1440,722
+      C1320,770 1200,678 1080,726
+      C960,774 840,682 720,730
+      C600,778 480,686 360,734
+      C240,782 120,688 0,746 Z
+    " fill="rgba(255,255,255,0.09)" opacity="0.9"/>
+  </g>
+
+  <!-- ===== WAVE BAND 7 — Vibrant green (#14E060) ===== -->
+  <!-- Bottom band with neon green glow -->
+  <defs>
+    <linearGradient id="greenBand" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#14E060"/>
+      <stop offset="40%" stop-color="#0ABB50"/>
+      <stop offset="100%" stop-color="#069040"/>
+    </linearGradient>
+    <filter id="greenGlow" x="-5%" y="-20%" width="110%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <g filter="url(#greenGlow)">
+    <path d="
+      M0,790
+      C120,734 240,830 360,782
+      C480,734 600,824 720,776
+      C840,728 960,818 1080,770
+      C1200,722 1320,812 1440,764
+      L1440,900 L0,900 Z
+    " fill="url(#greenBand)"/>
+    <!-- Bright highlight stripe at top edge of green band -->
+    <path d="
+      M0,790
+      C120,734 240,830 360,782
+      C480,734 600,824 720,776
+      C840,728 960,818 1080,770
+      C1200,722 1320,812 1440,764
+      L1440,768
+      C1320,816 1200,726 1080,774
+      C960,822 840,732 720,780
+      C600,828 480,738 360,786
+      C240,834 120,740 0,798 Z
+    " fill="rgba(255,255,255,0.18)" opacity="1"/>
+  </g>
+
+  <!-- Subtle vignette overlay for depth -->
+  <defs>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.35)"/>
+    </radialGradient>
+  </defs>
+  <rect width="1440" height="900" fill="url(#vignette)" opacity="0.6"/>
+</svg>
