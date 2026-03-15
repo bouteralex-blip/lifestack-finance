@@ -2554,7 +2554,7 @@ const T10 = ()=>{
             ["5. Bull","19%",`${SC_BULL.find(s=>s.v>=1000)?.y||'2028'}`,`${SC_BULL.find(s=>s.v>=1800)?.y||'2030'}`,`£${(SC_BULL[9].v/1000).toFixed(1)}m`],
           ]}/>
         <Ins text={`Base case: £1M by 2030, FIRE by 2032. Conservative (8%): £1M by 2033. Wrapper alpha alone (+1.2%) accelerates every milestone by ~1 year — highest-certainty alpha available.`}/>
-      </Card>
+      </PanelShell>
     </Grid>
     {/* MONTE CARLO + MILESTONES */}
     {(()=>{
@@ -2783,7 +2783,7 @@ const T11 = ()=>{
           ["NEXO",`£57`,`£81`,`-£24`,"-29.6%","Dust — exit"],
           ["Total",fK(cryptoTotal),fK(cryptoPrev),`-${fK(cryptoPrev-cryptoTotal)}`,pc((cryptoTotal-cryptoPrev)/cryptoPrev*100),"Consolidate to BTC"],
         ]} hl={3}/>
-      </Card>
+      </PanelShell>
     </Grid>
     <Ins type="action" text={`Plan: (1) Do NOT sell BTC into extreme fear — signals overwhelmingly say accumulate. (2) Consolidate EC10+ETH+SOL into BTC to simplify to a single position. (3) Exit NEXO dust immediately. (4) Set mechanical trim targets: take profit if MVRV >2.5 and Fear >75. BTC 200-week MA at ~$65K is key structural support.`}/>
   </div>);
