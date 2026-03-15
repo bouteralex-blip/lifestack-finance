@@ -39,26 +39,25 @@ const P = {
 // Light model: locked at 135deg top-left. Edge discipline: border + highlight + inner stroke.
 // Tiers: Glass-1 (dense/readable), Glass-2 (default), Glass-3 (overlay/cinematic)
 const GLASS_BASE = {
-  radius: 16,
+  radius: 10,  // Horizon UI Pro: rounded-[10px] — signature corner radius
   padding: 20,
 };
 
-// Playbook Ch.4.7 light-mode glass recipe (snippet_chapter_4_7.css)
-// Shell: border rgba(0,0,0,.08), highlight 135deg, inner stroke rgba(255,255,255,.22)
-// Plate: tier-1=0.55, tier-2=0.42, tier-3=0.30 (scale plate, not whole surface)
-// Blur: 18px saturate(1.1) — NOT 1.6 which oversaturates on light backgrounds
+// Playbook Ch.4.7 + Horizon UI Pro light-mode hybrid
+// Glass: Shell/Plate/Content stack. Horizon: rounded-10, visible borders, structured shadows.
+// Plate opacities reduced from pure Playbook to let background perceptibility through (Ch.1.1)
 const glassLight = (tier=2) => {
-  const plate = tier===1 ? 0.55 : tier===3 ? 0.30 : 0.42;
-  const blur = tier===1 ? 16 : tier===3 ? 24 : 18;
-  const sat = tier===1 ? 1.05 : tier===3 ? 1.2 : 1.1;
+  const plate = tier===1 ? 0.48 : tier===3 ? 0.22 : 0.35;  // Reduced: background must remain recognizable (Playbook 1.1)
+  const blur = tier===1 ? 16 : tier===3 ? 24 : 20;
+  const sat = tier===1 ? 1.05 : tier===3 ? 1.2 : 1.15;
   return {
     background:`rgba(255,255,255,${plate})`,
     backdropFilter:`blur(${blur}px) saturate(${sat})`,
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
-    border:`1px solid rgba(0,0,0,0.08)`,
+    border:`1px solid rgba(0,0,0,${tier===1?0.10:0.07})`,  // Visible border (Horizon: border-gray-200)
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), inset 0 0 0 1px rgba(255,255,255,0.22)`,
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 40%)`,
+    boxShadow:`0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,${tier===1?0.30:0.25})`,  // Horizon: shadow-md shadow-[#F3F3F3]
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.60:0.45}), rgba(255,255,255,0) 40%)`,  // Highlight band
   };
 };
 const G = glassLight(2);
@@ -67,7 +66,7 @@ const G3 = glassLight(3);
 const GS = {
   background:"rgba(15,23,42,0.94)",
   backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)",
-  border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,
+  border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,
   boxShadow:"0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 let PORT = {
@@ -343,22 +342,22 @@ const hx2 = c => { if(!c||c[0]!=="#") return "99,102,241"; c=c.replace("#",""); 
 
 const K = ({l,v,s,c=P.cyan,sm,delta,deltaType}) => (
   <div style={{
-    position:'relative', borderRadius:16, overflow:'hidden', textAlign:"center",
+    position:'relative', borderRadius:10, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
-    {/* Shell — edge discipline + locked highlight (Playbook 4.7) */}
+    {/* Shell — Horizon: rounded-10 + visible border + glass highlight */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:'blur(18px) saturate(1.1)',WebkitBackdropFilter:'blur(18px) saturate(1.1)',
-      border:'1px solid rgba(0,0,0,0.08)',
-      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 40%)`,
-      boxShadow:'0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), inset 0 0 0 1px rgba(255,255,255,0.22)',
+      backdropFilter:'blur(20px) saturate(1.15)',WebkitBackdropFilter:'blur(20px) saturate(1.15)',
+      border:'1px solid rgba(0,0,0,0.07)',
+      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%)`,
+      boxShadow:'0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.25)',
       pointerEvents:'none',
     }}/>
-    {/* Plate — stabilised readability (tier-1: dense data surface) */}
+    {/* Plate — Glass-1 density for KPI readability */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      background:'rgba(255,255,255,0.55)',
+      background:'rgba(255,255,255,0.48)',
       pointerEvents:'none',
     }}/>
     {/* Accent edge — bottom border glow (Finance amber cascade) */}
@@ -381,7 +380,7 @@ const Hd = ({t,s,tag,ac=P.cyan}) => (
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
       <h2 style={{fontSize:22,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.3}}>{t}</h2>
-      {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}12`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}18`}}>{tag}</span>}
+      {tag&&<span style={{padding:"3px 10px",borderRadius:5,fontSize:10,fontWeight:700,background:`${ac}12`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}18`}}>{tag}</span>}
     </div>
     {s&&<p style={{fontSize:13,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -393,7 +392,7 @@ const Ins = ({text,type="insight"}) => {
     <div style={{
       position:'relative',overflow:'hidden',
       padding:"16px 20px",borderLeft:`3px solid ${c}`,
-      borderRadius:"0 16px 16px 0",marginBottom:14,
+      borderRadius:"0 10px 10px 0",marginBottom:14,
     }}>
       <div style={{position:'absolute',inset:0,borderRadius:'inherit',
         backdropFilter:'blur(14px) saturate(1.1)',WebkitBackdropFilter:'blur(14px) saturate(1.1)',
@@ -415,16 +414,22 @@ const GlassCard = (props) => <Card {...props} />;
 const KpiTile = (props) => <K {...props} />;
 const SectionHeader = (props) => <Hd {...props} />;
 const InsightCallout = (props) => <Ins {...props} />;
-const PanelShell = ({title,subtitle,children,tier=2,...cardProps}) => (
+const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,...cardProps}) => (
   <GlassCard hover tier={tier} {...cardProps}>
-    {title && <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>{title}</div>}
-    {subtitle && <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{subtitle}</div>}
+    {(title||metric) && <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:subtitle?4:8}}>
+      <div>
+        {title && <div style={{fontSize:13,fontWeight:700,color:P.t1,letterSpacing:-0.2}}>{title}</div>}
+        {subtitle && <div style={{fontSize:11,color:P.t3,marginTop:2}}>{subtitle}</div>}
+      </div>
+      {metric && <div style={{fontSize:18,fontWeight:800,color:metricColor||P.cyan,fontFamily:P.mono,letterSpacing:-0.5}}>{metric}</div>}
+    </div>}
+    {!title&&!metric&&subtitle && <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{subtitle}</div>}
     {children}
   </GlassCard>
 );
 
 const Tbl = ({h,r,hl}) => (
-  <div style={{overflowX:"auto",borderRadius:14,border:`1px solid rgba(0,0,0,0.08)`,backdropFilter:'blur(16px) saturate(1.05)',WebkitBackdropFilter:'blur(16px) saturate(1.05)',background:"rgba(255,255,255,0.55)",boxShadow:'0 4px 24px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.22)'}}>
+  <div style={{overflowX:"auto",borderRadius:10,border:'1px solid rgba(0,0,0,0.10)',backdropFilter:'blur(16px) saturate(1.05)',WebkitBackdropFilter:'blur(16px) saturate(1.05)',background:"rgba(255,255,255,0.48)",boxShadow:'0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.30)'}}>
     <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
       <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid rgba(0,0,0,0.08)`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(248,250,252,0.85)"}}>{x}</th>)}</tr></thead>
       <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
@@ -440,7 +445,7 @@ const Tip = ({active,payload,label}) => {
   if(!active||!payload?.length) return null;
   return (
     <div style={{
-      position:'relative',borderRadius:14,overflow:'hidden',minWidth:140,
+      position:'relative',borderRadius:10,overflow:'hidden',minWidth:140,
     }}>
       <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',background:'rgba(15,23,42,0.92)',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
       <div style={{position:'relative',zIndex:1,padding:"12px 16px"}}>
@@ -3050,9 +3055,10 @@ export default function PortfolioVOS(){
       <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
       {/* Ambient orbs for depth */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
-        <div style={{position:"absolute",top:"-15%",right:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)"}}/>
-        <div style={{position:"absolute",bottom:"-15%",left:"-8%",width:"45vw",height:"45vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 70%)"}}/>
-        <div style={{position:"absolute",top:"40%",left:"30%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 60%)"}}/>
+        <div style={{position:"absolute",top:"-15%",right:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%)"}}/>
+        <div style={{position:"absolute",bottom:"-15%",left:"-8%",width:"45vw",height:"45vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(236,72,153,0.10) 0%, transparent 70%)"}}/>
+        <div style={{position:"absolute",top:"40%",left:"30%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 60%)"}}/>
+        <div style={{position:"absolute",top:"15%",left:"55%",width:"35vw",height:"35vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(20,184,166,0.06) 0%, transparent 65%)"}}/>
       </div>
       {/* Top header bar */}
       <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.6)"}}>
