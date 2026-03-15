@@ -32,15 +32,24 @@ const P = {
   accentFinance:"#0F969C",
   // Pinterest teal depth layers (for layered luxury effect)
   l0:"#05161A",l1:"#072E33",l2:"#0C7075",l3:"#0F969C",l4:"#6DA5C0",l5:"#294D61",
+  // Blueprint 6-colour data series rotation (Factor 5)
+  // 1-series: teal · 2: teal+violet · 3: teal+violet+amber · 4+: full rotation
+  s1:"#0F969C",  // Primary: teal (our accent)
+  s2:"#7C6FFF",  // Secondary: violet
+  s3:"#f59e0b",  // Warm: amber
+  s4:"#FF5C7A",  // Hot: coral (negative/loss indicator)
+  s5:"#3B9EFF",  // Cool: blue (benchmark/informational)
+  s6:"#FF3BBD",  // Energy: magenta (spot alerts only)
 };
 
 // --- MATERIAL TILE STYLES: Solid gradient accent cards — teal-navy spectrum ---
+// All radius 16px per blueprint Factor 1 spec
 const MAT = {
-  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(15,150,156,0.30)',borderRadius:14,border:'1px solid rgba(15,150,156,0.35)'},
-  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(109,165,192,0.20)',borderRadius:14,border:'1px solid rgba(109,165,192,0.25)'},
-  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
-  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
-  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 0 0 1px rgba(15,150,156,0.18)',borderRadius:14,border:'1px solid rgba(15,150,156,0.20)'},
+  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), 0 0 80px rgba(15,150,156,0.10), inset 0 1px 0 rgba(255,255,255,0.22)',borderRadius:16,border:'1px solid rgba(15,150,156,0.35)'},
+  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), 0 0 80px rgba(41,77,97,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',borderRadius:16,border:'1px solid rgba(109,165,192,0.25)'},
+  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), 0 0 80px rgba(217,119,6,0.08), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
+  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), 0 0 80px rgba(220,38,38,0.08), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
+  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), 0 0 80px rgba(12,112,117,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',borderRadius:16,border:'1px solid rgba(15,150,156,0.20)'},
 };
 
 // --- LIQUID GLASS SYSTEM: True refraction over teal/green wallpaper ---
@@ -48,19 +57,20 @@ const MAT = {
 // SVG feTurbulence + feDisplacementMap for light-bending effect
 // Stack: shell (blur+refract) + plate (dark readability) + content
 const GLASS_BASE = {
-  radius: 14,  // Upgraded from 10 — more premium feel
-  padding: 18,
+  radius: 16,  // Blueprint spec: 16px consistent on all cards
+  padding: 20, // Blueprint spec: 20px internal padding everywhere
 };
 
 // Dark teal-navy glass plates over wallpaper — teal spectrum bends through
 // Pinterest palette: #05161A (deep) → #072E33 (surface) → #0C7075 (mid) → #0F969C (accent)
 // Teal-tinted borders + warm glass sheen for luxury depth
 const glassLight = (tier=2) => {
+  // Blueprint spec: heavy frost 20px, dual shadow system
   const plate = tier===1 ? 'rgba(7,46,51,0.72)' : tier===3 ? 'rgba(5,22,26,0.35)' : 'rgba(7,46,51,0.58)';
-  const blur = tier===1 ? 30 : tier===3 ? 12 : 24;
-  const sat = tier===1 ? 2.0 : tier===3 ? 1.4 : 1.7;
-  const specular = tier===1 ? 0.22 : tier===3 ? 0.12 : 0.16;
-  const sheen = tier===3 ? 0.11 : tier===1 ? 0.09 : 0.07;
+  const blur = 20; // Spec: blur(20px) everywhere — heavy frosting, consistent
+  const sat = tier===1 ? 1.8 : tier===3 ? 1.3 : 1.6;
+  const specular = tier===1 ? 0.22 : tier===3 ? 0.10 : 0.15;
+  const sheen = tier===3 ? 0.08 : tier===1 ? 0.08 : 0.06;
   const bdr = tier===1 ? 'rgba(15,150,156,0.32)' : tier===3 ? 'rgba(15,150,156,0.10)' : 'rgba(15,150,156,0.22)';
   return {
     background: plate,
@@ -68,8 +78,10 @@ const glassLight = (tier=2) => {
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
     border:`1px solid ${bdr}`,
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 20px 56px rgba(0,0,0,0.45), 0 4px 16px rgba(5,22,26,0.35), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 0 0 1px rgba(15,150,156,0.06), inset 0 -1px 0 rgba(255,255,255,0.03)`,
-    backgroundImage:`linear-gradient(145deg, rgba(255,255,255,${sheen}) 0%, rgba(15,150,156,0.04) 35%, transparent 60%, rgba(255,255,255,0.03) 100%)`,
+    // Blueprint spec dual-shadow: tight definition + wide ambient
+    boxShadow:`0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 0 0 1px rgba(15,150,156,0.06)`,
+    // 135deg diagonal shine — blueprint Factor 3 spec
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${sheen}) 0%, transparent 50%, rgba(255,255,255,0.02) 100%)`,
   };
 };
 const G = glassLight(2);
@@ -77,15 +89,15 @@ const G1 = glassLight(1);
 const G3 = glassLight(3);
 const GS = {
   background:"rgba(7,46,51,0.92)",
-  backdropFilter:"blur(30px) saturate(1.6)",WebkitBackdropFilter:"blur(30px) saturate(1.6)",
-  border:"1px solid rgba(15,150,156,0.28)",borderRadius:14,
-  boxShadow:"0 14px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 0 0 1px rgba(15,150,156,0.08), inset 0 -1px 0 rgba(255,255,255,0.03)",
-  backgroundImage:"linear-gradient(145deg, rgba(255,255,255,0.08), rgba(15,150,156,0.04) 40%, transparent 60%)",
+  backdropFilter:"blur(20px) saturate(1.6)",WebkitBackdropFilter:"blur(20px) saturate(1.6)",
+  border:"1px solid rgba(15,150,156,0.28)",borderRadius:16,
+  boxShadow:"0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.16)",
+  backgroundImage:"linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)",
 };
 // Panel header banner — deep teal-dark strip, teal accent shimmer
 const HEADER_BANNER = {
   background:'linear-gradient(90deg, rgba(5,22,26,0.92), rgba(7,46,51,0.80) 70%)',
-  padding:'10px 16px',borderRadius:'14px 14px 0 0',
+  padding:'10px 16px',borderRadius:'16px 16px 0 0',
   marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
   backgroundImage:'linear-gradient(90deg, rgba(15,150,156,0.10), transparent 70%)',
   borderBottom:'1px solid rgba(15,150,156,0.16)',
@@ -394,7 +406,7 @@ const hx2 = c => { if(!c||c[0]!=="#") return "99,102,241"; c=c.replace("#",""); 
 
 const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
   <div style={{
-    position:'relative', borderRadius:14, overflow:'hidden', textAlign:"center",
+    position:'relative', borderRadius:16, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
     {/* Shell — glass blur + refraction over wallpaper */}
@@ -522,8 +534,8 @@ const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,
   const ac = metricColor||P.cyan;
   return (
     <GlassCard hover tier={tier} {...cardProps} style={{...cardProps.style,padding:0}}>
-      {/* Top glass shimmer highlight — bright edge like image 1 */}
-      <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.20) 32%,${ac}60 50%,rgba(255,255,255,0.20) 68%,transparent 92%)`,borderRadius:'14px 14px 0 0',flexShrink:0}}/>
+      {/* Top glass shimmer highlight — bright edge like image 1, spec radius 16px */}
+      <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.20) 32%,${ac}60 50%,rgba(255,255,255,0.20) 68%,transparent 92%)`,borderRadius:'16px 16px 0 0',flexShrink:0}}/>
       {(title||metric||badge) && <div style={{...HEADER_BANNER,padding:cfg.hpad}}>
         <div style={{flex:1}}>
           {title && <div style={{...HEADER_TITLE,fontSize:cfg.titleSz}}>{title}</div>}
@@ -566,20 +578,36 @@ const Tbl = ({h,r,hl}) => (
   </div>
 );
 
+// ── LiquidGlassTooltip — Blueprint spec: frosted glass card, diagonal refraction, neon dot glow ──
 const Tip = ({active,payload,label}) => {
   if(!active||!payload?.length) return null;
   return (
     <div style={{
-      position:'relative',borderRadius:10,overflow:'hidden',minWidth:140,
+      position:'relative',borderRadius:16,overflow:'hidden',minWidth:150,
+      boxShadow:'0 12px 40px rgba(0,0,0,0.50), 0 0 80px rgba(0,0,0,0.20)',
     }}>
-      <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',background:'rgba(15,23,42,0.92)',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
+      {/* Frosted glass surface — 24px blur per spec */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:'blur(24px) saturate(1.6)',WebkitBackdropFilter:'blur(24px) saturate(1.6)',
+        background:'rgba(5,22,26,0.82)',
+        border:'1px solid rgba(255,255,255,0.15)',
+        pointerEvents:'none',
+      }}/>
+      {/* Diagonal refraction highlight — blueprint Factor 3 */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        background:'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+        opacity:0.6,pointerEvents:'none',
+      }}/>
       <div style={{position:'relative',zIndex:1,padding:"12px 16px"}}>
-        <div style={{color:"#94a3b8",marginBottom:6,fontSize:11,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',borderBottom:'1px solid rgba(255,255,255,0.06)',paddingBottom:5}}>{label}</div>
+        <div style={{color:P.t3,marginBottom:6,fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',
+          borderBottom:'1px solid rgba(255,255,255,0.06)',paddingBottom:5}}>{label}</div>
         {payload.filter(p=>p.name!==" ").map((p,i) => (
-          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
-            <div style={{width:8,height:8,borderRadius:'50%',background:p.color||P.cyan,boxShadow:`0 0 8px ${p.color||P.cyan}60`,flexShrink:0}}/>
-            <span style={{fontSize:12,color:'#cbd5e1',flex:1}}>{p.name}</span>
-            <span style={{fontSize:13,color:p.color||"#818cf8",fontWeight:700,fontFamily:P.mono}}>
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            {/* Neon dot with glow — blueprint spec */}
+            <div style={{width:9,height:9,borderRadius:'50%',background:p.color||P.cyan,
+              boxShadow:`0 0 8px ${p.color||P.cyan}`,flexShrink:0}}/>
+            <span style={{fontSize:12,color:P.t2,flex:1}}>{p.name}</span>
+            <span style={{fontSize:13,color:p.color||P.cyan,fontWeight:700,fontFamily:P.mono}}>
               {typeof p.value==="number"?(Math.abs(p.value)>999?`£${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
             </span>
           </div>
@@ -594,14 +622,21 @@ const FlexRow = ({children,gap=12,style}) => (<div style={{display:"flex",flexWr
 const Grid = ({children,cols="1fr 1fr",gap=14,style}) => (<div style={{display:"grid",gridTemplateColumns:cols,gap,...style}}>{children}</div>);
 const ChartDefs = () => (
   <defs>
-    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.50}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gIndigo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.indigo} stopOpacity={0.45}/><stop offset="100%" stopColor={P.indigo} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.green} stopOpacity={0.45}/><stop offset="100%" stopColor={P.green} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.red} stopOpacity={0.42}/><stop offset="100%" stopColor={P.red} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.amber} stopOpacity={0.45}/><stop offset="100%" stopColor={P.amber} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.purple} stopOpacity={0.45}/><stop offset="100%" stopColor={P.purple} stopOpacity={0.06}/></linearGradient>
-    <linearGradient id="gBtc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.btc} stopOpacity={0.50}/><stop offset="100%" stopColor={P.btc} stopOpacity={0.06}/></linearGradient>
-    <filter id="chartGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="boldGlow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    {/* Blueprint Factor 5: area fills 60% at line, 10% at baseline */}
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s1} stopOpacity={0.60}/><stop offset="100%" stopColor={P.s1} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gIndigo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.indigo} stopOpacity={0.55}/><stop offset="100%" stopColor={P.indigo} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.green} stopOpacity={0.55}/><stop offset="100%" stopColor={P.green} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.negative} stopOpacity={0.55}/><stop offset="100%" stopColor={P.negative} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s3} stopOpacity={0.55}/><stop offset="100%" stopColor={P.s3} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s2} stopOpacity={0.55}/><stop offset="100%" stopColor={P.s2} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gBtc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.btc} stopOpacity={0.60}/><stop offset="100%" stopColor={P.btc} stopOpacity={0.08}/></linearGradient>
+    {/* New series s4–s6 */}
+    <linearGradient id="gCoral" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s4} stopOpacity={0.55}/><stop offset="100%" stopColor={P.s4} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s5} stopOpacity={0.55}/><stop offset="100%" stopColor={P.s5} stopOpacity={0.08}/></linearGradient>
+    <linearGradient id="gMagenta" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.s6} stopOpacity={0.55}/><stop offset="100%" stopColor={P.s6} stopOpacity={0.08}/></linearGradient>
+    {/* Glow filters — Tier 2 (hero charts) max 40% opacity per blueprint Factor 6 */}
+    <filter id="chartGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="boldGlow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
 );
 const fmt = v=>`£${Math.abs(v).toLocaleString("en-GB",{maximumFractionDigits:0})}`;
@@ -656,6 +691,288 @@ const Shimmer = ({w='100%',h=16,r=6}) => (
     animation:'shimmer 1.5s infinite',
   }}/>
 );
+
+// ── ControlBar — Blueprint Factor 18: time pills + filters between Zone 1 and Zone 2 ──
+const ControlBar = ({periods=['24H','7D','30D','YTD','ALL'],activePeriod='YTD',onPeriod,filters=[],activeFilter,onFilter,actions=[]}) => (
+  <div style={{
+    display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',
+    gap:8,padding:'8px 14px',marginBottom:12,
+    background:'rgba(5,22,26,0.60)',
+    backdropFilter:'blur(20px) saturate(1.4)',WebkitBackdropFilter:'blur(20px) saturate(1.4)',
+    border:'1px solid rgba(15,150,156,0.12)',borderRadius:12,
+    boxShadow:'0 4px 16px rgba(0,0,0,0.20)',
+  }}>
+    {/* Left: time range pills */}
+    <div style={{display:'flex',gap:3,background:'rgba(0,0,0,0.30)',borderRadius:9,padding:3,
+      boxShadow:'inset 0 2px 6px rgba(0,0,0,0.40)'}}>
+      {periods.map(p=>(
+        <button key={p} onClick={()=>onPeriod&&onPeriod(p)} style={{
+          padding:'4px 11px',borderRadius:7,border:'none',cursor:'pointer',
+          fontSize:10,fontWeight:700,letterSpacing:0.6,fontFamily:'inherit',
+          background:p===activePeriod?'rgba(15,150,156,0.22)':'transparent',
+          color:p===activePeriod?P.cyan:'rgba(232,244,245,0.38)',
+          boxShadow:p===activePeriod?`0 0 12px rgba(15,150,156,0.20), inset 0 1px 0 rgba(255,255,255,0.10)`:'none',
+          transition:'all 0.15s ease',
+        }}>{p}</button>
+      ))}
+    </div>
+    {/* Centre: category filters */}
+    {filters.length>0 && <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+      {filters.map(f=>(
+        <button key={f} onClick={()=>onFilter&&onFilter(f)} style={{
+          padding:'4px 11px',borderRadius:8,border:`1px solid ${f===activeFilter?'rgba(15,150,156,0.40)':'rgba(255,255,255,0.08)'}`,
+          cursor:'pointer',fontSize:10,fontWeight:600,fontFamily:'inherit',
+          background:f===activeFilter?'rgba(15,150,156,0.15)':'transparent',
+          color:f===activeFilter?P.cyan:'rgba(232,244,245,0.45)',
+          transition:'all 0.15s ease',
+        }}>{f}</button>
+      ))}
+    </div>}
+    {/* Right: action buttons */}
+    {actions.length>0 && <div style={{display:'flex',gap:6}}>
+      {actions.map((a,i)=>(
+        <button key={i} onClick={a.onClick} style={{
+          display:'flex',alignItems:'center',gap:4,
+          padding:'4px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',
+          cursor:'pointer',fontSize:9,fontWeight:700,letterSpacing:0.5,fontFamily:'inherit',
+          background:'rgba(255,255,255,0.04)',color:P.t3,
+          transition:'all 0.15s ease',
+        }}>{a.icon&&<span>{a.icon}</span>}{a.label}</button>
+      ))}
+    </div>}
+  </div>
+);
+
+// ── CIOInsightBanner — Blueprint Component 7: agent synthesis + regime + confidence ──
+const CIOInsightBanner = ({text,regime='Late Cycle',confidence=72,children}) => {
+  const regimeMap = {
+    'Expansion':   {c:P.s1,  label:'EXPANSION'},
+    'Late Cycle':  {c:P.s3,  label:'LATE CYCLE'},
+    'Recession Watch': {c:P.s4, label:'RECESSION WATCH'},
+    'Crisis':      {c:P.negative, label:'CRISIS'},
+  };
+  const rm = regimeMap[regime] || regimeMap['Late Cycle'];
+  return (
+    <div style={{
+      position:'relative',overflow:'hidden',padding:'16px 20px',marginBottom:14,
+      borderLeft:`4px solid ${rm.c}`,borderRadius:'0 16px 16px 0',
+      background:'rgba(5,22,26,0.65)',
+      backdropFilter:'blur(20px) saturate(1.5)',WebkitBackdropFilter:'blur(20px) saturate(1.5)',
+      border:`1px solid rgba(255,255,255,0.08)`,borderLeft:`4px solid ${rm.c}`,
+      boxShadow:`0 12px 40px rgba(0,0,0,0.30), 0 0 60px rgba(0,0,0,0.12)`,
+    }}>
+      {/* Animated shimmer strip */}
+      <div style={{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',
+        background:`linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)`,
+        transform:'skewX(-12deg)',animation:'shimmer 3s infinite',pointerEvents:'none',
+      }}/>
+      <div style={{position:'relative',zIndex:1,display:'flex',alignItems:'flex-start',gap:14}}>
+        {/* Icon */}
+        <div style={{width:38,height:38,borderRadius:10,flexShrink:0,
+          background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.10)',
+          display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>⚡</div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:1.5,textTransform:'uppercase',color:P.t3}}>
+              Agent Synthesis · <span style={{color:rm.c}}>{rm.label}</span>
+            </div>
+            <div style={{fontSize:9,fontFamily:P.mono,padding:'2px 8px',borderRadius:5,
+              background:'rgba(255,255,255,0.06)',color:P.t3,
+              border:'1px solid rgba(255,255,255,0.08)'}}>Confidence: {confidence}%</div>
+          </div>
+          {text&&<p style={{fontSize:13,color:P.t1,lineHeight:1.7,margin:0,fontWeight:500}}>{text}</p>}
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── RiskAlertStack — Blueprint Component 8: traffic-light risk limit breach cards ──
+const RiskAlertStack = ({alerts=[]}) => {
+  const levelMap = {
+    critical: {bg:'rgba(239,68,68,0.10)',border:'rgba(239,68,68,0.40)',text:'#fca5a5',glow:'rgba(239,68,68,0.20)',label:'CRITICAL'},
+    warning:  {bg:'rgba(245,158,11,0.10)',border:'rgba(245,158,11,0.40)',text:'#fcd34d',glow:'rgba(245,158,11,0.20)',label:'WARNING'},
+    info:     {bg:'rgba(59,130,246,0.10)',border:'rgba(59,130,246,0.40)',text:'#93c5fd',glow:'rgba(59,130,246,0.18)',label:'INFO'},
+  };
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {alerts.map((a,i) => {
+        const s = levelMap[a.level] || levelMap.warning;
+        return (
+          <div key={i} style={{
+            padding:'12px 16px',borderRadius:12,
+            background:s.bg,border:`1px solid ${s.border}`,
+            backdropFilter:'blur(20px) saturate(1.4)',WebkitBackdropFilter:'blur(20px) saturate(1.4)',
+            boxShadow:`0 0 20px ${s.glow}`,
+            display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,
+          }}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:'uppercase',
+                color:s.text,opacity:0.85,marginBottom:2}}>{a.metric} LIMIT BREACH</div>
+              <div style={{fontSize:12,color:P.t1,lineHeight:1.5,fontWeight:500}}>{a.message}</div>
+            </div>
+            {a.level==='critical' && (
+              <button onClick={a.onAction} style={{
+                padding:'6px 14px',background:P.negative,color:'#fff',
+                border:'none',borderRadius:8,fontSize:10,fontWeight:800,
+                cursor:'pointer',flexShrink:0,letterSpacing:0.5,fontFamily:'inherit',
+                boxShadow:'0 4px 12px rgba(239,68,68,0.35)',
+              }}>HEDGE →</button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ── MonteCarloFan — Blueprint Component 6: P10/P50/P90 probability cone ──
+const MonteCarloFan = ({data=[],height=220}) => {
+  if(!data.length) return null;
+  const W=700,H=height;
+  const maxV = Math.max(...data.map(d=>d.p90||0));
+  const minV = Math.min(...data.map(d=>d.p10||0));
+  const rangeV = maxV - minV || 1;
+  const scaleX = i => (i/(data.length-1))*W;
+  const scaleY = v => H - ((v-minV)/rangeV)*(H-20) - 10;
+  const topPts = data.map((d,i)=>`${scaleX(i)},${scaleY(d.p90||0)}`).join(' L ');
+  const botPts = [...data].reverse().map((d,i)=>`${scaleX(data.length-1-i)},${scaleY(d.p10||0)}`).join(' L ');
+  const p50Pts = data.map((d,i)=>`${scaleX(i)},${scaleY(d.p50||0)}`).join(' L ');
+  return (
+    <div style={{width:'100%',overflow:'hidden'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:height,overflow:'visible'}}>
+        <defs>
+          <linearGradient id="mcFan" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={P.s1} stopOpacity="0.25"/>
+            <stop offset="100%" stopColor={P.s1} stopOpacity="0.05"/>
+          </linearGradient>
+        </defs>
+        {/* Confidence band P10–P90 */}
+        <path d={`M ${topPts} L ${botPts} Z`} fill="url(#mcFan)"/>
+        {/* P50 base case — neon line with glow */}
+        <polyline fill="none" stroke={P.s1} strokeWidth={2.5} strokeLinecap="round" points={p50Pts}
+          style={{filter:`drop-shadow(0 0 6px ${P.s1}66)`}}/>
+        {/* Glow duplicate */}
+        <polyline fill="none" stroke={P.s1} strokeWidth={7} strokeLinecap="round" points={p50Pts}
+          style={{filter:'blur(5px)'}} opacity={0.35}/>
+        {/* Legend */}
+        <text x={8} y={14} fill={P.t3} fontSize={10} fontWeight={700}>P10</text>
+        <text x={W/2-10} y={14} fill={P.s1} fontSize={10} fontWeight={800}>P50 (Base)</text>
+        <text x={W-28} y={14} fill={P.t3} fontSize={10} fontWeight={700}>P90</text>
+      </svg>
+    </div>
+  );
+};
+
+// ── FactorHeatmap — Blueprint Component 9: 5-factor exposure matrix ──
+const FactorHeatmap = ({data=[]}) => {
+  const factors = ['Growth','Value','Momentum','Quality','Low Vol'];
+  const getCell = (v) => {
+    const abs = Math.abs(v);
+    if(v>0.6)  return {bg:`rgba(15,150,156,0.50)`,text:P.s1,  glow:`0 0 10px rgba(15,150,156,0.60)`};
+    if(v>0.2)  return {bg:`rgba(15,150,156,0.22)`,text:P.s1,  glow:'none'};
+    if(v>-0.2) return {bg:'rgba(255,255,255,0.04)',text:P.t3,  glow:'none'};
+    if(v>-0.6) return {bg:`rgba(255,92,122,0.22)`, text:P.s4,  glow:'none'};
+    return        {bg:`rgba(255,92,122,0.50)`,      text:P.s4,  glow:`0 0 10px rgba(255,92,122,0.60)`};
+  };
+  return (
+    <div style={{overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'separate',borderSpacing:4,tableLayout:'fixed'}}>
+        <thead>
+          <tr>
+            <th style={{textAlign:'left',fontSize:10,fontWeight:700,color:P.t3,textTransform:'uppercase',
+              letterSpacing:0.8,paddingBottom:6,width:'30%'}}>Asset</th>
+            {factors.map(f=>(
+              <th key={f} style={{textAlign:'center',fontSize:9,fontWeight:700,color:P.t3,
+                textTransform:'uppercase',letterSpacing:0.6,paddingBottom:6}}>{f}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row,i)=>(
+            <tr key={i}>
+              <td style={{fontSize:12,color:P.t2,fontWeight:600,paddingRight:8,paddingBottom:4}}>{row.name}</td>
+              {factors.map(f=>{
+                const v = row[f.toLowerCase().replace(' ','_')] ?? row[f] ?? 0;
+                const s = getCell(v);
+                return (
+                  <td key={f} style={{paddingBottom:4}}>
+                    <div title={`${f}: ${(v*100).toFixed(0)}%`} style={{
+                      height:30,borderRadius:8,
+                      background:s.bg,border:'1px solid rgba(255,255,255,0.06)',
+                      boxShadow:s.glow,
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      fontSize:10,fontWeight:700,color:s.text,fontFamily:P.mono,
+                      cursor:'crosshair',transition:'transform 0.2s ease',
+                    }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.08)'}
+                       onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+                      {v!==0?`${v>0?'+':''}${(v*100).toFixed(0)}%`:'—'}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* Legend */}
+      <div style={{display:'flex',gap:10,marginTop:8,flexWrap:'wrap'}}>
+        {[{c:P.s1,l:'High positive (>60%)'},{c:'rgba(15,150,156,0.40)',l:'Positive'},{c:P.t4,l:'Neutral'},{c:P.s4,l:'Negative'}].map((x,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:5}}>
+            <div style={{width:10,height:10,borderRadius:3,background:x.c}}/>
+            <span style={{fontSize:9,color:P.t4}}>{x.l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── DecisionQualityMatrix — Blueprint Component 10: behavioral finance scores ──
+const DecisionQualityMatrix = ({scores={}}) => {
+  const metrics = [
+    {label:'Timing Alpha',      val:scores.timing      ?? 50,desc:'Entry/exit quality vs systematic'},
+    {label:'Wrapper Efficiency',val:scores.wrapper     ?? 62,desc:'Tax-sheltered % of growth assets'},
+    {label:'Debt Management',   val:scores.debt        ?? 58,desc:'Debt drag vs NW trajectory'},
+    {label:'Disposition Discipline',val:scores.disposition??42,desc:'PGR vs PLR — avoiding hold-losers'},
+  ];
+  const overall = Math.round(metrics.reduce((a,m)=>a+m.val,0)/metrics.length);
+  const oc = overall>=70?P.s1:overall>=45?P.s3:P.s4;
+  return (
+    <div style={{display:'flex',gap:14,flexWrap:'wrap'}}>
+      {/* Hero score */}
+      <div style={{
+        padding:'16px 20px',minWidth:100,textAlign:'center',
+        background:'linear-gradient(135deg, rgba(109,165,192,0.18), rgba(5,22,26,0.60))',
+        border:`1px solid rgba(109,165,192,0.20)`,borderRadius:12,flexShrink:0,
+        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,
+      }}>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:1.2,textTransform:'uppercase',color:P.t3}}>PROCESS</div>
+        <div style={{fontSize:44,fontWeight:900,color:oc,fontFamily:P.mono,lineHeight:1}}>{overall}</div>
+        <div style={{fontSize:9,color:P.t4}}>/100</div>
+      </div>
+      {/* Metric bars */}
+      <div style={{flex:1,display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        {metrics.map((m,i)=>(
+          <div key={i} style={{padding:'10px 12px',background:'rgba(255,255,255,0.03)',borderRadius:10,border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+              <span style={{fontSize:11,fontWeight:600,color:P.t2}}>{m.label}</span>
+              <span style={{fontSize:11,fontFamily:P.mono,color:P.t3}}>{m.val}</span>
+            </div>
+            <div style={{height:6,background:'rgba(0,0,0,0.40)',borderRadius:4,overflow:'hidden',
+              boxShadow:'inset 0 2px 4px rgba(0,0,0,0.30)'}}>
+              <div style={{width:`${m.val}%`,height:'100%',
+                background:`linear-gradient(90deg, ${P.s2}, ${P.s1})`,borderRadius:4,
+                transition:'width 0.8s ease',boxShadow:`0 0 8px ${P.s2}40`}}/>
+            </div>
+            <div style={{fontSize:9,color:P.t4,marginTop:4}}>{m.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // Stat Row — compact inline metric for transaction-style lists
 const StatRow = ({label,value,sub,c=P.t1,icon}) => (
@@ -915,6 +1232,22 @@ const T1 = ()=>{
       <div style={{gridColumn:"span 2"}}><KpiTile l="Cash Buffer" v={`${runway.toFixed(1)}mo`} c={runway>=3?P.positive:P.negative} delta="vs 3.0 target" deltaType={runway>=3?"up":"down"} bench="Rule: 3-6mo" sm/></div>
     </div>
 
+    {/* AGENT INSIGHT BANNER — synthesis + regime context */}
+    <CIOInsightBanner
+      regime="Late Cycle"
+      confidence={72}
+      text={`Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
+    />
+
+    {/* CONTROL BAR — time filter between Zone 1 and Zone 2 */}
+    <ControlBar
+      periods={['1M','3M','6M','YTD','1Y','ALL']}
+      activePeriod="6M"
+      filters={['All','NW','Assets','Drawdown']}
+      activeFilter="All"
+      actions={[{label:'Export PDF',icon:'↓'},{label:'Refresh',icon:'↺'}]}
+    />
+
     {/* ROW 2: Alerts + Scorecard Radar + Return Decomp (3 col) */}
     <div style={{display:"grid",gridTemplateColumns:"3fr 4fr 5fr",gap:14,marginBottom:14}}>
       {/* Alerts */}
@@ -936,6 +1269,14 @@ const T1 = ()=>{
         <div style={{display:"flex",justifyContent:"flex-end",marginBottom:6}}>
           <Gauge score={SCORECARD.overall} label="" size={48}/>
         </div>
+        {/* DECISION QUALITY MATRIX — Blueprint Component 10 */}
+        <DecisionQualityMatrix scores={{
+          timing: Math.round(dqTiming * 10),
+          wrapper: Math.round(dqWrapper * 10),
+          debt: Math.round(dqDebt * 10),
+          disposition: 42,
+        }}/>
+        <div style={{height:10}}/>
         <ReactECharts option={{
           tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.96)',borderColor:'rgba(255,255,255,0.10)',textStyle:{color:'#f1f5f9',fontSize:11},borderRadius:10,padding:[10,14]},
           radar:{indicator:radarData.map(d=>({name:d.metric,max:10})),radius:'68%',axisName:{color:'#475569',fontSize:10,fontWeight:600},splitArea:{areaStyle:{color:['rgba(99,102,241,0.03)','rgba(99,102,241,0.06)']}},splitLine:{lineStyle:{color:'rgba(0,0,0,0.08)',width:1}},axisLine:{lineStyle:{color:'rgba(0,0,0,0.06)',width:1}}},
@@ -2051,6 +2392,18 @@ const T4 = ()=>{
       </PanelShell>
     </Grid>
 
+    {/* FACTOR HEATMAP — Blueprint Component 9: 5-factor exposure matrix */}
+    <PanelShell hover title="FAMA-FRENCH FACTOR EXPOSURE MATRIX" subtitle="5-factor cell heatmap — teal=positive exposure, coral=negative" takeaway="Growth/Quality tilt positive. Value and Low Vol exposures are neutral. Crypto dominates momentum negatively in recent periods.">
+      <FactorHeatmap data={[
+        {name:"Equity ETFs (JPM)",  Growth: 0.65, Value: 0.45, Momentum: 0.30, Quality: 0.70, 'Low Vol': 0.20},
+        {name:"Pension (Daiwa)",    Growth: 0.50, Value: 0.55, Momentum: 0.15, Quality: 0.60, 'Low Vol': 0.35},
+        {name:"Bitcoin",           Growth: 0.80, Value:-0.60, Momentum:-0.70, Quality:-0.55, 'Low Vol':-0.90},
+        {name:"ZAR (EM)",          Growth: 0.25, Value: 0.65, Momentum:-0.10, Quality: 0.10, 'Low Vol':-0.30},
+        {name:"Cash / FD",         Growth:-0.10, Value: 0.15, Momentum:-0.05, Quality: 0.80, 'Low Vol': 0.95},
+        {name:"UK Small Cap",      Growth: 0.30, Value: 0.70, Momentum: 0.10, Quality: 0.25, 'Low Vol': 0.15},
+      ]}/>
+    </PanelShell>
+
     {/* Risk Budget + Correlation (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
       <PanelShell hover title="RISK BUDGET UTILISATION" subtitle="Risk/capital ratio — >1.5x overconsuming, <0.5x drag" takeaway="Crypto consumes 2.5x its capital weight in risk. Cash is 0.1x — pure drag on returns with zero risk contribution.">
@@ -2102,13 +2455,22 @@ const T5 = ()=>{
   return(<div>
     <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
 
-    {/* KPI STRIP */}
+    {/* KPI STRIP — Zone 1 Signal */}
     <FlexRow gap={6} style={{marginBottom:14}}>
       <KpiTile l="Scenarios" v={STRESS.length} c={P.t2} sm bench="6-10"/><KpiTile l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off" bench="<-15%"/>
       <KpiTile l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted" bench="<-3%"/>
       <KpiTile l="Max NW Impact" v={fK(PORT.netWorth * Math.min(...STRESS.map(s=>s.impact)) / 100)} c={P.negative} sm delta="At worst case"/>
       <KpiTile l="Best Hedge" v="GBP/USD" c={P.positive} sm delta="+3.2% USD gain"/>
     </FlexRow>
+
+    {/* RISK ALERT STACK — Blueprint Component 8 */}
+    <RiskAlertStack alerts={[
+      {level:'critical',metric:'Crypto VaR',message:'Crypto allocation contributes 32% of total portfolio VaR from 13% of capital — 2.5× risk budget limit breached.'},
+      {level:'critical',metric:'Amex APR',message:`${fmt(PORT.amexDebt)} at 22% APR is destroying £2,343/yr in guaranteed return. Immediate clearance outperforms any investment.`},
+      {level:'warning',metric:'ISA Deadline',message:`£20,000 ISA allowance expires 5 April. ${Math.round((new Date('2026-04-05')-new Date())/86400000)} days remaining. Zero deployed.`},
+      {level:'warning',metric:'Cash Buffer',message:'3.4-month cash runway below 6-month institutional standard. Market shock could force forced selling.'},
+    ]}/>
+    <div style={{marginBottom:14}}/>
 
     {/* SIDE-BY-SIDE: Impact Matrix + Probability Chart */}
     <Grid cols="7fr 5fr" gap={14}>
