@@ -1288,18 +1288,18 @@ const T4 = ()=>{
   ];
   const volTrend=MONTHLY_DATA.filter(m=>m.vol!=null).map(m=>({d:m.m,vol:m.vol,dd:m.r}));
   return(<div>
-    <Hd t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red}/>
+    <SectionHeader t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red}/>
 
     {/* KPI ROW */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Vol" v={`${RISK.vol}%`} c={P.negative} sm delta="Annualised"/><K l="Sharpe" v={RISK.sharpe.toFixed(2)} c={RISK.sharpe>=0.5?P.positive:P.negative} sm delta="<0.5=poor"/>
-      <K l="Sortino" v={RISK.sortino.toFixed(2)} c={P.amber} sm delta="Downside-adj"/><K l="Max DD" v={`${RISK.maxDD}%`} c={P.negative} sm delta={`${RISK.ddDur}d`}/>
-      <K l="VaR 95" v={`${RISK.var95}%`} c={P.negative} sm delta="Monthly"/><K l="CVaR" v={`${RISK.cvar95}%`} c={P.negative} sm delta="Shortfall"/>
-      <K l="Omega" v={RISK.omega.toFixed(2)} c={P.amber} sm delta=">1.0 OK"/><K l="Beta" v={RISK.beta.toFixed(2)} c={P.t2} sm delta="vs MSCI"/>
+      <KpiTile l="Vol" v={`${RISK.vol}%`} c={P.negative} sm delta="Annualised"/><KpiTile l="Sharpe" v={RISK.sharpe.toFixed(2)} c={RISK.sharpe>=0.5?P.positive:P.negative} sm delta="<0.5=poor"/>
+      <KpiTile l="Sortino" v={RISK.sortino.toFixed(2)} c={P.amber} sm delta="Downside-adj"/><KpiTile l="Max DD" v={`${RISK.maxDD}%`} c={P.negative} sm delta={`${RISK.ddDur}d`}/>
+      <KpiTile l="VaR 95" v={`${RISK.var95}%`} c={P.negative} sm delta="Monthly"/><KpiTile l="CVaR" v={`${RISK.cvar95}%`} c={P.negative} sm delta="Shortfall"/>
+      <KpiTile l="Omega" v={RISK.omega.toFixed(2)} c={P.amber} sm delta=">1.0 OK"/><KpiTile l="Beta" v={RISK.beta.toFixed(2)} c={P.t2} sm delta="vs MSCI"/>
     </FlexRow>
 
     {/* Risk metrics table (full width, Glass-1 for density) */}
-    <Card hover tier={1} style={{marginBottom:14}}>
+    <PanelShell hover tier={1} style={{marginBottom:14}}>
       <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>COMPLETE RISK METRICS</div>
       <Tbl h={["Metric","Value","Rating","Interpretation"]}
         r={[
@@ -1314,11 +1314,11 @@ const T4 = ()=>{
           ["Skewness",RISK.skew.toFixed(2),"Neg. skew","More large losses than gains"],
           ["Kurtosis",RISK.kurt.toFixed(1),"Fat tails","5.4 vs normal 3.0"],
         ]} hl={2}/>
-    </Card>
+    </PanelShell>
 
     {/* Factor Radar + Risk vs Capital (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <Card hover>
+      <PanelShell hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR EXPOSURE vs BENCHMARK</div>
         <ResponsiveContainer width="100%" height={320}>
           <RadarChart data={radar}><PolarGrid stroke="rgba(0,0,0,0.04)" gridType="polygon"/>
@@ -1329,8 +1329,8 @@ const T4 = ()=>{
             <Tooltip/>
           </RadarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
+      </PanelShell>
+      <PanelShell hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>RISK vs CAPITAL CONTRIBUTION</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={riskContrib} margin={{left:5}}>
@@ -1343,12 +1343,12 @@ const T4 = ()=>{
           </BarChart>
         </ResponsiveContainer>
         <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital \u2192 32% risk (2.5x). Cash/FD: 16% capital \u2192 2% risk (drag).</div>
-      </Card>
+      </PanelShell>
     </Grid>
 
     {/* Vol Trend + Factor Table (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <Card hover>
+      <PanelShell hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>ROLLING VOLATILITY & MONTHLY RETURN</div>
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={volTrend}>
@@ -1361,18 +1361,18 @@ const T4 = ()=>{
             <Line yAxisId="l" type="monotone" dataKey="vol" name="Rolling Vol %" stroke={P.amber} strokeWidth={2.5} dot={{fill:P.amber,r:3}}/>
           </ComposedChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover tier={1}>
+      </PanelShell>
+      <PanelShell hover tier={1}>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR ATTRIBUTION TABLE</div>
         <Tbl h={["Factor","Port","Bench","Intent","Ret%","Risk%"]}
           r={FACTORS.map(f=>[f.f,`${f.p}`,`${f.b}`,f.intent,`${f.ret>0?"+":""}${f.ret}%`,`${f.risk}%`])} hl={4}/>
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>Crypto Beta: 32% risk, -8.4% return. Only equity beta and UK domestic are compensated.</div>
-      </Card>
+      </PanelShell>
     </Grid>
 
     {/* Risk Budget + Correlation (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <Card hover>
+      <PanelShell hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
         <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{"Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag."}</div>
         <div style={{display:"grid",gap:8}}>
@@ -1392,8 +1392,8 @@ const T4 = ()=>{
             );
           })}
         </div>
-      </Card>
-      <Card hover>
+      </PanelShell>
+      <PanelShell hover>
         <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>CROSS-ASSET CORRELATION</div>
         <div style={{fontSize:11,color:P.t3,marginBottom:8}}>Pairwise correlations. Low/negative = genuine diversification.</div>
         {(()=>{
@@ -1412,10 +1412,10 @@ const T4 = ()=>{
           return <ReactECharts option={heatOpt} style={{height:260}} opts={{renderer:'svg'}}/>;
         })()}
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>Equity-Crypto 0.52 = less diversification than perceived. Cash/FD is the only true diversifier.</div>
-      </Card>
+      </PanelShell>
     </Grid>
 
-    <Ins type="risk" text={`Sharpe of ${RISK.sharpe} is below institutional minimums. Excluding crypto, equity sleeve Sharpe is ~0.9-1.1. Skewness ${RISK.skew} + kurtosis ${RISK.kurt} = fat left tails. Risk budget dominated by a single asset class delivering negative returns.`}/>
+    <InsightCallout type="risk" text={`Sharpe of ${RISK.sharpe} is below institutional minimums. Excluding crypto, equity sleeve Sharpe is ~0.9-1.1. Skewness ${RISK.skew} + kurtosis ${RISK.kurt} = fat left tails. Risk budget dominated by a single asset class delivering negative returns.`}/>
   </div>);
 };
 // =========================================================================
@@ -1424,19 +1424,19 @@ const T4 = ()=>{
 const T5 = ()=>{
   const probWeighted = STRESS.map(s=>({...s,wImpact:+(s.impact*parseFloat(s.pr)/100).toFixed(2)}));
   return(<div>
-    <Hd t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
+    <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Scenarios" v={STRESS.length} c={P.t2} sm/><K l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off"/>
-      <K l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted"/>
-      <K l="Max NW Impact" v={fK(PORT.netWorth * Math.min(...STRESS.map(s=>s.impact)) / 100)} c={P.negative} sm delta="At worst case"/>
-      <K l="Best Hedge" v="GBP/USD" c={P.positive} sm delta="+3.2% USD gain"/>
+      <KpiTile l="Scenarios" v={STRESS.length} c={P.t2} sm/><KpiTile l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off"/>
+      <KpiTile l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted"/>
+      <KpiTile l="Max NW Impact" v={fK(PORT.netWorth * Math.min(...STRESS.map(s=>s.impact)) / 100)} c={P.negative} sm delta="At worst case"/>
+      <KpiTile l="Best Hedge" v="GBP/USD" c={P.positive} sm delta="+3.2% USD gain"/>
     </FlexRow>
 
     {/* SIDE-BY-SIDE: Impact Matrix + Probability Chart */}
     <Grid cols="7fr 5fr" gap={14}>
-    <Card hover>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
       {STRESS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${P.b2}`}}>
         <div style={{flex:"1 1 160px",fontSize:14,color:P.t2,fontWeight:500}}>{s.s}</div>
@@ -1447,8 +1447,8 @@ const T5 = ()=>{
         <div style={{width:35,fontSize:12,color:P.t3,textAlign:"right"}}>{s.pr}</div>
         <div style={{flex:"0 0 120px",fontSize:13,color:P.t3,textAlign:"right"}}>{s.exp}</div>
       </div>)}
-    </Card>
-    <Card hover>
+    </PanelShell>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>PROBABILITY-WEIGHTED IMPACT</div>
       <ResponsiveContainer width="100%" height={360}>
         <BarChart data={probWeighted} margin={{left:5}}>
@@ -1462,10 +1462,10 @@ const T5 = ()=>{
         </BarChart>
       </ResponsiveContainer>
       <div style={{fontSize:12,color:P.t3,marginTop:6}}>Expected loss: {probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(2)}% prob-weighted.</div>
-    </Card>
+    </PanelShell>
     </Grid>
     {/* SPRINT 2: Scenario Heatmap — sleeves × scenarios cross-matrix */}
-    <Card hover>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Each cell shows estimated portfolio impact (%) from that sleeve under that scenario. Darker red = larger loss.</div>
       {(()=>{
@@ -1487,8 +1487,8 @@ const T5 = ()=>{
         };
         return <ReactECharts option={opt} style={{height:240}} opts={{renderer:'svg'}}/>;
       })()}
-    </Card>
-    <Card hover>
+    </PanelShell>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>WEALTH PROJECTION — 5 SCENARIOS</div>
       <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Salary: £170k +15%/yr · Bonus: 100% of salary · Tax: 47% · Expenses: £6k/mo +15%/yr · Returns vary by scenario</div>
       <ResponsiveContainer width="100%" height={420}>
@@ -1504,7 +1504,7 @@ const T5 = ()=>{
         </AreaChart>
       </ResponsiveContainer>
       <div style={{fontSize:13,color:P.t3,marginTop:6}}>Base case (15% returns) reaches £1M by 2030 (age 36). Conservative (8% returns) still reaches £1M by 2032. FIRE (£1.8M) achievable by 2032-34 depending on scenario. Income growth at 15%/yr is the dominant driver in all cases.</div>
-    </Card>
+    </PanelShell>
   </div>);
 };
 
@@ -1523,13 +1523,13 @@ const T6 = ()=>{
     {m:"Investable",v:+((netSalary/12)-PORT.monthlyExpenses).toFixed(0)},
   ];
   return(<div>
-    <Hd t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
+    <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March"/><K l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber}/>
-      <K l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><K l="Expenses" v="£6k/mo" s="£72k/yr"/>
-      <K l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber} sm/><K l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative} sm/>
+      <KpiTile l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March"/><KpiTile l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber}/>
+      <KpiTile l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><KpiTile l="Expenses" v="£6k/mo" s="£72k/yr"/>
+      <KpiTile l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber} sm/><KpiTile l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative} sm/>
     </FlexRow>
-    <Card hover>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>BALANCE SHEET</div>
       <Tbl h={["Item","Amount","% NW","Interpretation"]} r={[
         ["Total Assets",fmt(PORT.assets),"---","Includes pro-rata £100k correction"],
@@ -1540,9 +1540,9 @@ const T6 = ()=>{
         ["Emergency Target",fmt(PORT.monthlyExpenses*3),"---","£18k target — shortfall of ~£2k"],
         ["Debt-to-Assets",`${(PORT.debts/PORT.assets*100).toFixed(1)}%`,"---","Low leverage but Amex rate is punitive"],
       ]}/>
-    </Card>
+    </PanelShell>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-      <Card hover>
+      <PanelShell hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>MONTHLY CASHFLOW</div>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={monthlyFlow}>
@@ -1553,8 +1553,8 @@ const T6 = ()=>{
             <Bar dataKey="v" name="£/month" radius={[4,4,0,0]}>{monthlyFlow.map((d,i)=><Cell key={i} fill={d.v>=0?P.cyan:P.red} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
+      </PanelShell>
+      <PanelShell hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>DEPLOYMENT STATUS</div>
         <div style={{display:"grid",gap:14,marginTop:8}}>
           <Bar2 val={0} max={20000} c={P.red} label="ISA Allowance 2025/26 (29 days left)"/>
@@ -1562,10 +1562,10 @@ const T6 = ()=>{
           <Bar2 val={liquidCash} max={18000} c={P.amber} label="Emergency Fund (target £18k)"/>
           <Bar2 val={PORT.amexDebt} max={PORT.amexDebt} c={P.red} label={`Amex Outstanding: ${fmt(PORT.amexDebt)}`}/>
         </div>
-      </Card>
+      </PanelShell>
     </div>
     {/* SPRINT 2: Capital Conversion Efficiency */}
-    <Card hover>
+    <PanelShell hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CAPITAL CONVERSION EFFICIENCY</div>
       <div style={{fontSize:12,color:P.t3,marginBottom:12}}>What percentage of every pound earned actually compounds into wealth vs leaks to tax, expenses, debt, and friction.</div>
       {(()=>{
@@ -1597,8 +1597,8 @@ const T6 = ()=>{
           </div>
         );
       })()}
-    </Card>
-    <Ins type="action" text={`New salary of £170k + bonus £150-190k transforms the capital engine. Post-tax take-home of ~£180k/yr with £72k expenses = £108k+ annual investable surplus. At this deployment rate, £1M is achievable within 5-6 years through savings compounding alone. Immediate priorities: (1) clear Amex in full, (2) max ISA, (3) salary sacrifice into pension, (4) rebuild emergency fund to £18k.`}/>
+    </PanelShell>
+    <InsightCallout type="action" text={`New salary of £170k + bonus £150-190k transforms the capital engine. Post-tax take-home of ~£180k/yr with £72k expenses = £108k+ annual investable surplus. At this deployment rate, £1M is achievable within 5-6 years through savings compounding alone. Immediate priorities: (1) clear Amex in full, (2) max ISA, (3) salary sacrifice into pension, (4) rebuild emergency fund to £18k.`}/>
   </div>);
 };
 
@@ -2991,6 +2991,9 @@ const TABS=[
   {k:"exec",l:"T1 Executive Summary"},
   {k:"struct",l:"T2 Structure & Concentration"},
   {k:"perf",l:"T3 Performance & Attribution"},
+  {k:"risk",l:"T4 Risk Engine"},
+  {k:"stress",l:"T5 Stress Tests"},
+  {k:"cash",l:"T6 Cashflow & Capital"},
 ];
 
 export default function PortfolioVOS(){
@@ -3020,6 +3023,9 @@ export default function PortfolioVOS(){
     case "exec":return <T1/>;
     case "struct":return <T2/>;
     case "perf":return <T3/>;
+    case "risk":return <T4/>;
+    case "stress":return <T5/>;
+    case "cash":return <T6/>;
     default:return <T1/>;
   }};
   return (
