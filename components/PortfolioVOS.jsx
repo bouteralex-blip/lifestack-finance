@@ -3022,37 +3022,21 @@ const T10 = ()=>{
       return(<>
         <Grid cols="7fr 5fr" gap={14}>
           <PanelShell hover title={`MONTE CARLO FAN CHART (${N.toLocaleString()} SIMS)`} subtitle="BoE-style percentile cone — mean 12%, vol 18%, salary +15%/yr" takeaway="P50 median path crosses £1M by 2030. Even P10 (worst 10%) reaches £1M by 2033 — income dominates.">
-            <ResponsiveContainer width="100%" height={360}>
-              <AreaChart data={fanData}><CartesianGrid stroke={P.b2}/>
-                <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
-                <Tooltip content={({active,payload,label})=>{
-                  if(!active||!payload?.length)return null;
-                  const d=fanData.find(f=>f.y===label);
-                  return(<div style={{...GS,padding:"10px 14px",fontSize:12,borderRadius:14}}>
-                    <div style={{color:P.t3,marginBottom:4,fontWeight:600}}>{label}</div>
-                    {[["P90",P.green,d?.p90],["P75","#06b6d4",d?.p75],["P50",P.cyan,d?.p50],["P25",P.amber,d?.p25],["P10",P.red,d?.p10]].map(([l,c,v],i)=>(
-                      <div key={i} style={{color:c,fontWeight:600}}>{l}: £{v>=1000?`${(v/1000).toFixed(1)}m`:`${v}k`}</div>
-                    ))}
-                    <div style={{color:P.t4,fontSize:11,marginTop:4}}>Spread: £{((d?.p90-d?.p10)/1000).toFixed(1)}m</div>
-                  </div>);
-                }}/>
-                <Area type="monotone" dataKey="p90" stroke="none" fill={P.green} fillOpacity={0.06}/>
-                <Area type="monotone" dataKey="p75" stroke="none" fill={P.cyan} fillOpacity={0.08}/>
-                <Area type="monotone" dataKey="p50" stroke={P.cyan} fill={P.cyan} fillOpacity={0.12} strokeWidth={2.5}/>
-                <Area type="monotone" dataKey="p25" stroke="none" fill={P.amber} fillOpacity={0.06}/>
-                <Area type="monotone" dataKey="p10" stroke={P.red} fill={P.red} fillOpacity={0.04} strokeWidth={1.5} strokeDasharray="4 4"/>
-                <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:11,fontWeight:700}}/>
-                <ReferenceLine y={1800} stroke={P.indigo} strokeDasharray="8 4" label={{value:"FIRE",fill:P.indigo,fontSize:11,fontWeight:700}}/>
-              </AreaChart>
-            </ResponsiveContainer>
-            <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
-              {[["P90",P.green,"Best 10%"],["P75","#06b6d4","Upper Q"],["P50",P.cyan,"Median"],["P25",P.amber,"Lower Q"],["P10",P.red,"Worst 10%"]].map(([l,c,d],i)=>(
-                <div key={i} style={{fontSize:11,display:"flex",alignItems:"center",gap:4}}>
-                  <div style={{width:12,height:4,background:c,borderRadius:2}}/>
-                  <span style={{color:P.t3}}>{l}</span>
-                  <span style={{color:P.t4}}>({d})</span>
-                </div>
-              ))}
+            <MonteCarloFan data={fanData} height={360}/>
+            <div style={{display:"flex",gap:12,marginTop:8,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                {[["P90",P.positive,"Best 10%"],["P50",P.s1,"Median"],["P10",P.s4,"Worst 10%"]].map(([l,c,d],i)=>(
+                  <div key={i} style={{fontSize:11,display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{width:12,height:4,background:c,borderRadius:2}}/>
+                    <span style={{color:P.t3}}>{l}</span>
+                    <span style={{color:P.t4}}>({d})</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:16}}>
+                {fanData[4]&&<div style={{fontSize:11,color:P.t4}}>2030 P50: <span style={{color:P.s1,fontWeight:700}}>£{(fanData[4].p50/1000).toFixed(1)}m</span></div>}
+                {fanData[9]&&<div style={{fontSize:11,color:P.t4}}>2035 P50: <span style={{color:P.s1,fontWeight:700}}>£{(fanData[9].p50/1000).toFixed(1)}m</span></div>}
+              </div>
             </div>
           </PanelShell>
           <PanelShell hover title="MILESTONE PROBABILITIES" subtitle={`% of ${N.toLocaleString()} simulations reaching each wealth level`} takeaway="£500k near-certain by 2029. £1M probability reaches 85%+ by 2031. FIRE achievable in most scenarios by 2033.">
@@ -4452,8 +4436,8 @@ export default function PortfolioVOS(){
     case "long":return <T10/>;
     case "crypto":return <T11/>;
     case "act":return <T12/>;
-    case "tax":return <T14/>;
-    case "gloss":return <T13/>;
+    case "tax":return <T13/>;
+    case "gloss":return <T14/>;
     case "sys":return <T15/>;
     case "storage":return <T16/>;
     case "settings":return <T17/>;
