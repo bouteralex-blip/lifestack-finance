@@ -681,6 +681,22 @@ const T1 = ()=>{
     {metric:"Capital Eff.",score:SCORECARD.capitalEff,full:10},
   ];
 
+      // Asset class distribution for a denser analysis tile
+      const totalAssets = PORT.assets;
+      const classAgg = {};
+      HOLDINGS.forEach(h => { classAgg[h.cls] = (classAgg[h.cls] || 0) + h.val; });
+      const classData = Object.entries(classAgg).map(([cls, val]) => {
+        const pct = +(val / totalAssets * 100).toFixed(1);
+        let color;
+        if (cls === "Crypto") color = P.btc;
+        else if (cls === "ETF") color = P.cyan;
+        else if (cls === "Pension") color = "#06b6d4";
+        else if (cls === "Cash/FD" || cls === "Cash") color = "#94a3b8";
+        else if (cls === "Investment") color = P.indigo;
+        else color = P.purple;
+        return { cls, val, pct, color };
+      }).sort((a,b) => b.val - a.val);
+
   return(<div>
     <SectionHeader t="EXECUTIVE SUMMARY" s={`${PORT.date} \u00B7 Net Worth ${fmt(PORT.netWorth)} \u00B7 Assets ${fmt(PORT.assets)} \u00B7 Debts ${fmt(PORT.debts)}`} tag="CIO BRIEFING"/>
 
@@ -836,6 +852,33 @@ const T1 = ()=>{
           <Bar2 val={fire} max={100} c={P.cyan} label="FIRE Progress"/>
           <Bar2 val={debtToAsset} max={10} c={debtToAsset<5?P.positive:P.amber} label="Debt Ratio"/>
         </div>
+    </PanelShell>
+    </div>
+
+    {/* New ROW: Asset class distribution & debt summary (dense Horizon tiles) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:10}}>ASSET CLASS DISTRIBUTION</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie data={classData} dataKey="val" nameKey="cls" cx="50%" cy="50%" innerRadius={50} outerRadius={80} startAngle={90} endAngle={450} paddingAngle={2}>
+              {classData.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.9}/>) }
+            </Pie>
+            <Tooltip content={<Tip/>}/>
+          </PieChart>
+        </ResponsiveContainer>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:8}}>
+          {classData.map((c,i)=><div key={i} style={{fontSize:11,color:c.color,padding:'3px 8px',background:`${c.color}14`,borderRadius:6,fontWeight:700,border:`1px solid ${c.color}20`}}>{c.cls} {c.pct}%</div>)}
+        </div>
+      </PanelShell>
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:10}}>DEBT & CASH SUMMARY</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          <KpiTile l="Amex" v={fmt(PORT.amexDebt)} c={P.negative} sm delta="22% APR"/>
+          <KpiTile l="Monzo Flex" v={fmt(PORT.monzoFlex)} c={P.negative} sm delta="0% APR"/>
+          <KpiTile l="Liquid Cash" v={fK(liquidCash)} c={P.cyan} sm delta={`${runway.toFixed(1)}mo buffer`}/>
+          <KpiTile l="Credit/NW" v={`${(((PORT.amexDebt+PORT.monzoFlex)/PORT.netWorth)*100).toFixed(1)}%`} c={P.negative} sm delta="Exposure"/>
+        </div>
       </PanelShell>
     </div>
 
@@ -980,6 +1023,26 @@ const T2 = ()=>{
   const ccyData=Object.entries(ccyAgg).map(([n,v])=>({n,v:+(v/totalAssets*100).toFixed(1),c:ccyColors[n]||P.t3})).sort((a,b)=>b.v-a.v);
   const treemapData = sorted.slice(0,12).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),size:h.val,color:h.cls==="Crypto"?P.btc:h.cls==="ETF"?P.cyan:h.cls==="Pension"?"#06b6d4":h.cls==="Cash/FD"||h.cls==="Cash"?"#94a3b8":h.cls==="Investment"?P.indigo:P.purple}));
 
+  // Additional aggregations for class distribution and concentration composition
+  const classAgg2 = {};
+  HOLDINGS.forEach(h => { classAgg2[h.cls] = (classAgg2[h.cls] || 0) + h.val; });
+  const classData2 = Object.entries(classAgg2).map(([cls,val]) => {
+    const pct = +(val / totalAssets * 100).toFixed(1);
+    let color;
+    if (cls === "Crypto") color = P.btc;
+    else if (cls === "ETF") color = P.cyan;
+    else if (cls === "Pension") color = "#06b6d4";
+    else if (cls === "Cash/FD" || cls === "Cash") color = "#94a3b8";
+    else if (cls === "Investment") color = P.indigo;
+    else color = P.purple;
+    return { cls, val, pct, color };
+  }).sort((a,b) => b.val - a.val);
+  const concData = [
+    {name:'Top 3', val:+((top3/totalAssets*100).toFixed(1)), c:P.amber},
+    {name:'Top 5', val:+((top5/totalAssets*100).toFixed(1)), c:P.cyan},
+    {name:'Rest', val:+((100 - (top5/totalAssets*100)).toFixed(1)), c:P.t3},
+  ];
+
   return(<div>
     <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, geographic exposure, wrapper analysis, concentration metrics" tag="HOLDINGS"/>
 
@@ -1060,6 +1123,67 @@ const T2 = ()=>{
       </PanelShell>
     </Grid>
 
+    {/*
+      * NEW ROW — CLASS DISTRIBUTION & CONCENTRATION
+      *
+      * A supplementary set of charts to densify the Structure tab.  The first panel shows
+      * the asset class composition of the portfolio as a donut chart.  Each slice
+      * represents a class and is coloured consistently with the rest of the dashboard
+      * (crypto = bitcoin yellow, ETFs = cyan, pension = teal, cash/cash–equivalent
+      * wrappers grey, other investments purple).  The legend below lists each class
+      * with its percentage share.  The second panel visualises concentration by
+      * splitting net asset value into Top‑3 holdings, Top‑5 holdings and the rest.
+      * A horizontal bar chart emphasises just how much of the portfolio sits in a
+      * handful of positions.  Together these panels highlight structural
+      * diversification risks beyond what’s visible from the high‑level KPI strip.
+      */}
+    <Grid cols="5fr 5fr" gap={16} style={{marginBottom:16}}>
+      {/* Asset class distribution pie */}
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:8}}>ASSET CLASS DISTRIBUTION</div>
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie dataKey="pct" data={classData2} cx="50%" cy="50%" innerRadius={36} outerRadius={80} paddingAngle={2} stroke={P.b2}>
+              {classData2.map((d,i)=>(
+                <Cell key={i} fill={d.color} fillOpacity={0.85}/>
+              ))}
+            </Pie>
+            <Tooltip content={<Tip/>}/>
+          </PieChart>
+        </ResponsiveContainer>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
+          {classData2.map((d,i)=>(
+            <div key={i} style={{fontSize:11,color:d.color,padding:"3px 8px",background:`${d.color}14`,borderRadius:6,fontWeight:700,border:`1px solid ${d.color}20`,boxShadow:`0 1px 3px ${d.color}10`}}>
+              {d.cls} {d.pct}%
+            </div>
+          ))}
+        </div>
+        <div style={{fontSize:11,color:P.t3,marginTop:6,fontWeight:500}}>
+          Pension and ETFs dominate asset allocation; cash and crypto remain modest shares.
+        </div>
+      </PanelShell>
+      {/* Concentration composition bar */}
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:8}}>CONCENTRATION COMPOSITION</div>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={concData} layout="vertical" margin={{left:70}}>
+            <CartesianGrid stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
+            <XAxis type="number" tick={{fill:P.t3,fontSize:11}} tickFormatter={v=>`${v}%`}/>
+            <YAxis dataKey="name" type="category" tick={{fill:P.t1,fontSize:12,fontWeight:600}} width={65}/>
+            <Tooltip content={<Tip/>}/>
+            <Bar dataKey="val" name="Weight %" radius={[0,8,8,0]}>
+              {concData.map((d,i)=>(
+                <Cell key={i} fill={d.c} fillOpacity={0.85}/>
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div style={{fontSize:11,color:P.t3,marginTop:6,fontWeight:500}}>
+          Top 3 positions represent {concData[0].val}% of NAV and Top 5 over {concData[1].val}% — the rest is scattered amongst smaller names.
+        </div>
+      </PanelShell>
+    </Grid>
+
     {/* SECTOR EXPOSURE (full width — bold bars with glow) */}
     <PanelShell hover>
       <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:4}}>LOOK-THROUGH SECTOR EXPOSURE</div>
@@ -1115,6 +1239,69 @@ const T3 = ()=>{
     contrib:+((h.val-h.prev)/PORT.nw6moAgo*100).toFixed(1),
   })).sort((a,b)=>b.contrib-a.contrib).filter((_,i,a)=>i<4||i>=a.length-5);
   const cumReturn = NW_WEEKLY.map(w=>({d:w.d,ret:((w.nw-PORT.nw6moAgo)/PORT.nw6moAgo*100)}));
+
+  // Compute beta, alpha and correlation against benchmark using monthly data. Converts
+  // percentage inputs into decimals, then calculates covariance and variance.  Beta
+  // measures volatility vs the benchmark (1.0 = equal volatility).  Alpha
+  // represents excess return unexplained by beta.  Correlation indicates
+  // diversification benefit.
+  const benchMonthly = REF_DATA?.benchmark_monthly_returns?.months || [{m:"Oct",bench:-1.5,port:-2.1},{m:"Nov",bench:-3.2,port:-6.8},{m:"Dec",bench:0.8,port:-1.2},{m:"Jan",bench:1.2,port:-0.5},{m:"Feb",bench:-2.1,port:-4.2},{m:"Mar",bench:2.0,port:3.2}];
+  const pR = benchMonthly.map(b=>b.port/100);
+  const bR = benchMonthly.map(b=>b.bench/100);
+  const nB = bR.length;
+  const meanP = pR.reduce((a,v)=>a+v,0)/nB;
+  const meanB = bR.reduce((a,v)=>a+v,0)/nB;
+  let covPB = 0, varB = 0, varP = 0;
+  for(let i=0;i<nB;i++){
+    const dP = pR[i]-meanP;
+    const dB = bR[i]-meanB;
+    covPB += dP*dB;
+    varB += dB*dB;
+    varP += dP*dP;
+  }
+  covPB /= nB;
+  varB /= nB;
+  varP /= nB;
+  const beta = varB>0 ? covPB/varB : 0;
+  const alpha = ((meanP - beta*meanB) * 100);
+  const corr = varP>0&&varB>0 ? covPB/Math.sqrt(varP*varB) : 0;
+
+  // Compute maximum drawdown and recovery time from weekly net worth series.  We track
+  // the running peak and the largest percentage drop below that peak.  Recovery
+  // measures how many weeks it takes to regain or surpass the prior high.  If no
+  // recovery occurs within the dataset, the period to the last observation is used.
+  let peakVal = NW_WEEKLY[0]?.nw || 0;
+  let peakIdx = 0;
+  let maxDD = 0;
+  let troughIdx = 0;
+  for(let i=0;i<NW_WEEKLY.length;i++){
+    const val = NW_WEEKLY[i].nw;
+    if(val > peakVal){
+      peakVal = val;
+      peakIdx = i;
+    }
+    const dd = peakVal > 0 ? (peakVal - val)/peakVal : 0;
+    if(dd > maxDD){
+      maxDD = dd;
+      troughIdx = i;
+    }
+  }
+  let recovery = 0;
+  let recovered = false;
+  if(peakIdx < troughIdx){
+    const prePeakVal = NW_WEEKLY[peakIdx].nw;
+    for(let i=troughIdx;i<NW_WEEKLY.length;i++){
+      if(NW_WEEKLY[i].nw >= prePeakVal){
+        recovery = i - troughIdx;
+        recovered = true;
+        break;
+      }
+    }
+    if(!recovered){
+      recovery = NW_WEEKLY.length - troughIdx;
+    }
+  }
+  maxDD = +(maxDD*100).toFixed(1);
 
   return(<div>
     <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, contribution analysis, return decomposition" tag="PM REVIEW"/>
@@ -1257,6 +1444,29 @@ const T3 = ()=>{
             <div style={{fontSize:11,color:P.t3,marginTop:6,fontWeight:500}}>Capture ratio {captureRatio} \u2014 {captureRatio < 1 ? "below 1.0 = portfolio amplifies downside. Crypto drag." : "defensive characteristics."}</div>
           </div>);
         })()}
+      </PanelShell>
+    </Grid>
+
+    {/* ROW 4: Risk-adjusted metrics and drawdown analysis */}
+    <Grid cols="1fr 1fr" gap={16}>
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:4}}>BETA & ALPHA</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Risk-adjusted performance relative to benchmark.</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:8}}>
+          <KpiTile l="Beta" v={beta.toFixed(2)} c={beta>1?P.red:beta<0.9?P.green:P.amber} sm delta="Volatility vs bench"/>
+          <KpiTile l="Alpha" v={`${alpha.toFixed(1)}%`} c={alpha>=0?P.positive:P.negative} sm delta="Excess return"/>
+          <KpiTile l="Corr" v={corr.toFixed(2)} c={corr<0.6?P.positive:corr>0.8?P.red:P.amber} sm delta="Diversification"/>
+        </div>
+        <div style={{fontSize:11,color:P.t3,marginTop:6,fontWeight:500}}>Beta near 1 implies similar volatility; positive alpha signals skill beyond market exposure.</div>
+      </PanelShell>
+      <PanelShell hover>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,marginBottom:4}}>MAX DRAWDOWN & RECOVERY</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>Peak-to-trough decline over the period and weeks to recovery.</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2, 1fr)",gap:8}}>
+          <KpiTile l="Max Drawdown" v={`${maxDD}%`} c={maxDD>20?P.red:maxDD>10?P.amber:P.positive} sm delta="Largest drop"/>
+          <KpiTile l="Recovery Time" v={`${recovery}w`} c={recovery>8?P.amber:recovery>4?P.positive:P.green} sm delta="Weeks"/>
+        </div>
+        <div style={{fontSize:11,color:P.t3,marginTop:6,fontWeight:500}}>The portfolio fell {maxDD}% at most; recovery took ~{recovery} weeks.</div>
       </PanelShell>
     </Grid>
 
