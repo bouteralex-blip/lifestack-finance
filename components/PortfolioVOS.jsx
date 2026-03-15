@@ -40,24 +40,24 @@ const P = {
 // Tiers: Glass-1 (dense/readable), Glass-2 (default), Glass-3 (overlay/cinematic)
 const GLASS_BASE = {
   radius: 10,  // Horizon UI Pro: rounded-[10px] — signature corner radius
-  padding: 20,
+  padding: 16,  // Tighter than default for CIO terminal density
 };
 
-// Playbook Ch.4.7 + Horizon UI Pro light-mode hybrid
-// Glass: Shell/Plate/Content stack. Horizon: rounded-10, visible borders, structured shadows.
-// Plate opacities reduced from pure Playbook to let background perceptibility through (Ch.1.1)
+// Playbook Ch.4.7 + Horizon UI Pro — calibrated for macOS Sonoma wallpaper (dark rich bg)
+// Glass on dark bg: white plates provide contrast, white borders provide edge discipline
+// Playbook Ch.1.1: "background should remain recognizable" — plate opacity controls this
 const glassLight = (tier=2) => {
-  const plate = tier===1 ? 0.48 : tier===3 ? 0.22 : 0.35;  // Reduced: background must remain recognizable (Playbook 1.1)
-  const blur = tier===1 ? 16 : tier===3 ? 24 : 20;
-  const sat = tier===1 ? 1.05 : tier===3 ? 1.2 : 1.15;
+  const plate = tier===1 ? 0.18 : tier===3 ? 0.08 : 0.14;  // White plates over dark bg = true glass
+  const blur = tier===1 ? 20 : tier===3 ? 28 : 24;
+  const sat = tier===1 ? 1.2 : tier===3 ? 1.5 : 1.3;
   return {
     background:`rgba(255,255,255,${plate})`,
     backdropFilter:`blur(${blur}px) saturate(${sat})`,
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
-    border:`1px solid rgba(0,0,0,${tier===1?0.10:0.07})`,  // Visible border (Horizon: border-gray-200)
+    border:`1px solid rgba(255,255,255,${tier===1?0.15:0.10})`,  // White edges on dark bg
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,${tier===1?0.30:0.25})`,  // Horizon: shadow-md shadow-[#F3F3F3]
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.60:0.45}), rgba(255,255,255,0) 40%)`,  // Highlight band
+    boxShadow:`0 8px 32px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,${tier===1?0.12:0.08})`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.15:0.10}), rgba(255,255,255,0) 40%)`,
   };
 };
 const G = glassLight(2);
@@ -294,7 +294,7 @@ const Card = ({children,style,glow,hover,tier=2,accent}) => {
   return (
     <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
       style={{
-        position:'relative', borderRadius:GLASS_BASE.radius, overflow:'hidden', marginBottom:16,
+        position:'relative', borderRadius:GLASS_BASE.radius, overflow:'hidden', marginBottom:8,
         transition:"all 0.35s cubic-bezier(0.25,0.46,0.45,0.94)",
         transform:hovered&&hover?"translateY(-3px) scale(1.003)":"none",
         ...(style?.flex?{flex:style.flex}:{}),
@@ -345,19 +345,19 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType}) => (
     position:'relative', borderRadius:10, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
-    {/* Shell — Horizon: rounded-10 + visible border + glass highlight */}
+    {/* Shell — Horizon: rounded-10 + white edge on dark bg + glass highlight */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:'blur(20px) saturate(1.15)',WebkitBackdropFilter:'blur(20px) saturate(1.15)',
-      border:'1px solid rgba(0,0,0,0.07)',
-      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%)`,
-      boxShadow:'0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.25)',
+      backdropFilter:'blur(24px) saturate(1.3)',WebkitBackdropFilter:'blur(24px) saturate(1.3)',
+      border:'1px solid rgba(255,255,255,0.12)',
+      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 40%)`,
+      boxShadow:'0 8px 32px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.10)',
       pointerEvents:'none',
     }}/>
-    {/* Plate — Glass-1 density for KPI readability */}
+    {/* Plate — Glass-1 for KPI readability on dark bg */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      background:'rgba(255,255,255,0.48)',
+      background:'rgba(255,255,255,0.18)',
       pointerEvents:'none',
     }}/>
     {/* Accent edge — bottom border glow (Finance amber cascade) */}
@@ -396,9 +396,9 @@ const Ins = ({text,type="insight"}) => {
     }}>
       <div style={{position:'absolute',inset:0,borderRadius:'inherit',
         backdropFilter:'blur(14px) saturate(1.1)',WebkitBackdropFilter:'blur(14px) saturate(1.1)',
-        background:`linear-gradient(135deg,${c}06,rgba(255,255,255,0.42) 70%)`,
-        border:'1px solid rgba(0,0,0,0.06)',borderLeft:'none',
-        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.22)',
+        background:`linear-gradient(135deg,${c}10,rgba(255,255,255,0.10) 70%)`,
+        border:'1px solid rgba(255,255,255,0.08)',borderLeft:'none',
+        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.06)',
         pointerEvents:'none',
       }}/>
       <div style={{position:'relative',zIndex:1}}>
@@ -429,9 +429,9 @@ const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,...cardPr
 );
 
 const Tbl = ({h,r,hl}) => (
-  <div style={{overflowX:"auto",borderRadius:10,border:'1px solid rgba(0,0,0,0.10)',backdropFilter:'blur(16px) saturate(1.05)',WebkitBackdropFilter:'blur(16px) saturate(1.05)',background:"rgba(255,255,255,0.48)",boxShadow:'0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.30)'}}>
+  <div style={{overflowX:"auto",borderRadius:10,border:'1px solid rgba(255,255,255,0.15)',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',background:"rgba(255,255,255,0.18)",boxShadow:'0 8px 32px rgba(0,0,0,0.20), inset 0 0 0 1px rgba(255,255,255,0.10)'}}>
     <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid rgba(0,0,0,0.08)`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(248,250,252,0.85)"}}>{x}</th>)}</tr></thead>
+      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:'1px solid rgba(255,255,255,0.10)',color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(255,255,255,0.08)"}}>{x}</th>)}</tr></thead>
       <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
         const neg=typeof cell==="string"&&cell.startsWith("-");
         const pos=typeof cell==="string"&&cell.startsWith("+");
@@ -3050,22 +3050,15 @@ export default function PortfolioVOS(){
   }};
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:"url('/bg-finance.jpg') center/cover fixed",
+      background:"url('/bg-sonoma.jpg') center/cover fixed",
     }}>
-      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
-      {/* Ambient orbs for depth */}
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
-        <div style={{position:"absolute",top:"-15%",right:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%)"}}/>
-        <div style={{position:"absolute",bottom:"-15%",left:"-8%",width:"45vw",height:"45vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(236,72,153,0.10) 0%, transparent 70%)"}}/>
-        <div style={{position:"absolute",top:"40%",left:"30%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 60%)"}}/>
-        <div style={{position:"absolute",top:"15%",left:"55%",width:"35vw",height:"35vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(20,184,166,0.06) 0%, transparent 65%)"}}/>
-      </div>
-      {/* Top header bar */}
-      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.6)"}}>
+      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
+      {/* Top header bar — frosted glass on dark wallpaper */}
+      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.12)"}}>
         {/* Header shell */}
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.5)',WebkitBackdropFilter:'blur(24px) saturate(1.5)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.3)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(28px) saturate(1.4)',WebkitBackdropFilter:'blur(28px) saturate(1.4)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.10), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
         {/* Header plate */}
-        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.12)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -3101,7 +3094,7 @@ export default function PortfolioVOS(){
         </div>
       </div>
       {/* Content area */}
-      <div style={{position:"relative",zIndex:1,padding:"20px 28px 40px",maxWidth:1680,margin:"0 auto"}}>
+      <div style={{position:"relative",zIndex:1,padding:"14px 22px 32px",maxWidth:1680,margin:"0 auto"}}>
         {render()}
       </div>
       {/* Footer */}
