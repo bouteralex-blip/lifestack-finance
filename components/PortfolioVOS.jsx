@@ -1943,7 +1943,7 @@ const T4 = ()=>{
             <PolarRadiusAxis tick={{fill:P.t4,fontSize:9}} domain={[0,100]}/>
             <Radar name="Portfolio" dataKey="portfolio" stroke={P.cyan} fill={P.cyan} fillOpacity={0.12} strokeWidth={2.5}/>
             <Radar name="Benchmark" dataKey="benchmark" stroke={P.t4} fill="none" strokeWidth={1.5} strokeDasharray="4 4"/>
-            <Tooltip/>
+            <Tooltip content={<Tip/>}/>
           </RadarChart>
         </ResponsiveContainer>
       </PanelShell>
