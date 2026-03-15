@@ -2994,6 +2994,15 @@ const TABS=[
   {k:"risk",l:"T4 Risk Engine"},
   {k:"stress",l:"T5 Stress Tests"},
   {k:"cash",l:"T6 Cashflow & Capital"},
+  {k:"bonus",l:"T7 Bonus Strategy"},
+  {k:"opp",l:"T8 Opportunities"},
+  {k:"eff",l:"T9 Capital Efficiency"},
+  {k:"long",l:"T10 Long-Term Compounding"},
+  {k:"crypto",l:"T11 Crypto Engine"},
+  {k:"act",l:"T12 Action Plan"},
+  {k:"tax",l:"T13 Tax Advisor"},
+  {k:"gloss",l:"T14 Glossary"},
+  {k:"sys",l:"T15 System Architecture"},
 ];
 
 export default function PortfolioVOS(){
@@ -3026,6 +3035,15 @@ export default function PortfolioVOS(){
     case "risk":return <T4/>;
     case "stress":return <T5/>;
     case "cash":return <T6/>;
+    case "bonus":return <T7/>;
+    case "opp":return <T8/>;
+    case "eff":return <T9/>;
+    case "long":return <T10/>;
+    case "crypto":return <T11/>;
+    case "act":return <T12/>;
+    case "tax":return <T14/>;
+    case "gloss":return <T13/>;
+    case "sys":return <T15/>;
     default:return <T1/>;
   }};
   return (
