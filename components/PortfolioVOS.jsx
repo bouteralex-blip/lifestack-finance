@@ -39,29 +39,26 @@ const P = {
 // Light model: locked at 135deg top-left. Edge discipline: border + highlight + inner stroke.
 // Tiers: Glass-1 (dense/readable), Glass-2 (default), Glass-3 (overlay/cinematic)
 const GLASS_BASE = {
-  bg: 0.05,
-  blur: 20,
-  border: 0.08,
   radius: 16,
   padding: 20,
-  shadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 80px rgba(0,0,0,0.15)",
 };
 
+// Playbook Ch.4.7 light-mode glass recipe (snippet_chapter_4_7.css)
+// Shell: border rgba(0,0,0,.08), highlight 135deg, inner stroke rgba(255,255,255,.22)
+// Plate: tier-1=0.55, tier-2=0.42, tier-3=0.30 (scale plate, not whole surface)
+// Blur: 18px saturate(1.1) — NOT 1.6 which oversaturates on light backgrounds
 const glassLight = (tier=2) => {
-  // Dense data surfaces get quieter glass (tier 1), overlays get lighter plates (tier 3)
-  const plate = tier===1?0.07:tier===3?0.04:GLASS_BASE.bg;
-  const blur = tier===1?16:tier===3?22:GLASS_BASE.blur;
-  const borderA = tier===1?0.10:tier===3?0.06:GLASS_BASE.border;
-  const hlA = tier===1?0.06:tier===3?0.12:0.08;
-  const inA = tier===1?0.10:tier===3?0.05:0.08;
+  const plate = tier===1 ? 0.55 : tier===3 ? 0.30 : 0.42;
+  const blur = tier===1 ? 16 : tier===3 ? 24 : 18;
+  const sat = tier===1 ? 1.05 : tier===3 ? 1.2 : 1.1;
   return {
     background:`rgba(255,255,255,${plate})`,
-    backdropFilter:`blur(${blur}px) saturate(1.6)`,
-    WebkitBackdropFilter:`blur(${blur}px) saturate(1.6)`,
-    border:`1px solid rgba(255,255,255,${borderA})`,
+    backdropFilter:`blur(${blur}px) saturate(${sat})`,
+    WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
+    border:`1px solid rgba(0,0,0,0.08)`,
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`${GLASS_BASE.shadow}, inset 0 1px 0 rgba(255,255,255,${inA}), inset 0 0 0 1px rgba(255,255,255,${inA*0.5})`,
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${hlA}), transparent 50%)`,
+    boxShadow:`0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), inset 0 0 0 1px rgba(255,255,255,0.22)`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 40%)`,
   };
 };
 const G = glassLight(2);
@@ -71,7 +68,7 @@ const GS = {
   background:"rgba(15,23,42,0.94)",
   backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)",
   border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,
-  boxShadow:"0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
+  boxShadow:"0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 let PORT = {
   date:"7 March 2026",age:32,
@@ -349,19 +346,19 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType}) => (
     position:'relative', borderRadius:16, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
-    {/* Shell — edge discipline + locked highlight */}
+    {/* Shell — edge discipline + locked highlight (Playbook 4.7) */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',
-      border:'1px solid rgba(255,255,255,0.08)',
-      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.12), transparent 45%)`,
-      boxShadow:'0 8px 32px rgba(0,0,0,0.3), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)',
+      backdropFilter:'blur(18px) saturate(1.1)',WebkitBackdropFilter:'blur(18px) saturate(1.1)',
+      border:'1px solid rgba(0,0,0,0.08)',
+      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 40%)`,
+      boxShadow:'0 4px 24px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.03), inset 0 0 0 1px rgba(255,255,255,0.22)',
       pointerEvents:'none',
     }}/>
-    {/* Plate — stabilised readability surface */}
+    {/* Plate — stabilised readability (tier-1: dense data surface) */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      background:'rgba(255,255,255,0.05)',
+      background:'rgba(255,255,255,0.55)',
       pointerEvents:'none',
     }}/>
     {/* Accent edge — bottom border glow (Finance amber cascade) */}
@@ -399,10 +396,10 @@ const Ins = ({text,type="insight"}) => {
       borderRadius:"0 16px 16px 0",marginBottom:14,
     }}>
       <div style={{position:'absolute',inset:0,borderRadius:'inherit',
-        backdropFilter:'blur(14px) saturate(1.3)',WebkitBackdropFilter:'blur(14px) saturate(1.3)',
-        background:`linear-gradient(135deg,${c}06,rgba(255,255,255,0.45) 70%)`,
-        border:'1px solid rgba(255,255,255,0.5)',borderLeft:'none',
-        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.3)',
+        backdropFilter:'blur(14px) saturate(1.1)',WebkitBackdropFilter:'blur(14px) saturate(1.1)',
+        background:`linear-gradient(135deg,${c}06,rgba(255,255,255,0.42) 70%)`,
+        border:'1px solid rgba(0,0,0,0.06)',borderLeft:'none',
+        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.22)',
         pointerEvents:'none',
       }}/>
       <div style={{position:'relative',zIndex:1}}>
@@ -427,9 +424,9 @@ const PanelShell = ({title,subtitle,children,tier=2,...cardProps}) => (
 );
 
 const Tbl = ({h,r,hl}) => (
-  <div style={{overflowX:"auto",borderRadius:14,border:`1px solid rgba(255,255,255,0.08)`,backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',background:"rgba(255,255,255,0.03)"}}>
+  <div style={{overflowX:"auto",borderRadius:14,border:`1px solid rgba(0,0,0,0.08)`,backdropFilter:'blur(16px) saturate(1.05)',WebkitBackdropFilter:'blur(16px) saturate(1.05)',background:"rgba(255,255,255,0.55)",boxShadow:'0 4px 24px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.22)'}}>
     <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid ${P.b1}`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(255,255,255,0.08)"}}>{x}</th>)}</tr></thead>
+      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:`1px solid rgba(0,0,0,0.08)`,color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(248,250,252,0.85)"}}>{x}</th>)}</tr></thead>
       <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
         const neg=typeof cell==="string"&&cell.startsWith("-");
         const pos=typeof cell==="string"&&cell.startsWith("+");
@@ -445,7 +442,7 @@ const Tip = ({active,payload,label}) => {
     <div style={{
       position:'relative',borderRadius:14,overflow:'hidden',minWidth:140,
     }}>
-      <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.4)',WebkitBackdropFilter:'blur(20px) saturate(1.4)',background:'rgba(15,23,42,0.92)',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',background:'rgba(15,23,42,0.92)',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
       <div style={{position:'relative',zIndex:1,padding:"12px 16px"}}>
         <div style={{color:"#94a3b8",marginBottom:6,fontSize:11,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',borderBottom:'1px solid rgba(255,255,255,0.06)',paddingBottom:5}}>{label}</div>
         {payload.filter(p=>p.name!==" ").map((p,i) => (
