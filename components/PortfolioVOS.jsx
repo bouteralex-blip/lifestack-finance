@@ -11,10 +11,9 @@ const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 // Pure visual reskin of v5.4 — zero data/analytics changes
 // =========================================================================
 
-// --- PALETTE: Institutional light mode — Finance accent: amber/gold ---
+// --- PALETTE: Dark mode — Teal/Green wallpaper accent system ---
 const P = {
-  bg:"#f0f2f8",
-  // Primary accent — Finance module identity (amber/gold cascade)
+  bg:"#0a1628",
   cyan:"#6366f1",cyanD:"rgba(99,102,241,0.10)",cyanG:"rgba(99,102,241,0.04)",
   indigo:"#818cf8",indigoD:"rgba(129,140,248,0.10)",
   amber:"#f59e0b",amberD:"rgba(245,158,11,0.08)",
@@ -22,42 +21,46 @@ const P = {
   green:"#22c55e",greenD:"rgba(34,197,94,0.08)",
   purple:"#a855f7",orange:"#fb923c",btc:"#f7931a",pink:"#ec4899",
   teal:"#14b8a6",sky:"#0ea5e9",
-  // Semantic colours for sentiment pair (teal = positive, coral = negative)
   positive:"#14b8a6",negative:"#f43f5e",
-  // Typography hierarchy
-  t1:"#0f172a",t2:"#334155",t3:"#64748b",t4:"#94a3b8",t5:"#cbd5e1",
-  // Border / separator system
-  b1:"rgba(0,0,0,0.08)",b2:"rgba(0,0,0,0.04)",b3:"rgba(0,0,0,0.02)",
-  // Monospace font stack
+  // Dark mode typography — bright on dark
+  t1:"#f1f5f9",t2:"#cbd5e1",t3:"#94a3b8",t4:"rgba(255,255,255,0.55)",t5:"rgba(255,255,255,0.35)",
+  // Border / separator system — light on dark
+  b1:"rgba(255,255,255,0.08)",b2:"rgba(255,255,255,0.05)",b3:"rgba(255,255,255,0.03)",
   mono:"'JetBrains Mono','SF Mono','Cascadia Code',monospace",
-  // Card accent glow presets
   accentFinance:"#f59e0b",
 };
 
-// --- LIQUID GLASS SYSTEM: Playbook-compliant layered surface ---
-// Stack: outer shell (material) + inner plate (readability) + content (text/icons)
-// Light model: locked at 135deg top-left. Edge discipline: border + highlight + inner stroke.
-// Tiers: Glass-1 (dense/readable), Glass-2 (default), Glass-3 (overlay/cinematic)
-const GLASS_BASE = {
-  radius: 10,  // Horizon UI Pro: rounded-[10px] — signature corner radius
-  padding: 16,  // Tighter than default for CIO terminal density
+// --- MATERIAL TILE STYLES: Solid gradient accent cards (no glass) ---
+const MAT = {
+  teal:{background:'linear-gradient(135deg, #0d9488, #065f46)',boxShadow:'0 8px 32px rgba(13,148,136,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  indigo:{background:'linear-gradient(135deg, #4f46e5, #3730a3)',boxShadow:'0 8px 32px rgba(79,70,229,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  red:{background:'linear-gradient(135deg, #dc2626, #991b1b)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:14,border:'1px solid rgba(255,255,255,0.12)'},
+  dark:{background:'linear-gradient(135deg, #1e293b, #0f172a)',boxShadow:'0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.08)',borderRadius:14,border:'1px solid rgba(255,255,255,0.10)'},
 };
 
-// Playbook Ch.4.7 + Horizon UI Pro — calibrated for macOS Sonoma wallpaper (dark rich bg)
-// Glass on dark bg: white plates provide contrast, white borders provide edge discipline
-// Playbook Ch.1.1: "background should remain recognizable" — plate opacity controls this
+// --- LIQUID GLASS SYSTEM: True refraction over teal/green wallpaper ---
+// glass-refraction library vars: blur 26/20/8, sat 1.7/1.5/1.3
+// SVG feTurbulence + feDisplacementMap for light-bending effect
+// Stack: shell (blur+refract) + plate (dark readability) + content
+const GLASS_BASE = {
+  radius: 14,  // Upgraded from 10 — more premium feel
+  padding: 18,
+};
+
+// Dark glass plates over vibrant wallpaper — wallpaper bends through
 const glassLight = (tier=2) => {
-  const plate = tier===1 ? 0.18 : tier===3 ? 0.08 : 0.14;  // White plates over dark bg = true glass
-  const blur = tier===1 ? 20 : tier===3 ? 28 : 24;
-  const sat = tier===1 ? 1.2 : tier===3 ? 1.5 : 1.3;
+  const plate = tier===1 ? 'rgba(15,23,42,0.72)' : tier===3 ? 'rgba(15,23,42,0.45)' : 'rgba(15,23,42,0.62)';
+  const blur = tier===1 ? 26 : tier===3 ? 8 : 20;
+  const sat = tier===1 ? 1.7 : tier===3 ? 1.3 : 1.5;
   return {
-    background:`rgba(255,255,255,${plate})`,
+    background: plate,
     backdropFilter:`blur(${blur}px) saturate(${sat})`,
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
-    border:`1px solid rgba(255,255,255,${tier===1?0.20:0.14})`,  // White edges on dark bg
+    border:`1px solid rgba(255,255,255,${tier===1?0.12:tier===3?0.06:0.09})`,
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 12px 40px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(255,255,255,${tier===1?0.15:0.10})`,
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.15:0.10}), rgba(255,255,255,0) 40%)`,
+    boxShadow:`0 16px 48px rgba(0,0,0,0.45), 0 4px 14px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,${tier===1?0.12:0.08})`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.06:0.04}), transparent 50%)`,
   };
 };
 const G = glassLight(2);
@@ -66,9 +69,17 @@ const G3 = glassLight(3);
 const GS = {
   background:"rgba(15,23,42,0.94)",
   backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)",
-  border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,
-  boxShadow:"0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
+  border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,
+  boxShadow:"0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06)",
 };
+// Panel header banner style — dark opaque strip with bold white text
+const HEADER_BANNER = {
+  background:'rgba(10,16,32,0.85)',padding:'10px 16px',borderRadius:'14px 14px 0 0',
+  marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
+};
+const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#fff',letterSpacing:1.5,textTransform:'uppercase'};
+const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.45)',marginTop:1};
+const HEADER_DOTS = {fontSize:16,color:'rgba(255,255,255,0.35)',cursor:'pointer',letterSpacing:2};
 let PORT = {
   date:"7 March 2026",age:32,
   netWorth:362072, assets:375670, debts:13598,
@@ -287,16 +298,44 @@ let REF_DATA = {};
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
-const Card = ({children,style,glow,hover,tier=2,accent}) => {
+const Card = ({children,style,glow,hover,tier=2,accent,material}) => {
   const [hovered,setHovered] = useState(false);
-  const gSpec = glassLight(tier, accent);
+  const gSpec = glassLight(tier);
   const glowAccent = accent || P.cyan;
+  // Material variant — solid gradient, no glass
+  if(material){
+    const ms = MAT[material] || MAT.teal;
+    return (
+      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
+        style={{
+          position:'relative',overflow:'hidden',marginBottom:8,
+          ...ms,
+          transition:'all 0.2s ease',
+          transform:hovered?'translateY(-2px)':'none',
+          filter:hovered?'brightness(1.08)':'none',
+          ...(style?.flex?{flex:style.flex}:{}),
+          ...(style?.minWidth?{minWidth:style.minWidth}:{}),
+          ...(style?.maxWidth?{maxWidth:style.maxWidth}:{}),
+          ...(style?.gridColumn?{gridColumn:style.gridColumn}:{}),
+          ...(style?.width?{width:style.width}:{}),
+          ...(style?.margin?{margin:style.margin}:{}),
+          ...(style?.marginBottom?{marginBottom:style.marginBottom}:style?.marginBottom===0?{marginBottom:0}:{}),
+        }}
+      >
+        <div style={{position:'relative',zIndex:1,padding:style?.padding||`${GLASS_BASE.padding}px`,
+          ...(style?.textAlign?{textAlign:style.textAlign}:{}),
+        }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
   return (
     <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
       style={{
         position:'relative', borderRadius:GLASS_BASE.radius, overflow:'hidden', marginBottom:8,
-        transition:"all 0.35s cubic-bezier(0.25,0.46,0.45,0.94)",
-        transform:hovered&&hover?"translateY(-4px) scale(1.006)":"none",
+        transition:"all 0.25s ease",
+        transform:hovered&&hover?"translateY(-2px) scale(1.005)":"none",
         ...(style?.flex?{flex:style.flex}:{}),
         ...(style?.minWidth?{minWidth:style.minWidth}:{}),
         ...(style?.maxWidth?{maxWidth:style.maxWidth}:{}),
@@ -306,26 +345,26 @@ const Card = ({children,style,glow,hover,tier=2,accent}) => {
         ...(style?.marginBottom?{marginBottom:style.marginBottom}:style?.marginBottom===0?{marginBottom:0}:{}),
       }}
     >
-      {/* SHELL: outer glass material — edges, highlight band, blur */}
+      {/* SHELL: outer glass — blur + refraction */}
       <div style={{
         position:'absolute',inset:0,borderRadius:'inherit',
         backdropFilter:gSpec.backdropFilter, WebkitBackdropFilter:gSpec.WebkitBackdropFilter,
-        border:gSpec.border,
+        border:hovered&&hover?`1px solid rgba(255,255,255,0.16)`:gSpec.border,
         backgroundImage:gSpec.backgroundImage,
         boxShadow: glow
-          ? `0 12px 48px rgba(${accent?hx2(glowAccent):'99,102,241'},0.18), ${gSpec.boxShadow}`
+          ? `0 16px 48px rgba(${accent?hx2(glowAccent):'99,102,241'},0.25), ${gSpec.boxShadow}`
           : hovered&&hover
-            ? `0 12px 48px rgba(0,0,0,0.15), 0 20px 60px rgba(0,0,0,0.06), ${gSpec.boxShadow}`
+            ? `0 20px 60px rgba(0,0,0,0.35), ${gSpec.boxShadow}`
             : gSpec.boxShadow,
-        pointerEvents:'none', transition:'box-shadow 0.35s ease',
+        pointerEvents:'none', transition:'all 0.25s ease',
       }}/>
-      {/* PLATE: inner stabilised surface — readability guarantee */}
+      {/* PLATE: dark readability surface */}
       <div style={{
         position:'absolute',inset:0,borderRadius:'inherit',
         background:gSpec.background,
         pointerEvents:'none',
       }}/>
-      {/* CONTENT: sits above plate */}
+      {/* CONTENT */}
       <div style={{
         position:'relative', zIndex:1,
         padding:style?.padding||`${GLASS_BASE.padding}px`,
@@ -340,38 +379,43 @@ const Card = ({children,style,glow,hover,tier=2,accent}) => {
 };
 const hx2 = c => { if(!c||c[0]!=="#") return "99,102,241"; c=c.replace("#",""); return [parseInt(c.substring(0,2),16),parseInt(c.substring(2,4),16),parseInt(c.substring(4,6),16)].join(","); };
 
-const K = ({l,v,s,c=P.cyan,sm,delta,deltaType}) => (
+const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
   <div style={{
-    position:'relative', borderRadius:10, overflow:'hidden', textAlign:"center",
+    position:'relative', borderRadius:14, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
-    {/* Shell — Horizon: rounded-10 + white edge on dark bg + glass highlight */}
+    {/* Shell — glass blur over wallpaper */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:'blur(24px) saturate(1.3)',WebkitBackdropFilter:'blur(24px) saturate(1.3)',
-      border:'1px solid rgba(255,255,255,0.12)',
-      backgroundImage:`linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 40%)`,
-      boxShadow:'0 12px 40px rgba(0,0,0,0.30), 0 4px 14px rgba(0,0,0,0.20), inset 0 0 0 1px rgba(255,255,255,0.12)',
+      backdropFilter:'blur(22px) saturate(1.5)',WebkitBackdropFilter:'blur(22px) saturate(1.5)',
+      border:'1px solid rgba(255,255,255,0.10)',
+      backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',
+      boxShadow:'0 16px 48px rgba(0,0,0,0.40), 0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10)',
       pointerEvents:'none',
     }}/>
-    {/* Plate — Glass-1 for KPI readability on dark bg */}
+    {/* Plate — dark for readability */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      background:'rgba(255,255,255,0.18)',
+      background:'rgba(15,23,42,0.65)',
       pointerEvents:'none',
     }}/>
-    {/* Accent edge — bottom border glow (Finance amber cascade) */}
+    {/* Accent edge — bottom glow */}
     <div style={{
-      position:'absolute',bottom:0,left:'8%',right:'8%',height:4,
+      position:'absolute',bottom:0,left:'8%',right:'8%',height:3,
       background:`linear-gradient(90deg, transparent, ${c}80, transparent)`,
       borderRadius:2, pointerEvents:'none',
     }}/>
-    {/* Content — sits above plate */}
-    <div style={{position:'relative',zIndex:1,padding:sm?"12px 14px":"20px"}}>
-      <div style={{fontSize:10.5,color:P.t4,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:4}}>{l}</div>
-      <div style={{fontSize:sm?22:32,fontWeight:900,color:c,fontFamily:P.mono,letterSpacing:-0.5,lineHeight:1.1}}>{v}</div>
-      {s&&<div style={{fontSize:10.5,color:P.t4,marginTop:3,lineHeight:1.3}}>{s}</div>}
-      {delta&&<div style={{fontSize:10,marginTop:3,fontWeight:600,color:deltaType==="up"?P.positive:deltaType==="down"?P.negative:P.t4}}>{deltaType==="up"?"\u25B2":deltaType==="down"?"\u25BC":"\u25CF"} {delta}</div>}
+    {/* Content */}
+    <div style={{position:'relative',zIndex:1,padding:sm?"12px 14px":"18px 16px"}}>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.55)',textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:5}}>{l}</div>
+      <div style={{fontSize:sm?24:28,fontWeight:800,color:c,fontFamily:P.mono,letterSpacing:-0.5,lineHeight:1.1}}>{v}</div>
+      {s&&<div style={{fontSize:10,color:'rgba(255,255,255,0.45)',marginTop:4,lineHeight:1.3}}>{s}</div>}
+      {delta&&<div style={{display:'inline-flex',alignItems:'center',gap:3,marginTop:4,fontSize:10,fontWeight:700,
+        color:deltaType==="up"?P.positive:deltaType==="down"?P.negative:'rgba(255,255,255,0.5)',
+        background:deltaType==="up"?'rgba(34,197,94,0.15)':deltaType==="down"?'rgba(244,63,94,0.15)':'rgba(255,255,255,0.06)',
+        padding:'2px 6px',borderRadius:4,
+      }}>{deltaType==="up"?"▲":deltaType==="down"?"▼":"●"} {delta}</div>}
+      {bench&&<div style={{fontSize:8,color:'rgba(255,255,255,0.35)',marginTop:3}}>vs Bench: {bench}</div>}
     </div>
   </div>
 );
@@ -379,10 +423,10 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType}) => (
 const Hd = ({t,s,tag,ac=P.cyan}) => (
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
-      <h2 style={{fontSize:24,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.4,textShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>{t}</h2>
-      {tag&&<span style={{padding:"3px 10px",borderRadius:5,fontSize:10,fontWeight:700,background:`${ac}12`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}18`}}>{tag}</span>}
+      <h2 style={{fontSize:24,fontWeight:800,color:'#fff',margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
+      {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
     </div>
-    {s&&<p style={{fontSize:13,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
+    {s&&<p style={{fontSize:13,color:'rgba(255,255,255,0.55)',margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
 );
 
@@ -391,19 +435,19 @@ const Ins = ({text,type="insight"}) => {
   return (
     <div style={{
       position:'relative',overflow:'hidden',
-      padding:"18px 22px",borderLeft:`4px solid ${c}`,
-      borderRadius:"0 10px 10px 0",marginBottom:14,
+      padding:"16px 20px",borderLeft:`4px solid ${c}`,
+      borderRadius:"0 14px 14px 0",marginBottom:14,
     }}>
       <div style={{position:'absolute',inset:0,borderRadius:'inherit',
-        backdropFilter:'blur(14px) saturate(1.1)',WebkitBackdropFilter:'blur(14px) saturate(1.1)',
-        background:`linear-gradient(135deg,${c}10,rgba(255,255,255,0.10) 70%)`,
-        border:'1px solid rgba(255,255,255,0.08)',borderLeft:'none',
-        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.06)',
+        backdropFilter:'blur(14px) saturate(1.2)',WebkitBackdropFilter:'blur(14px) saturate(1.2)',
+        background:`linear-gradient(135deg,${c}12,rgba(15,23,42,0.60) 70%)`,
+        border:'1px solid rgba(255,255,255,0.06)',borderLeft:'none',
+        boxShadow:'0 8px 24px rgba(0,0,0,0.25)',
         pointerEvents:'none',
       }}/>
       <div style={{position:'relative',zIndex:1}}>
         <div style={{fontSize:11,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:6}}>{type}</div>
-        <div style={{fontSize:14,color:P.t2,lineHeight:1.7,fontWeight:500}}>{text}</div>
+        <div style={{fontSize:13,color:'#cbd5e1',lineHeight:1.7,fontWeight:500}}>{text}</div>
       </div>
     </div>
   );
@@ -414,28 +458,33 @@ const GlassCard = (props) => <Card {...props} />;
 const KpiTile = (props) => <K {...props} />;
 const SectionHeader = (props) => <Hd {...props} />;
 const InsightCallout = (props) => <Ins {...props} />;
-const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,...cardProps}) => (
-  <GlassCard hover tier={tier} {...cardProps}>
-    {(title||metric) && <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:subtitle?4:8}}>
+const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,...cardProps}) => (
+  <GlassCard hover tier={tier} {...cardProps} style={{...cardProps.style,padding:0}}>
+    {(title||metric) && <div style={{...HEADER_BANNER}}>
       <div>
-        {title && <div style={{fontSize:13,fontWeight:700,color:P.t1,letterSpacing:-0.2}}>{title}</div>}
-        {subtitle && <div style={{fontSize:11,color:P.t3,marginTop:2}}>{subtitle}</div>}
+        {title && <div style={{...HEADER_TITLE}}>{title}</div>}
+        {subtitle && <div style={{...HEADER_SUB}}>{subtitle}</div>}
       </div>
-      {metric && <div style={{fontSize:18,fontWeight:800,color:metricColor||P.cyan,fontFamily:P.mono,letterSpacing:-0.5}}>{metric}</div>}
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        {metric && <div style={{fontSize:18,fontWeight:800,color:metricColor||P.cyan,fontFamily:P.mono,letterSpacing:-0.5}}>{metric}</div>}
+        <span style={{...HEADER_DOTS}}>{"\u2022\u2022\u2022"}</span>
+      </div>
     </div>}
-    {!title&&!metric&&subtitle && <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{subtitle}</div>}
-    {children}
+    <div style={{padding:GLASS_BASE.padding}}>
+      {children}
+      {takeaway && <div style={{fontSize:10,fontStyle:'italic',color:'rgba(255,255,255,0.38)',borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:6,marginTop:10,lineHeight:1.5}}>{takeaway}</div>}
+    </div>
   </GlassCard>
 );
 
 const Tbl = ({h,r,hl}) => (
-  <div style={{overflowX:"auto",borderRadius:10,border:'1px solid rgba(255,255,255,0.15)',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',background:"rgba(255,255,255,0.18)",boxShadow:'0 12px 40px rgba(0,0,0,0.28), inset 0 0 0 1px rgba(255,255,255,0.12)'}}>
-    <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:'1px solid rgba(255,255,255,0.10)',color:P.t3,fontWeight:700,fontSize:12,textTransform:"uppercase",letterSpacing:0.6,background:"rgba(255,255,255,0.12)"}}>{x}</th>)}</tr></thead>
-      <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"background 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.04)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>{row.map((cell,ci) => {
+  <div style={{overflowX:"auto",borderRadius:14,border:'1px solid rgba(255,255,255,0.08)',background:"rgba(15,23,42,0.50)",boxShadow:'0 8px 32px rgba(0,0,0,0.30)'}}>
+    <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+      <thead><tr>{h.map((x,i) => <th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:'1px solid rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.55)',fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:0.8,background:"rgba(10,16,32,0.60)"}}>{x}</th>)}</tr></thead>
+      <tbody>{r.map((row,ri) => <tr key={ri} style={{transition:"all 0.15s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.04)";e.currentTarget.style.boxShadow="0 2px 8px rgba(0,0,0,0.15)"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.boxShadow="none"}}>{row.map((cell,ci) => {
         const neg=typeof cell==="string"&&cell.startsWith("-");
         const pos=typeof cell==="string"&&cell.startsWith("+");
-        return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"9px 14px",borderBottom:`1px solid ${P.b2}`,color:hl===ci?(neg?P.negative:pos?P.positive:P.t1):(ci===0?P.t1:P.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:14}}>{cell}</td>;
+        return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"9px 14px",borderBottom:'1px solid rgba(255,255,255,0.04)',color:hl===ci?(neg?P.negative:pos?P.positive:'#f1f5f9'):(ci===0?'#f1f5f9':'#cbd5e1'),fontWeight:ci===0||hl===ci?600:500,fontSize:12}}>{cell}</td>;
       })}</tr>)}</tbody>
     </table>
   </div>
@@ -455,7 +504,7 @@ const Tip = ({active,payload,label}) => {
             <div style={{width:8,height:8,borderRadius:'50%',background:p.color||P.cyan,boxShadow:`0 0 8px ${p.color||P.cyan}60`,flexShrink:0}}/>
             <span style={{fontSize:12,color:'#cbd5e1',flex:1}}>{p.name}</span>
             <span style={{fontSize:13,color:p.color||"#818cf8",fontWeight:700,fontFamily:P.mono}}>
-              {typeof p.value==="number"?(Math.abs(p.value)>999?`\u00A3${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
+              {typeof p.value==="number"?(Math.abs(p.value)>999?`£${(p.value/1000).toFixed(1)}k`:p.value.toFixed(1)):p.value}
             </span>
           </div>
         ))}
@@ -479,8 +528,8 @@ const ChartDefs = () => (
     <filter id="chartGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="boldGlow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
 );
-const fmt = v=>`\u00A3${Math.abs(v).toLocaleString("en-GB",{maximumFractionDigits:0})}`;
-const fK = v=>`\u00A3${(v/1000).toFixed(v>=10000?0:1)}k`;
+const fmt = v=>`£${Math.abs(v).toLocaleString("en-GB",{maximumFractionDigits:0})}`;
+const fK = v=>`£${(v/1000).toFixed(v>=10000?0:1)}k`;
 const pc = v=>`${v>0?"+":""}${v.toFixed(1)}%`;
 
 const Gauge = ({score,max=10,label,size=68}) => {
@@ -511,15 +560,15 @@ const Bar2 = ({val,max=100,c=P.cyan,label}) => (<div style={{marginBottom:6}}>
 // SPRINT 1 — NEW UI COMPONENTS (Tab 01 enrichment)
 // =========================================================================
 const AlertPanel = ({items}) => (
-  <div style={{...G,padding:"16px 20px",marginBottom:16,borderLeft:`4px solid ${P.red}`}}>
-    <div style={{fontSize:11,fontWeight:700,color:P.red,letterSpacing:1.2,textTransform:"uppercase",marginBottom:10}}>ALERT PANEL — RULES BREACHED</div>
+  <div style={{background:'rgba(15,23,42,0.65)',backdropFilter:'blur(20px) saturate(1.5)',WebkitBackdropFilter:'blur(20px) saturate(1.5)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:14,padding:"16px 20px",marginBottom:16,borderLeft:`4px solid ${P.red}`,boxShadow:'0 12px 40px rgba(0,0,0,0.35)'}}>
+    <div style={{fontSize:11,fontWeight:800,color:P.red,letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}}>GOVERNANCE ALERTS</div>
     {items.map((a,i) => {
-      const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
+      const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : 'rgba(255,255,255,0.4)';
       return (
-        <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<items.length-1?`1px solid ${P.b2}`:"none"}}>
+        <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<items.length-1?'1px solid rgba(255,255,255,0.05)':"none"}}>
           <div style={{width:9,height:9,borderRadius:"50%",background:dc,flexShrink:0,boxShadow:`0 0 8px ${dc}50`}}/>
-          <div style={{fontSize:14,color:P.t2,flex:1,lineHeight:1.5}}>{a.msg}</div>
-          <span style={{fontSize:10,color:dc,fontWeight:700,padding:"2px 8px",borderRadius:6,background:`${dc}12`,border:`1px solid ${dc}20`,textTransform:"uppercase",letterSpacing:0.5}}>{a.sev}</span>
+          <div style={{fontSize:12,color:'#cbd5e1',flex:1,lineHeight:1.5}}>{a.msg}</div>
+          <span style={{fontSize:9,color:'#fff',fontWeight:700,padding:"2px 8px",borderRadius:9999,background:dc,textTransform:"uppercase",letterSpacing:0.5}}>{a.sev}</span>
         </div>
       );
     })}
@@ -528,20 +577,20 @@ const AlertPanel = ({items}) => (
 
 const CalendarHeatmap = ({data}) => {
   const getColor = (r) => {
-    if(r <= -5) return {bg:"rgba(239,68,68,0.25)",text:P.red};
-    if(r <= -2) return {bg:"rgba(239,68,68,0.14)",text:P.red};
-    if(r < 0) return {bg:"rgba(239,68,68,0.07)",text:"#dc2626"};
-    if(r === 0) return {bg:"rgba(0,0,0,0.03)",text:P.t3};
-    if(r <= 2) return {bg:"rgba(34,197,94,0.08)",text:P.green};
-    return {bg:"rgba(34,197,94,0.18)",text:P.green};
+    if(r <= -5) return {bg:"rgba(239,68,68,0.25)",text:"#f87171"};
+    if(r <= -2) return {bg:"rgba(239,68,68,0.15)",text:"#f87171"};
+    if(r < 0) return {bg:"rgba(239,68,68,0.08)",text:"#fca5a5"};
+    if(r === 0) return {bg:"rgba(255,255,255,0.04)",text:'rgba(255,255,255,0.5)'};
+    if(r <= 2) return {bg:"rgba(34,197,94,0.12)",text:"#4ade80"};
+    return {bg:"rgba(34,197,94,0.22)",text:"#4ade80"};
   };
   return (
     <div style={{display:"grid",gridTemplateColumns:`repeat(${data.length},1fr)`,gap:6}}>
       {data.map((d,i) => {
         const {bg,text} = getColor(d.r);
         return (
-          <div key={i} style={{background:bg,borderRadius:12,padding:"14px 8px",textAlign:"center",border:`1px solid ${text}15`}}>
-            <div style={{fontSize:11,color:P.t4,fontWeight:600,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>{d.m}</div>
+          <div key={i} style={{background:bg,borderRadius:12,padding:"14px 8px",textAlign:"center",border:`1px solid ${text}20`,boxShadow:'0 4px 12px rgba(0,0,0,0.20)'}}>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.50)',fontWeight:700,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>{d.m}</div>
             <div style={{fontSize:22,fontWeight:800,color:text,fontFamily:P.mono}}>{d.r>0?"+":""}{d.r}%</div>
           </div>
         );
@@ -554,8 +603,8 @@ const MiniWaterfall = ({data}) => {
   const total = data.reduce((a,d)=>a+d.val,0);
   return (
     <div style={{...G,padding:"20px 24px",marginBottom:16}}>
-      <div style={{fontSize:13,fontWeight:700,color:P.t1,letterSpacing:0.5,marginBottom:4}}>RETURN DECOMPOSITION — WHAT DROVE THE {pc(nwReturn)} RETURN</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:14}}>Allocation, selection, and structural effects decomposed into decision-level attribution.</div>
+      <div style={{fontSize:13,fontWeight:800,color:'#fff',letterSpacing:0.5,marginBottom:4}}>RETURN DECOMPOSITION — WHAT DROVE THE {pc(nwReturn)} RETURN</div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.50)',marginBottom:14}}>Allocation, selection, and structural effects decomposed into decision-level attribution.</div>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {data.map((d,i) => {
           const maxAbs = Math.max(...data.map(x=>Math.abs(x.val)));
@@ -563,7 +612,7 @@ const MiniWaterfall = ({data}) => {
           const isPos = d.val >= 0;
           return (
             <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:130,fontSize:12,color:P.t3,textAlign:"right",flexShrink:0}}>{d.name}</div>
+              <div style={{width:130,fontSize:12,color:'rgba(255,255,255,0.55)',textAlign:"right",flexShrink:0}}>{d.name}</div>
               <div style={{flex:1,height:22,position:"relative"}}>
                 <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:P.b1}}/>
                 <div style={{
@@ -616,9 +665,9 @@ const SankeyChart = () => {
       <path d={lnk(x1+nodeW,left[1].y,stt,x2,mid[0].y+stt,stt)} fill="url(#sg2)" stroke="none"/>
       <path d={lnk(x1+nodeW,left[1].y+stt,stp,x2,mid[1].y+stp,stp)} fill="url(#sg0)" stroke="none"/>
       {(()=>{let sy=mid[1].y;const cols=["url(#sg0)","url(#sg5)","url(#sg3)","url(#sg4)","url(#sg6)","url(#sg2)","url(#sg7)"];return right.map((r,i)=>{const sh=r.val*scaleY;const p=<path key={i} d={lnk(x2+nodeW,sy,sh,x3,r.y,r.h)} fill={cols[i]} stroke="none"/>;sy+=sh;return p;});})()}
-      {left.map((n,i) => <g key={`l${i}`}><rect x={x1} y={n.y} width={nodeW} height={n.h} rx={5} fill={n.color} opacity={0.85}/><text x={x1-6} y={n.y+n.h/2} textAnchor="end" fill={P.t2} fontSize={11} fontWeight={700} dominantBaseline="middle">{n.label}</text><text x={x1-6} y={n.y+n.h/2+13} textAnchor="end" fill={P.t4} fontSize={10} dominantBaseline="middle">{"\u00A3"}{n.val}k</text></g>)}
-      {mid.map((n,i) => <g key={`m${i}`}><rect x={x2} y={n.y} width={nodeW} height={n.h} rx={5} fill={n.color} opacity={0.85}/><text x={x2+nodeW/2} y={n.y-6} textAnchor="middle" fill={P.t2} fontSize={10} fontWeight={700}>{n.label}</text><text x={x2+nodeW/2} y={n.y+n.h+13} textAnchor="middle" fill={P.t4} fontSize={9}>{"\u00A3"}{n.val.toFixed(0)}k</text></g>)}
-      {right.map((n,i) => <g key={`r${i}`}><rect x={x3} y={n.y} width={nodeW} height={Math.max(n.h,4)} rx={4} fill={n.color} opacity={0.85}/><text x={x3+nodeW+8} y={n.y+Math.max(n.h,4)/2} fill={P.t2} fontSize={10} fontWeight={600} dominantBaseline="middle">{n.label}</text><text x={x3+nodeW+8} y={n.y+Math.max(n.h,4)/2+12} fill={P.t4} fontSize={9} dominantBaseline="middle">{"\u00A3"}{n.val}k</text></g>)}
+      {left.map((n,i) => <g key={`l${i}`}><rect x={x1} y={n.y} width={nodeW} height={n.h} rx={5} fill={n.color} opacity={0.85}/><text x={x1-6} y={n.y+n.h/2} textAnchor="end" fill={P.t2} fontSize={11} fontWeight={700} dominantBaseline="middle">{n.label}</text><text x={x1-6} y={n.y+n.h/2+13} textAnchor="end" fill={P.t4} fontSize={10} dominantBaseline="middle">{"£"}{n.val}k</text></g>)}
+      {mid.map((n,i) => <g key={`m${i}`}><rect x={x2} y={n.y} width={nodeW} height={n.h} rx={5} fill={n.color} opacity={0.85}/><text x={x2+nodeW/2} y={n.y-6} textAnchor="middle" fill={P.t2} fontSize={10} fontWeight={700}>{n.label}</text><text x={x2+nodeW/2} y={n.y+n.h+13} textAnchor="middle" fill={P.t4} fontSize={9}>{"£"}{n.val.toFixed(0)}k</text></g>)}
+      {right.map((n,i) => <g key={`r${i}`}><rect x={x3} y={n.y} width={nodeW} height={Math.max(n.h,4)} rx={4} fill={n.color} opacity={0.85}/><text x={x3+nodeW+8} y={n.y+Math.max(n.h,4)/2} fill={P.t2} fontSize={10} fontWeight={600} dominantBaseline="middle">{n.label}</text><text x={x3+nodeW+8} y={n.y+Math.max(n.h,4)/2+12} fill={P.t4} fontSize={9} dominantBaseline="middle">{"£"}{n.val}k</text></g>)}
     </svg>
   );
 };
@@ -651,11 +700,11 @@ const T1 = ()=>{
   const leverage = PORT.debts / PORT.netWorth;
 
   const alerts = [
-    {msg:"ISA deadline: 29 days. \u00A30 of \u00A320k deployed.", sev:"high"},
+    {msg:"ISA deadline: 29 days. £0 of £20k deployed.", sev:"high"},
     {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
     {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
     {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
-    {msg:"18 positions below \u00A31k. Fragment drag ~\u00A3160/yr.", sev:"low"},
+    {msg:"18 positions below £1k. Fragment drag ~£160/yr.", sev:"low"},
   ];
 
   const decomp = [
@@ -722,7 +771,7 @@ const T1 = ()=>{
               <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,#6366f1,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,fontWeight:900,boxShadow:'0 4px 16px rgba(99,102,241,0.35)'}}>LS</div>
               <div>
                 <div style={{fontSize:18,fontWeight:900,color:P.t1,letterSpacing:-0.5}}>EXECUTIVE SUMMARY</div>
-                <div style={{fontSize:11,color:P.t3}}>{PORT.date} \u00B7 CIO Briefing \u00B7 Institutional Review</div>
+                <div style={{fontSize:11,color:P.t3}}>{PORT.date} · CIO Briefing · Institutional Review</div>
               </div>
             </div>
             <div style={{fontSize:13,color:P.t2,lineHeight:1.7,maxWidth:800}}>
@@ -741,7 +790,7 @@ const T1 = ()=>{
     <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Net Worth" v={fK(PORT.netWorth)} c={P.cyan} delta={`Peak: ${fK(PORT.nwPeak)}`} deltaType={PORT.netWorth>=PORT.nwPeak?"up":"down"}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Total Assets" v={fK(PORT.assets)} c={P.indigo} delta={`Debts: ${fK(PORT.debts)}`}/></div>
-      <div style={{gridColumn:"span 2"}}><KpiTile l="6-Mo Return" v={pc(nwReturn)} c={nwReturn>0?P.positive:P.negative} delta="20 Sep \u2192 7 Mar" deltaType={nwReturn>0?"up":"down"}/></div>
+      <div style={{gridColumn:"span 2"}}><KpiTile l="6-Mo Return" v={pc(nwReturn)} c={nwReturn>0?P.positive:P.negative} delta="20 Sep → 7 Mar" deltaType={nwReturn>0?"up":"down"}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Active Return" v={pc(activeReturn)} c={activeReturn>0?P.positive:P.negative} delta="vs MSCI World" deltaType={activeReturn>0?"up":"down"}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Real Return" v={pc(realReturn)} c={realReturn>0?P.positive:P.negative} delta="After inflation" deltaType={realReturn>0?"up":"down"}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Peak Drawdown" v={`${RISK.maxDD}%`} c={P.negative} delta={`${RISK.ddDur}d duration`} deltaType="down"/></div>
@@ -780,7 +829,7 @@ const T1 = ()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div>
             <div style={{fontSize:13,fontWeight:800,color:P.t1}}>PORTFOLIO QUALITY</div>
-            <div style={{fontSize:10,color:P.t3,marginTop:2}}>Overall: {SCORECARD.overall}/10 \u00B7 Process: {decisionQuality}/10</div>
+            <div style={{fontSize:10,color:P.t3,marginTop:2}}>Overall: {SCORECARD.overall}/10 · Process: {decisionQuality}/10</div>
           </div>
           <Gauge score={SCORECARD.overall} label="" size={48}/>
         </div>
@@ -797,7 +846,7 @@ const T1 = ()=>{
       {/* Return Decomposition */}
       <PanelShell hover>
         <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:3}}>RETURN DECOMPOSITION</div>
-        <div style={{fontSize:10,color:P.t3,marginBottom:10}}>What drove {pc(nwReturn)} \u2014 allocation, selection, structural effects</div>
+        <div style={{fontSize:10,color:P.t3,marginBottom:10}}>What drove {pc(nwReturn)} — allocation, selection, structural effects</div>
         <div style={{display:"flex",flexDirection:"column",gap:5}}>
           {decomp.map((d,i) => {
             const maxAbs = Math.max(...decomp.map(x=>Math.abs(x.val)));
@@ -829,7 +878,7 @@ const T1 = ()=>{
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:P.t1}}>NET WORTH TRAJECTORY + FORECAST</div>
-          <div style={{fontSize:10,color:P.t3,marginTop:2}}>Historical 20 Sep 2025 \u2192 7 Mar 2026 \u00B7 5-scenario forward projection to 2035</div>
+          <div style={{fontSize:10,color:P.t3,marginTop:2}}>Historical 20 Sep 2025 → 7 Mar 2026 · 5-scenario forward projection to 2035</div>
         </div>
         <div style={{display:"flex",gap:10,flexWrap:'wrap'}}>
           {[{c:P.cyan,l:"NW"},{c:P.indigo,l:"Assets"},{c:P.red,l:"Drawdown"},{c:P.green,l:"Bull"},{c:P.t1,l:"Base"},{c:P.amber,l:"Conserv."}].map((x,i)=>(
@@ -845,14 +894,14 @@ const T1 = ()=>{
           </defs>
           <CartesianGrid stroke="rgba(0,0,0,0.05)" strokeDasharray="3 3"/>
           <XAxis dataKey="d" tick={{fill:P.t3,fontSize:9,fontWeight:500}} interval={3}/>
-          <YAxis tick={{fill:P.t3,fontSize:9}} tickFormatter={v=>v>=1000000?`\u00A3${(v/1000000).toFixed(1)}m`:`\u00A3${(v/1000).toFixed(0)}k`} domain={['dataMin-5000','auto']}/>
+          <YAxis tick={{fill:P.t3,fontSize:9}} tickFormatter={v=>v>=1000000?`£${(v/1000000).toFixed(1)}m`:`£${(v/1000).toFixed(0)}k`} domain={['dataMin-5000','auto']}/>
           <Tooltip content={<Tip/>}/>
           <Area type="monotone" dataKey="a" name="Assets" stroke={P.indigo} fill="url(#assetFillT1)" strokeWidth={1.5} dot={false}/>
           <Area type="monotone" dataKey="nw" name="Net Worth" stroke={P.cyan} fill="url(#nwFillT1)" strokeWidth={2.5} dot={{fill:P.cyan,r:2,strokeWidth:0}} style={{filter:'drop-shadow(0 2px 4px rgba(99,102,241,0.25))'}}/>
           <Line type="monotone" dataKey="bull" name="Bull" stroke={P.green} strokeWidth={1.5} dot={false} strokeDasharray="4 2"/>
           <Line type="monotone" dataKey="base" name="Base" stroke={P.t1} strokeWidth={2} dot={false}/>
           <Line type="monotone" dataKey="conserv" name="Conservative" stroke={P.amber} strokeWidth={1} dot={false} strokeDasharray="6 3"/>
-          <ReferenceLine y={1000000} stroke={P.amber} strokeDasharray="8 4" label={{value:"\u00A31M",fill:P.amber,fontSize:10,fontWeight:700}}/>
+          <ReferenceLine y={1000000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:10,fontWeight:700}}/>
           <ReferenceLine y={PORT.fireTarget} stroke={P.cyan} strokeDasharray="8 4" label={{value:"FIRE",fill:P.cyan,fontSize:10,fontWeight:700}}/>
         </ComposedChart>
       </ResponsiveContainer>
@@ -939,7 +988,7 @@ const T1 = ()=>{
       {/* Holding contribution diverging bar */}
       <PanelShell hover>
         <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:6}}>HOLDING CONTRIBUTION (GBP)</div>
-        <div style={{fontSize:10,color:P.t3,marginBottom:8}}>P&L by position \u2014 what actually made or lost money</div>
+        <div style={{fontSize:10,color:P.t3,marginBottom:8}}>P&L by position — what actually made or lost money</div>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={contribData.filter((_,i,a)=>i<5||i>=a.length-4)} layout="vertical" margin={{left:70}}>
             <CartesianGrid stroke="rgba(0,0,0,0.05)" strokeDasharray="3 3"/>
@@ -947,7 +996,7 @@ const T1 = ()=>{
             <YAxis dataKey="name" type="category" tick={{fill:P.t1,fontSize:10,fontWeight:600}} width={65}/>
             <Tooltip content={<Tip/>}/>
             <ReferenceLine x={0} stroke={P.t4} strokeWidth={1.5}/>
-            <Bar dataKey="pnl" name="P&L (\u00A3k)" radius={[0,6,6,0]}>{contribData.filter((_,i,a)=>i<5||i>=a.length-4).map((d,i)=><Cell key={i} fill={d.pnl>=0?P.cyan:P.red} fillOpacity={0.85}/>)}</Bar>
+            <Bar dataKey="pnl" name="P&L (£k)" radius={[0,6,6,0]}>{contribData.filter((_,i,a)=>i<5||i>=a.length-4).map((d,i)=><Cell key={i} fill={d.pnl>=0?P.cyan:P.red} fillOpacity={0.85}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
       </PanelShell>
@@ -1000,7 +1049,7 @@ const T1 = ()=>{
             <YAxis dataKey="name" type="category" tick={{fill:P.t1,fontSize:10,fontWeight:600}} width={45}/>
             <Tooltip content={<Tip/>}/>
             <ReferenceLine x={0} stroke={P.t4}/>
-            <Bar dataKey="pnl" name="P&L (\u00A3k)" radius={[0,6,6,0]}>{sleeveContrib.map((d,i)=><Cell key={i} fill={d.pnl>=0?d.color:P.red} fillOpacity={0.85}/>)}</Bar>
+            <Bar dataKey="pnl" name="P&L (£k)" radius={[0,6,6,0]}>{sleeveContrib.map((d,i)=><Cell key={i} fill={d.pnl>=0?d.color:P.red} fillOpacity={0.85}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
         <div style={{fontSize:9,color:P.t3,marginTop:4}}>Pension +{fK(18282)} largest positive. Crypto -{fK(39896)} largest drag.</div>
@@ -1014,21 +1063,21 @@ const T1 = ()=>{
           <div style={{width:24,height:24,borderRadius:7,background:`${P.positive}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.positive}}>+</div>
           <div style={{fontSize:12,fontWeight:800,color:P.positive,textTransform:"uppercase",letterSpacing:0.8}}>Strengths</div>
         </div>
-        {["JPM Research Enhanced all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+\u00A316.8k) \u2014 largest contributor","15.4 effective positions, HHI 0.065 \u2014 genuinely diversified","New comp (\u00A3340k gross) transforms savings engine"].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.positive,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
+        {["JPM Research Enhanced all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+£16.8k) — largest contributor","15.4 effective positions, HHI 0.065 — genuinely diversified","New comp (£340k gross) transforms savings engine"].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.positive,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
       <PanelShell style={{borderTop:`3px solid ${P.negative}`}} hover>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
           <div style={{width:24,height:24,borderRadius:7,background:`${P.negative}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.negative}}>\u2013</div>
           <div style={{fontSize:12,fontWeight:800,color:P.negative,textTransform:"uppercase",letterSpacing:0.8}}>Weaknesses</div>
         </div>
-        {[`Crypto lost ${fK(38400)} \u2014 32% risk from 13% capital`,`Cash halved: ${fK(33978)} \u2192 ${fK(15752)}. Now ${runway.toFixed(1)}mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR \u2014 most expensive capital`,`47% GIA wrapper \u2014 est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.negative,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
+        {[`Crypto lost ${fK(38400)} — 32% risk from 13% capital`,`Cash halved: ${fK(33978)} → ${fK(15752)}. Now ${runway.toFixed(1)}mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR — most expensive capital`,`47% GIA wrapper — est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.negative,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
       <PanelShell style={{borderTop:`3px solid ${P.cyan}`}} hover>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-          <div style={{width:24,height:24,borderRadius:7,background:`${P.cyan}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.cyan}}>\u2192</div>
+          <div style={{width:24,height:24,borderRadius:7,background:`${P.cyan}14`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:P.cyan}}>→</div>
           <div style={{fontSize:12,fontWeight:800,color:P.cyan,textTransform:"uppercase",letterSpacing:0.8}}>Priority Actions</div>
         </div>
-        {[`Max ISA (\u00A320k) before 5 April \u2014 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus \u2014 22% return.`,`Salary sacrifice \u00A31,250/mo \u2014 60% effective rate band.`,`Consolidate 18 micro-positions to \u226415.`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
+        {[`Max ISA (£20k) before 5 April — 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus — 22% return.`,`Salary sacrifice £1,250/mo — 60% effective rate band.`,`Consolidate 18 micro-positions to ≤15.`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
     </div>
   </div>);
@@ -1221,13 +1270,13 @@ const T2 = ()=>{
       <KpiTile l="Active Share" v={`${activeShare}%`} c={activeShare>40?P.amber:P.positive} sm delta="vs MSCI"/>
     </div>
 
-    <InsightCallout text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions = solid diversification. But ${microPositions>0?microPositions+' positions':'18+ positions'} below \u00A31k are symbolic clutter. Top 3 hold ${(top3/totalAssets*100).toFixed(0)}% \u2014 pension dominance is structural. Active share ${activeShare}% confirms meaningful deviation from MSCI World. The real concentration risk: crypto at 13% capital drives 32% of risk (2.5x ratio).`}/>
+    <InsightCallout text={`HHI of ${RISK.hhi} and ${RISK.effPos} effective positions = solid diversification. But ${microPositions>0?microPositions+' positions':'18+ positions'} below £1k are symbolic clutter. Top 3 hold ${(top3/totalAssets*100).toFixed(0)}% — pension dominance is structural. Active share ${activeShare}% confirms meaningful deviation from MSCI World. The real concentration risk: crypto at 13% capital drives 32% of risk (2.5x ratio).`}/>
 
     {/* ROW 2: Portfolio Size Map + Full Holdings Table (7fr + 5fr) */}
     <Grid cols="7fr 5fr" gap={14}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <PanelShell hover>
-          <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:8}}>PORTFOLIO SIZE MAP \u2014 TOP 12 HOLDINGS</div>
+          <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:8}}>PORTFOLIO SIZE MAP — TOP 12 HOLDINGS</div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={treemapData} layout="vertical" margin={{left:80}}>
               <CartesianGrid stroke="rgba(0,0,0,0.05)" horizontal={false} vertical strokeDasharray="3 3"/>
@@ -1241,16 +1290,16 @@ const T2 = ()=>{
         {/* Sleeve Treemap (ECharts) */}
         <PanelShell hover>
           <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:6}}>SLEEVE TREEMAP</div>
-          <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Relative area by sleeve value \u2014 compact weight distribution</div>
+          <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Relative area by sleeve value — compact weight distribution</div>
           <ReactECharts option={{
-            tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.94)',borderColor:'rgba(255,255,255,0.08)',textStyle:{color:'#f1f5f9',fontSize:11},formatter:p=>`<b>${p.name}</b><br/>${fK(p.value)} \u00B7 ${(p.value/totalAssets*100).toFixed(1)}%`},
+            tooltip:{trigger:'item',backgroundColor:'rgba(15,23,42,0.94)',borderColor:'rgba(255,255,255,0.08)',textStyle:{color:'#f1f5f9',fontSize:11},formatter:p=>`<b>${p.name}</b><br/>${fK(p.value)} · ${(p.value/totalAssets*100).toFixed(1)}%`},
             series:[{type:'treemap',data:SLEEVES.map(s=>({name:s.name.split("(")[0].trim(),value:s.val,itemStyle:{color:s.color,borderColor:'rgba(255,255,255,0.3)',borderWidth:2}})),label:{show:true,fontSize:10,fontWeight:700,color:'#0f172a',formatter:p=>p.name.split(' ')[0]},breadcrumb:{show:false},roam:false,levels:[{itemStyle:{borderColor:'rgba(255,255,255,0.4)',borderWidth:3,gapWidth:3}}]}],
           }} style={{height:200}} opts={{renderer:'svg'}}/>
         </PanelShell>
       </div>
 
       <PanelShell hover tier={1}>
-        <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:8}}>FULL HOLDINGS \u2014 RANKED BY VALUE</div>
+        <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:8}}>FULL HOLDINGS — RANKED BY VALUE</div>
         <Tbl h={["Holding","Value","Wt%","Class","6mo","Geo"]}
           r={sorted.map(h=>[h.name.split("(")[0].trim(),fK(h.val),`${(h.val/totalAssets*100).toFixed(1)}%`,h.cls,h.prev?pc((h.val-h.prev)/h.prev*100):"---",h.geo])} hl={4}/>
       </PanelShell>
@@ -1258,8 +1307,8 @@ const T2 = ()=>{
 
     {/* ROW 3: Sankey (full width) */}
     <PanelShell hover>
-      <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:4}}>NAV FLOW \u2014 ASSETS \u2192 CLASSES \u2192 WRAPPERS</div>
-      <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Total {fK(PORT.assets)} decomposed. 57% in taxable wrappers \u2014 biggest structural inefficiency.</div>
+      <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:4}}>NAV FLOW — ASSETS → CLASSES → WRAPPERS</div>
+      <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Total {fK(PORT.assets)} decomposed. 57% in taxable wrappers — biggest structural inefficiency.</div>
       <NavSankey/>
     </PanelShell>
 
@@ -1446,15 +1495,15 @@ const T2 = ()=>{
         <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:8}}>WRAPPER DETAIL</div>
         <Tbl h={["Wrapper","Value","% NAV","Tax Status"]}
           r={[["GIA (ETFs+Crypto)",fK(178000),"47%","Taxable"],["Pension",fK(82133),"22%","Tax-free"],["FD / Cash",fK(61538),"16%","Mixed"],["ISA",fK(18085),"5%","Tax-free"],["ZAR Accounts",fK(35914),"10%","Taxable"]]}/>
-        <div style={{fontSize:10,color:P.t3,marginTop:8}}>57% in taxable wrappers. Sheltered ratio: {((82133+18085)/totalAssets*100).toFixed(0)}%. Est. annual drag: \u00A35.4-7.3k/yr.</div>
+        <div style={{fontSize:10,color:P.t3,marginTop:8}}>57% in taxable wrappers. Sheltered ratio: {((82133+18085)/totalAssets*100).toFixed(0)}%. Est. annual drag: £5.4-7.3k/yr.</div>
       </PanelShell>
       <PanelShell hover>
         <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:6}}>MICRO-POSITION DIAGNOSTIC</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
-          <KpiTile l="Micro Count" v={`${microPositions>0?microPositions:18}`} c={P.amber} sm delta="<\u00A31k each"/>
+          <KpiTile l="Micro Count" v={`${microPositions>0?microPositions:18}`} c={P.amber} sm delta="<£1k each"/>
           <KpiTile l="Micro Value" v={fK(microValue>0?microValue:3200)} c={P.t3} sm delta="Total held"/>
-          <KpiTile l="Drag Est." v="\u00A3160/yr" c={P.negative} sm delta="TER+admin"/>
-          <KpiTile l="Action" v="Consolidate" c={P.cyan} sm delta="\u226415 positions"/>
+          <KpiTile l="Drag Est." v="£160/yr" c={P.negative} sm delta="TER+admin"/>
+          <KpiTile l="Action" v="Consolidate" c={P.cyan} sm delta="≤15 positions"/>
         </div>
         <div style={{fontSize:10,color:P.t3}}>These positions are symbolic diversification. They contribute negligible returns but create admin complexity and TER drag. Recommend selling and redeploying to core ETF holdings.</div>
       </PanelShell>
@@ -1564,7 +1613,7 @@ const T3 = ()=>{
       <KpiTile l="Opening NW" v={fK(PORT.nw6moAgo)} c={P.t2} sm/>
       <KpiTile l="Closing NW" v={fK(PORT.netWorth)} c={P.t1} sm/>
       <KpiTile l="Net Change" v={fK(PORT.netWorth-PORT.nw6moAgo)} c={P.negative} sm deltaType="down"/>
-      <KpiTile l="Inflows" v="+\u00A328.8k" c={P.positive} sm deltaType="up"/>
+      <KpiTile l="Inflows" v="+£28.8k" c={P.positive} sm deltaType="up"/>
       <KpiTile l="Market P&L" v={fK(investReturn)} c={P.negative} sm deltaType="down"/>
       <KpiTile l="TWR" v={`${twrPct}%`} c={twrPct>=0?P.positive:P.negative} sm delta="Time-weighted"/>
       <KpiTile l="MWR (XIRR)" v={`${xirr}%`} c={xirr>=0?P.positive:P.negative} sm delta="Money-weighted"/>
@@ -1577,21 +1626,21 @@ const T3 = ()=>{
     <Grid cols="7fr 5fr" gap={14}>
       <PanelShell hover>
         <div style={{fontSize:13,fontWeight:800,color:P.t1,marginBottom:4}}>NAV WATERFALL BRIDGE</div>
-        <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Start/End = absolute. Steps = contribution. {fK(PORT.nw6moAgo)} \u2192 {fK(PORT.netWorth)}</div>
+        <div style={{fontSize:10,color:P.t3,marginBottom:8}}>Start/End = absolute. Steps = contribution. {fK(PORT.nw6moAgo)} → {fK(PORT.netWorth)}</div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={waterfall} margin={{left:5,right:5,bottom:15}}>
             <CartesianGrid stroke="rgba(0,0,0,0.05)" strokeDasharray="3 3"/>
             <XAxis dataKey="name" tick={{fill:P.t3,fontSize:9,fontWeight:500}} angle={-25} textAnchor="end" height={60} interval={0}/>
-            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`\u00A3${v.toFixed(0)}k`} domain={[0,'auto']}/>
+            <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`£${v.toFixed(0)}k`} domain={[0,'auto']}/>
             <Tooltip content={({active,payload,label})=>{
               if(!active||!payload?.length)return null;
               const d=waterfall.find(w=>w.name===label);
               return(<div style={{...GS,padding:"10px 14px",fontSize:11,borderRadius:10}}>
                 <div style={{color:P.t3,marginBottom:3,fontWeight:700}}>{label}</div>
                 {d?.isAnchor
-                  ?<div style={{color:P.cyan,fontWeight:800,fontSize:13}}>\u00A3{d.step.toFixed(1)}k</div>
+                  ?<div style={{color:P.cyan,fontWeight:800,fontSize:13}}>£{d.step.toFixed(1)}k</div>
                   :<><div style={{color:d?.isPos?P.cyan:P.red,fontWeight:800,fontSize:13}}>{d?.isPos?"+":""}{d?.step.toFixed(1)}k</div>
-                    <div style={{color:P.t4,fontSize:10}}>Running: \u00A3{d?.cum.toFixed(1)}k</div></>}
+                    <div style={{color:P.t4,fontSize:10}}>Running: £{d?.cum.toFixed(1)}k</div></>}
               </div>);
             }}/>
             <Bar dataKey="base" stackId="w" fill="transparent" name=" " radius={0}/>
@@ -1617,7 +1666,7 @@ const T3 = ()=>{
       </PanelShell>
     </Grid>
 
-    <InsightCallout text={`The bridge reveals the core issue: +\u00A328.8k fresh capital but crypto destroyed -\u00A352.2k and cash drawn down -\u00A325.9k. Equity +\u00A313.6k and pension +\u00A316.8k were bright spots. Without crypto, portfolio would have grown +\u00A335k \u2014 instead it shrank -\u00A335k.`}/>
+    <InsightCallout text={`The bridge reveals the core issue: +£28.8k fresh capital but crypto destroyed -£52.2k and cash drawn down -£25.9k. Equity +£13.6k and pension +£16.8k were bright spots. Without crypto, portfolio would have grown +£35k — instead it shrank -£35k.`}/>
 
     {/* ROW 3: 4-panel — Cumulative Return + Monthly Heatmap + Flows vs Returns + Geo Contrib */}
     <div style={{display:"grid",gridTemplateColumns:"3fr 3fr 3fr 3fr",gap:12,marginBottom:14}}>
@@ -1840,7 +1889,7 @@ const T4 = ()=>{
           ["Annualised Vol",`${RISK.vol}%`,"Elevated","Driven by 48% crypto vol on 13% weight"],
           ["Sharpe Ratio",RISK.sharpe.toFixed(2),"Poor","Below 0.5 = insufficient risk compensation"],
           ["Sortino Ratio",RISK.sortino.toFixed(2),"Below avg","Downside vol from crypto drawdown"],
-          ["Calmar Ratio",RISK.calmar.toFixed(2),"Weak","Return/MaxDD \u2014 need >1.0"],
+          ["Calmar Ratio",RISK.calmar.toFixed(2),"Weak","Return/MaxDD — need >1.0"],
           ["Max Drawdown",`${RISK.maxDD}%`,"Moderate",`${RISK.ddDur} days, still in drawdown`],
           ["VaR 95%",`${RISK.var95}%`,"Elevated","5% chance of >3.8% monthly loss"],
           ["CVaR 95%",`${RISK.cvar95}%`,"Elevated","Expected -6.2% when VaR breached"],
@@ -1876,7 +1925,7 @@ const T4 = ()=>{
             <Bar dataKey="risk" name="Risk %" fill={P.red} fillOpacity={0.6} radius={[4,4,0,0]}/>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital \u2192 32% risk (2.5x). Cash/FD: 16% capital \u2192 2% risk (drag).</div>
+        <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital → 32% risk (2.5x). Cash/FD: 16% capital → 2% risk (drag).</div>
       </PanelShell>
     </Grid>
 
@@ -2148,15 +2197,15 @@ const T7 = ()=>{
   const debtPct = Math.round(PORT.amexDebt/totalDeployed*100);
   const isaPct = Math.round(20000/totalDeployed*100);
   return(<div>
-    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) \u00B7 Tax+NI: ${fK(BONUS.tax+BONUS.ni)} \u00B7 Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION"/>
+    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) · Tax+NI: ${fK(BONUS.tax+BONUS.ni)} · Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION"/>
     <FlexRow gap={10}>
       <K l="Gross Bonus" v={fK(BONUS.gross)} s="Mid-range est." sm/><K l="Tax + NI" v={fK(BONUS.tax+BONUS.ni)} s="45% + 2%" c={P.red} sm/>
-      <K l="Post-Tax" v={fK(BONUS.postTax)} s="Deployable" c={P.cyan} sm/><K l="ISA Max" v="\u00A320k" s="Non-negotiable" c={P.t1} sm/>
+      <K l="Post-Tax" v={fK(BONUS.postTax)} s="Deployable" c={P.cyan} sm/><K l="ISA Max" v="£20k" s="Non-negotiable" c={P.t1} sm/>
       <K l="Amex Clear" v={fmt(PORT.amexDebt)} s="22% APR" c={P.red} sm/><K l="Scenarios" v="3" s="Def/Bal/Agg" c={P.amber} sm/>
     </FlexRow>
     <Grid cols="7fr 5fr" gap={14}>
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO COMPARISON \u2014 ALLOCATION (\u00A3k)</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO COMPARISON — ALLOCATION (£k)</div>
         <ResponsiveContainer width="100%" height={360}>
           <BarChart data={compData}>
             <CartesianGrid stroke={P.b2}/>
@@ -2207,7 +2256,7 @@ const T7 = ()=>{
     </Grid>
     <Card style={{background:`linear-gradient(135deg,${P.cyanD},transparent)`,borderLeft:`3px solid ${P.cyan}`}}>
       <div style={{fontSize:16,fontWeight:800,color:P.cyan,marginBottom:6}}>RECOMMENDATION: BALANCED</div>
-      <div style={{fontSize:14,color:P.t2,lineHeight:1.7}}>Clear Amex in full (\u00A310.7k \u2014 guaranteed 22% return). Max ISA (\u00A320k into S&S ISA). Boost pension (\u00A315k salary sacrifice into 60% marginal rate band). Deploy \u00A310k quality equities, \u00A35k crypto (only at accumulation signals), \u00A35k AI/semis. Keep \u00A312.8k liquid to rebuild the emergency fund. Allow \u00A37k guilt-free spending. 5-year opportunity cost of defensive vs balanced: ~\u00A343k in foregone compounding.</div>
+      <div style={{fontSize:14,color:P.t2,lineHeight:1.7}}>Clear Amex in full (£10.7k — guaranteed 22% return). Max ISA (£20k into S&S ISA). Boost pension (£15k salary sacrifice into 60% marginal rate band). Deploy £10k quality equities, £5k crypto (only at accumulation signals), £5k AI/semis. Keep £12.8k liquid to rebuild the emergency fund. Allow £7k guilt-free spending. 5-year opportunity cost of defensive vs balanced: ~£43k in foregone compounding.</div>
     </Card>
   </div>);
 };
@@ -2253,7 +2302,7 @@ const T8 = ()=>{
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Opportunities" v={OPPS.length} c={P.t2} sm/><K l="Total Ann. Value" v={`\u00A3${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
+      <K l="Opportunities" v={OPPS.length} c={P.t2} sm/><K l="Total Ann. Value" v={`£${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
       <K l="Top Score" v={`${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta="Conv\u00D7Time"/><K l="Execute Now" v={OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
       <K l="Avg Conviction" v={(OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={P.t2} sm/><K l="Avg Timing" v={(OPPS.reduce((a,o)=>a+o.tm,0)/OPPS.length).toFixed(1)} c={P.t2} sm/>
     </FlexRow>
@@ -2444,15 +2493,15 @@ const T10 = ()=>{
   return(<div>
     <Hd t="LONG-TERM WEALTH PROJECTION" s="Human capital, FIRE path, 5 forecast scenarios, Monte Carlo simulation" tag="WEALTH ENGINE" ac={P.indigo}/>
     <FlexRow gap={10}>
-      <K l="Financial NW" v={fK(PORT.netWorth)} s="Current" sm/><K l="Human Capital" v={`\u00A3${(latestHC.hc/1000).toFixed(1)}m`} s="NPV future earnings" c={P.indigo} sm/>
-      <K l="Total Wealth" v={`\u00A3${(latestHC.total/1000).toFixed(1)}m`} s="HC + Financial" c={P.t1} sm/><K l="HC %" v={`${(latestHC.hc/latestHC.total*100).toFixed(0)}%`} s="Career dominant" c={P.amber} sm/>
+      <K l="Financial NW" v={fK(PORT.netWorth)} s="Current" sm/><K l="Human Capital" v={`£${(latestHC.hc/1000).toFixed(1)}m`} s="NPV future earnings" c={P.indigo} sm/>
+      <K l="Total Wealth" v={`£${(latestHC.total/1000).toFixed(1)}m`} s="HC + Financial" c={P.t1} sm/><K l="HC %" v={`${(latestHC.hc/latestHC.total*100).toFixed(0)}%`} s="Career dominant" c={P.amber} sm/>
       <K l="FIRE" v={`${fire.toFixed(0)}%`} s={fK(PORT.fireTarget)} c={P.indigo} sm/><K l="Crossover" v={`~${crossoverYear}`} s="Returns > Savings" c={P.cyan} sm/>
-      <K l="Base 2035" v={`\u00A3${(base2035/1000).toFixed(1)}m`} s="15% return" c={P.positive} sm/>
+      <K l="Base 2035" v={`£${(base2035/1000).toFixed(1)}m`} s="15% return" c={P.positive} sm/>
     </FlexRow>
     <Grid cols="7fr 5fr" gap={14}>
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>HUMAN CAPITAL vs FINANCIAL (\u00A3k)</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:6}}>Salary \u00A3170k +15%/yr, bonus 100%, tax 47%, assets +15%/yr, discount 7%, career to 55.</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>HUMAN CAPITAL vs FINANCIAL (£k)</div>
+        <div style={{fontSize:12,color:P.t3,marginBottom:6}}>Salary £170k +15%/yr, bonus 100%, tax 47%, assets +15%/yr, discount 7%, career to 55.</div>
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={hcFiltered}><CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
@@ -2461,16 +2510,16 @@ const T10 = ()=>{
               const d=hcFiltered.find(h=>h.y===label);
               return(<div style={{...GS,padding:"10px 14px",fontSize:13,borderRadius:14}}>
                 <div style={{color:P.t3,marginBottom:3,fontWeight:600}}>{label} (age {32+(label-2026)})</div>
-                <div style={{color:P.cyan,fontWeight:700}}>Financial: \u00A3{(d?.fin/1000).toFixed(1)}m</div>
-                <div style={{color:P.indigo,fontWeight:700}}>Human Capital: \u00A3{(d?.hc/1000).toFixed(1)}m</div>
-                <div style={{color:P.t1,fontWeight:700,borderTop:`1px solid ${P.b1}`,paddingTop:3,marginTop:3}}>Total: \u00A3{(d?.total/1000).toFixed(1)}m</div>
+                <div style={{color:P.cyan,fontWeight:700}}>Financial: £{(d?.fin/1000).toFixed(1)}m</div>
+                <div style={{color:P.indigo,fontWeight:700}}>Human Capital: £{(d?.hc/1000).toFixed(1)}m</div>
+                <div style={{color:P.t1,fontWeight:700,borderTop:`1px solid ${P.b1}`,paddingTop:3,marginTop:3}}>Total: £{(d?.total/1000).toFixed(1)}m</div>
               </div>);
             }}/>
             <Area type="monotone" dataKey="hc" name="Human Capital" stackId="1" stroke={P.indigo} fill={P.indigo} fillOpacity={0.15}/>
             <Area type="monotone" dataKey="fin" name="Financial" stackId="1" stroke={P.cyan} fill={P.cyan} fillOpacity={0.15}/>
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Total wealth grows from \u00A3{(latestHC.total/1000).toFixed(1)}m to \u00A3{(HC_DATA[9].total/1000).toFixed(1)}m. Financial capital dominates by ~2038.</div>
+        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Total wealth grows from £{(latestHC.total/1000).toFixed(1)}m to £{(HC_DATA[9].total/1000).toFixed(1)}m. Financial capital dominates by ~2038.</div>
       </Card>
       <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>SAVINGS vs RETURNS CONTRIBUTION</div>
@@ -2483,13 +2532,13 @@ const T10 = ()=>{
             <Area type="monotone" dataKey="returns" name="Returns %" stackId="1" stroke={P.indigo} fill={P.indigo} fillOpacity={0.18}/>
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Returns overtake savings around 2031-32 when assets reach ~\u00A31.5-2m. Before crossover, maximising savings rate matters most.</div>
+        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Returns overtake savings around 2031-32 when assets reach ~£1.5-2m. Before crossover, maximising savings rate matters most.</div>
       </Card>
     </Grid>
     <Grid cols="7fr 5fr" gap={14}>
       <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>5 FORECAST SCENARIOS</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:8}}>All share: salary \u00A3170k +15%/yr, bonus 100%, tax 47%, expenses \u00A36k/mo +15%/yr.</div>
+        <div style={{fontSize:12,color:P.t3,marginBottom:8}}>All share: salary £170k +15%/yr, bonus 100%, tax 47%, expenses £6k/mo +15%/yr.</div>
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={wFiltered}><CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
@@ -2497,7 +2546,7 @@ const T10 = ()=>{
               if(!active||!payload?.length)return null;
               return(<div style={{...GS,padding:"10px 14px",fontSize:12,borderRadius:14}}>
                 <div style={{color:P.t3,marginBottom:4,fontWeight:600}}>{label} (age {32+(label-2026)})</div>
-                {payload.map((p,i)=><div key={i} style={{color:p.color||P.cyan,fontWeight:600}}>{p.name}: \u00A3{(p.value/1000).toFixed(1)}m</div>)}
+                {payload.map((p,i)=><div key={i} style={{color:p.color||P.cyan,fontWeight:600}}>{p.name}: £{(p.value/1000).toFixed(1)}m</div>)}
               </div>);
             }}/>
             <Area type="monotone" dataKey="bull" name="5. Bull+Crypto (+19%)" stroke={P.green} fill={P.green} fillOpacity={0.04} strokeWidth={2}/>
@@ -2505,22 +2554,22 @@ const T10 = ()=>{
             <Area type="monotone" dataKey="wrapperAlpha" name="3. +Wrapper (+16.2%)" stroke={P.indigo} fill={P.indigo} fillOpacity={0.03} strokeWidth={2}/>
             <Area type="monotone" dataKey="base" name="2. Base (15%)" stroke={P.t1} fill={P.t1} fillOpacity={0.03} strokeWidth={2.5}/>
             <Area type="monotone" dataKey="conservative" name="1. Conservative (8%)" stroke={P.red} fill={P.red} fillOpacity={0.02} strokeWidth={1.5} strokeDasharray="4 4"/>
-            <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"\u00A31M",fill:P.amber,fontSize:12,fontWeight:700}}/>
+            <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:12,fontWeight:700}}/>
             <ReferenceLine y={1800} stroke={P.cyan} strokeDasharray="8 4" label={{value:"FIRE",fill:P.cyan,fontSize:12,fontWeight:700}}/>
           </AreaChart>
         </ResponsiveContainer>
       </Card>
       <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>SCENARIO DEFINITIONS</div>
-        <Tbl h={["Scenario","Return","\u00A31M By","FIRE By","2035 NW"]}
+        <Tbl h={["Scenario","Return","£1M By","FIRE By","2035 NW"]}
           r={[
-            ["1. Conservative","8%",`${SC_CONSERV.find(s=>s.v>=1000)?.y||'2033'}`,`${SC_CONSERV.find(s=>s.v>=1800)?.y||'2035+'}`,`\u00A3${(SC_CONSERV[9].v/1000).toFixed(1)}m`],
-            ["2. Base","15%",`${SC_BASE.find(s=>s.v>=1000)?.y||'2030'}`,`${SC_BASE.find(s=>s.v>=1800)?.y||'2032'}`,`\u00A3${(SC_BASE[9].v/1000).toFixed(1)}m`],
-            ["3. +Wrapper","16.2%",`${SC_WRAP.find(s=>s.v>=1000)?.y||'2029'}`,`${SC_WRAP.find(s=>s.v>=1800)?.y||'2031'}`,`\u00A3${(SC_WRAP[9].v/1000).toFixed(1)}m`],
-            ["4. All Opps","17.5%",`${SC_ALLOPPS.find(s=>s.v>=1000)?.y||'2029'}`,`${SC_ALLOPPS.find(s=>s.v>=1800)?.y||'2031'}`,`\u00A3${(SC_ALLOPPS[9].v/1000).toFixed(1)}m`],
-            ["5. Bull","19%",`${SC_BULL.find(s=>s.v>=1000)?.y||'2028'}`,`${SC_BULL.find(s=>s.v>=1800)?.y||'2030'}`,`\u00A3${(SC_BULL[9].v/1000).toFixed(1)}m`],
+            ["1. Conservative","8%",`${SC_CONSERV.find(s=>s.v>=1000)?.y||'2033'}`,`${SC_CONSERV.find(s=>s.v>=1800)?.y||'2035+'}`,`£${(SC_CONSERV[9].v/1000).toFixed(1)}m`],
+            ["2. Base","15%",`${SC_BASE.find(s=>s.v>=1000)?.y||'2030'}`,`${SC_BASE.find(s=>s.v>=1800)?.y||'2032'}`,`£${(SC_BASE[9].v/1000).toFixed(1)}m`],
+            ["3. +Wrapper","16.2%",`${SC_WRAP.find(s=>s.v>=1000)?.y||'2029'}`,`${SC_WRAP.find(s=>s.v>=1800)?.y||'2031'}`,`£${(SC_WRAP[9].v/1000).toFixed(1)}m`],
+            ["4. All Opps","17.5%",`${SC_ALLOPPS.find(s=>s.v>=1000)?.y||'2029'}`,`${SC_ALLOPPS.find(s=>s.v>=1800)?.y||'2031'}`,`£${(SC_ALLOPPS[9].v/1000).toFixed(1)}m`],
+            ["5. Bull","19%",`${SC_BULL.find(s=>s.v>=1000)?.y||'2028'}`,`${SC_BULL.find(s=>s.v>=1800)?.y||'2030'}`,`£${(SC_BULL[9].v/1000).toFixed(1)}m`],
           ]}/>
-        <Ins text={`Base case: \u00A31M by 2030, FIRE by 2032. Conservative (8%): \u00A31M by 2033. Wrapper alpha alone (+1.2%) accelerates every milestone by ~1 year \u2014 highest-certainty alpha available.`}/>
+        <Ins text={`Base case: £1M by 2030, FIRE by 2032. Conservative (8%): £1M by 2033. Wrapper alpha alone (+1.2%) accelerates every milestone by ~1 year — highest-certainty alpha available.`}/>
       </Card>
     </Grid>
     {/* MONTE CARLO + MILESTONES */}
@@ -2548,7 +2597,7 @@ const T10 = ()=>{
         const vals=allPaths.map(p=>p[ti]).sort((a,b)=>a-b);
         return{y:years[ti],p10:Math.round(vals[Math.floor(N*0.10)]),p25:Math.round(vals[Math.floor(N*0.25)]),p50:Math.round(vals[Math.floor(N*0.50)]),p75:Math.round(vals[Math.floor(N*0.75)]),p90:Math.round(vals[Math.floor(N*0.90)])};
       });
-      const milestones=[500,1000,1800,5000];const milestoneLabels=["\u00A3500k","\u00A31M","FIRE \u00A31.8M","\u00A35M"];const milestoneColors=[P.green,P.cyan,P.indigo,P.purple];
+      const milestones=[500,1000,1800,5000];const milestoneLabels=["£500k","£1M","FIRE £1.8M","£5M"];const milestoneColors=[P.green,P.cyan,P.indigo,P.purple];
       const probData=years.map((_,ti)=>{
         const vals=allPaths.map(p=>p[ti]);
         const obj={y:years[ti]};
@@ -2569,9 +2618,9 @@ const T10 = ()=>{
                   return(<div style={{...GS,padding:"10px 14px",fontSize:12,borderRadius:14}}>
                     <div style={{color:P.t3,marginBottom:4,fontWeight:600}}>{label}</div>
                     {[["P90",P.green,d?.p90],["P75","#06b6d4",d?.p75],["P50",P.cyan,d?.p50],["P25",P.amber,d?.p25],["P10",P.red,d?.p10]].map(([l,c,v],i)=>(
-                      <div key={i} style={{color:c,fontWeight:600}}>{l}: \u00A3{v>=1000?`${(v/1000).toFixed(1)}m`:`${v}k`}</div>
+                      <div key={i} style={{color:c,fontWeight:600}}>{l}: £{v>=1000?`${(v/1000).toFixed(1)}m`:`${v}k`}</div>
                     ))}
-                    <div style={{color:P.t4,fontSize:11,marginTop:4}}>Spread: \u00A3{((d?.p90-d?.p10)/1000).toFixed(1)}m</div>
+                    <div style={{color:P.t4,fontSize:11,marginTop:4}}>Spread: £{((d?.p90-d?.p10)/1000).toFixed(1)}m</div>
                   </div>);
                 }}/>
                 <Area type="monotone" dataKey="p90" stroke="none" fill={P.green} fillOpacity={0.06}/>
@@ -2579,7 +2628,7 @@ const T10 = ()=>{
                 <Area type="monotone" dataKey="p50" stroke={P.cyan} fill={P.cyan} fillOpacity={0.12} strokeWidth={2.5}/>
                 <Area type="monotone" dataKey="p25" stroke="none" fill={P.amber} fillOpacity={0.06}/>
                 <Area type="monotone" dataKey="p10" stroke={P.red} fill={P.red} fillOpacity={0.04} strokeWidth={1.5} strokeDasharray="4 4"/>
-                <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"\u00A31M",fill:P.amber,fontSize:11,fontWeight:700}}/>
+                <ReferenceLine y={1000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:11,fontWeight:700}}/>
                 <ReferenceLine y={1800} stroke={P.indigo} strokeDasharray="8 4" label={{value:"FIRE",fill:P.indigo,fontSize:11,fontWeight:700}}/>
               </AreaChart>
             </ResponsiveContainer>
@@ -2621,7 +2670,7 @@ const T10 = ()=>{
                 </React.Fragment>)}
               </div>
             </div>
-            <div style={{fontSize:11,color:P.t3,marginTop:8}}>\u00A3500k near-certain by {years[3]}. \u00A31M reaches {probData[5]?.m1}% by {years[5]}. FIRE at {probData[7]?.m2}% by {years[7]}.</div>
+            <div style={{fontSize:11,color:P.t3,marginTop:8}}>£500k near-certain by {years[3]}. £1M reaches {probData[5]?.m1}% by {years[5]}. FIRE at {probData[7]?.m2}% by {years[7]}.</div>
           </Card>
         </Grid>
       </>);
@@ -2640,8 +2689,8 @@ const T10 = ()=>{
                 if(!active||!payload?.length)return null;
                 return(<div style={{...GS,padding:"10px 14px",fontSize:12,borderRadius:14}}>
                   <div style={{color:P.t3,marginBottom:3,fontWeight:600}}>{label}</div>
-                  {payload.map((p,i)=><div key={i} style={{color:p.color,fontWeight:600}}>{p.name}: \u00A3{(p.value/1000).toFixed(1)}m</div>)}
-                  {payload.length===2&&<div style={{color:P.amber,fontSize:11,marginTop:3}}>Inflation erodes: \u00A3{((payload[0].value-payload[1].value)/1000).toFixed(1)}m</div>}
+                  {payload.map((p,i)=><div key={i} style={{color:p.color,fontWeight:600}}>{p.name}: £{(p.value/1000).toFixed(1)}m</div>)}
+                  {payload.length===2&&<div style={{color:P.amber,fontSize:11,marginTop:3}}>Inflation erodes: £{((payload[0].value-payload[1].value)/1000).toFixed(1)}m</div>}
                 </div>);
               }}/>
               <Area type="monotone" dataKey="nominal" name="Nominal" stroke={P.cyan} fill={P.cyan} fillOpacity={0.10} strokeWidth={2.5}/>
@@ -2651,9 +2700,9 @@ const T10 = ()=>{
           </ResponsiveContainer>
         );
       })()}
-      <div style={{fontSize:12,color:P.t3,marginTop:6}}>By 2035, nominal \u00A3{(wFiltered[9]?.base/1000).toFixed(1)}m is really \u00A3{(wFiltered[9]?.base/Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m in today's money. FIRE target should be inflation-indexed: \u00A31.8M today = ~\u00A3{(1800*Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m nominal by 2035.</div>
+      <div style={{fontSize:12,color:P.t3,marginTop:6}}>By 2035, nominal £{(wFiltered[9]?.base/1000).toFixed(1)}m is really £{(wFiltered[9]?.base/Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m in today's money. FIRE target should be inflation-indexed: £1.8M today = ~£{(1800*Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m nominal by 2035.</div>
     </Card>
-    <Ins text={`The income engine (\u00A3340k gross growing 15%/yr) is the most powerful variable. Even conservative 8% returns reach \u00A31M by 2032 because net savings of \u00A3108k+/yr compound aggressively. Wrapper optimisation alpha (+1.2%) is highest-certainty \u2014 no market views required. All 5 opportunities combined add +2.5% annually, worth ~\u00A3${((SC_ALLOPPS[9].v-SC_BASE[9].v)/1000).toFixed(1)}m by 2035 vs base.`}/>
+    <Ins text={`The income engine (£340k gross growing 15%/yr) is the most powerful variable. Even conservative 8% returns reach £1M by 2032 because net savings of £108k+/yr compound aggressively. Wrapper optimisation alpha (+1.2%) is highest-certainty — no market views required. All 5 opportunities combined add +2.5% annually, worth ~£${((SC_ALLOPPS[9].v-SC_BASE[9].v)/1000).toFixed(1)}m by 2035 vs base.`}/>
   </div>);
 };
 const T11 = ()=>{
@@ -2691,7 +2740,7 @@ const T11 = ()=>{
       <K l="6mo P&L" v={fK(cryptoTotal-cryptoPrev)} s="All crypto" c={P.red} sm/><K l="Composite" v={`${composite}/100`} s={zone.l} c={zone.c} sm/>
       <K l="BTC Progress" v={`${progress.toFixed(0)}%`} s={`${btcHeld.toFixed(3)} / ${target}`} c={P.btc} sm/>
     </FlexRow>
-    <Ins type="opp" text={`${bullish}/${signals.length} on-chain signals bullish \u2014 highest density since late 2022. MVRV 0.49, Fear 18, RSI 27.5, whale accumulation 270K BTC. Smart money is buying what retail is selling. 32% risk from 13% capital = 2.5x risk-to-capital ratio remains excessive. Strategy: consolidate, not expand.`}/>
+    <Ins type="opp" text={`${bullish}/${signals.length} on-chain signals bullish — highest density since late 2022. MVRV 0.49, Fear 18, RSI 27.5, whale accumulation 270K BTC. Smart money is buying what retail is selling. 32% risk from 13% capital = 2.5x risk-to-capital ratio remains excessive. Strategy: consolidate, not expand.`}/>
     <Card hover>
       <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ON-CHAIN SIGNAL DASHBOARD</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
@@ -2724,10 +2773,10 @@ const T11 = ()=>{
         <div style={{height:16,background:"rgba(0,0,0,0.06)",borderRadius:8,overflow:"hidden",marginBottom:8}}>
           <div style={{width:`${Math.min(progress,100)}%`,height:"100%",background:`linear-gradient(90deg,${P.btc}cc,${P.btc}60)`,borderRadius:8,boxShadow:`0 0 12px ${P.btc}30`}}/>
         </div>
-        <div style={{fontSize:11,color:P.t3,marginBottom:8}}>{progress.toFixed(1)}% complete. At \u00A3{monthlyDCA}/mo DCA, ~{monthsToTarget} months (~{Math.ceil(monthsToTarget/12)}yr).</div>
+        <div style={{fontSize:11,color:P.t3,marginBottom:8}}>{progress.toFixed(1)}% complete. At £{monthlyDCA}/mo DCA, ~{monthsToTarget} months (~{Math.ceil(monthsToTarget/12)}yr).</div>
         <Tbl h={["Metric","Value"]} r={[
           ["BTC Held",`${btcHeld.toFixed(4)} BTC`],["GBP Value",fK(29854)],["Avg Cost",`~$85,000`],
-          ["Current Price",`$${cm.btcPrice.toLocaleString()}`],["Monthly DCA",`\u00A3${monthlyDCA}`],
+          ["Current Price",`$${cm.btcPrice.toLocaleString()}`],["Monthly DCA",`£${monthlyDCA}`],
           ["Months to 1.0",`~${monthsToTarget}`],["Target Date",`~End ${2026+Math.floor(monthsToTarget/12)}`],
         ]}/>
       </Card>
@@ -2736,19 +2785,19 @@ const T11 = ()=>{
         <Tbl h={["Asset","Now","Return"]} r={[
           ["BTC",fK(29854),"-39.5%"],["EC10",fK(15845),"-44.4%"],
           ["ETH",fK(2986),"-54.4%"],["SOL",fK(1570),"-63.6%"],
-          ["NEXO","\u00A357","-29.6%"],["Total",fK(cryptoTotal),pc((cryptoTotal-cryptoPrev)/cryptoPrev*100)],
+          ["NEXO","£57","-29.6%"],["Total",fK(cryptoTotal),pc((cryptoTotal-cryptoPrev)/cryptoPrev*100)],
         ]} hl={3}/>
         <div style={{fontSize:11,color:P.t3,marginTop:6}}>32% of portfolio risk from 13% of capital. Risk/capital ratio: 2.5x.</div>
       </Card>
     </Grid>
     <Grid cols="1fr 1fr" gap={14}>
       <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>CRYPTO HOLDINGS \u2014 CURRENT vs 6 MONTHS AGO</div>
+        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>CRYPTO HOLDINGS — CURRENT vs 6 MONTHS AGO</div>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={cryptoHoldings}>
             <CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="name" tick={{fill:P.t3,fontSize:13}}/>
-            <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`\u00A3${(v/1000).toFixed(0)}k`}/>
+            <YAxis tick={{fill:P.t3,fontSize:12}} tickFormatter={v=>`£${(v/1000).toFixed(0)}k`}/>
             <Tooltip content={<Tip/>}/>
             <Bar dataKey="prev" name="6mo Ago" fill={P.t4} fillOpacity={0.3} radius={[4,4,0,0]}/>
             <Bar dataKey="current" name="Current" fill={P.btc} fillOpacity={0.7} radius={[4,4,0,0]}/>
@@ -2758,16 +2807,16 @@ const T11 = ()=>{
       <Card hover>
         <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>DETAILED HOLDINGS TABLE</div>
         <Tbl h={["Asset","Current","6mo Ago","P&L","Return","Action"]} r={[
-          ["BTC",fK(29854),fK(49310),`-${fK(19456)}`,"-39.5%","Core \u2014 hold, accumulate"],
+          ["BTC",fK(29854),fK(49310),`-${fK(19456)}`,"-39.5%","Core — hold, accumulate"],
           ["EC10",fK(15845),fK(28508),`-${fK(12663)}`,"-44.4%","Consolidate to BTC"],
-          ["ETH",fK(2986),fK(6545),`-${fK(3559)}`,"-54.4%","6 red months \u2014 weakest"],
+          ["ETH",fK(2986),fK(6545),`-${fK(3559)}`,"-54.4%","6 red months — weakest"],
           ["SOL",fK(1570),fK(4318),`-${fK(2748)}`,"-63.6%","Consider exit"],
-          ["NEXO",`\u00A357`,`\u00A381`,`-\u00A324`,"-29.6%","Dust \u2014 exit"],
+          ["NEXO",`£57`,`£81`,`-£24`,"-29.6%","Dust — exit"],
           ["Total",fK(cryptoTotal),fK(cryptoPrev),`-${fK(cryptoPrev-cryptoTotal)}`,pc((cryptoTotal-cryptoPrev)/cryptoPrev*100),"Consolidate to BTC"],
         ]} hl={3}/>
       </Card>
     </Grid>
-    <Ins type="action" text={`Plan: (1) Do NOT sell BTC into extreme fear \u2014 signals overwhelmingly say accumulate. (2) Consolidate EC10+ETH+SOL into BTC to simplify to a single position. (3) Exit NEXO dust immediately. (4) Set mechanical trim targets: take profit if MVRV >2.5 and Fear >75. BTC 200-week MA at ~$65K is key structural support.`}/>
+    <Ins type="action" text={`Plan: (1) Do NOT sell BTC into extreme fear — signals overwhelmingly say accumulate. (2) Consolidate EC10+ETH+SOL into BTC to simplify to a single position. (3) Exit NEXO dust immediately. (4) Set mechanical trim targets: take profit if MVRV >2.5 and Fear >75. BTC 200-week MA at ~$65K is key structural support.`}/>
   </div>);
 };
 const T12 = ()=>{
@@ -2797,8 +2846,8 @@ const T12 = ()=>{
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta="30 days"/>
-      <K l="Combined Value" v="\u00A317.8k/yr" c={P.positive} sm delta="All actions"/><K l="Guaranteed" v="\u00A312.7k/yr" c={P.positive} sm delta="No market risk"/>
-      <K l="Positions Target" v="\u226415" c={P.t2} sm delta="From 40+"/>
+      <K l="Combined Value" v="£17.8k/yr" c={P.positive} sm delta="All actions"/><K l="Guaranteed" v="£12.7k/yr" c={P.positive} sm delta="No market risk"/>
+      <K l="Positions Target" v="≤15" c={P.t2} sm delta="From 40+"/>
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
@@ -3580,46 +3629,78 @@ export default function PortfolioVOS(){
     case "sys":return <T15/>;
     default:return <T1/>;
   }};
+  const [showMenu,setShowMenu]=useState(false);
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:"url('/bg-sonoma.jpg') center/cover fixed",
+      background:`linear-gradient(135deg, #0a2e2a 0%, #0c3b34 15%, #0a3530 25%, #082e2e 35%, #0b3a35 45%, #0d4038 55%, #0a3530 65%, #072a28 75%, #0c3830 85%, #0a2e2a 100%)`,
+      backgroundAttachment:'fixed',
     }}>
-      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
-      {/* Top header bar — frosted glass on dark wallpaper */}
-      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.12)"}}>
-        {/* Header shell */}
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(28px) saturate(1.4)',WebkitBackdropFilter:'blur(28px) saturate(1.4)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.10), transparent 50%)',boxShadow:'inset 0 -1px 0 rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
-        {/* Header plate */}
-        <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
+      {/* Animated wallpaper overlay for teal/green wave depth */}
+      <div style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',
+        background:'radial-gradient(ellipse at 30% 20%, rgba(13,148,136,0.25) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(6,95,70,0.30) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(20,184,166,0.15) 0%, transparent 40%), radial-gradient(ellipse at 20% 70%, rgba(6,78,59,0.35) 0%, transparent 45%)',
+      }}/>
+      {/* SVG refraction filter for glass elements */}
+      <svg style={{position:'absolute',width:0,height:0}}>
+        <defs>
+          <filter id="glass-refract"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="2" seed="42" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="glass-refract-strong"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="2" seed="42" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter>
+        </defs>
+      </svg>
+      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}html{scroll-behavior:smooth}`}</style>
+      {/* Top header bar — frosted glass */}
+      <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(28px) saturate(1.6)',WebkitBackdropFilter:'blur(28px) saturate(1.6)',background:'rgba(10,16,32,0.75)',boxShadow:'0 4px 24px rgba(0,0,0,0.30)',pointerEvents:'none'}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800}}>LS</div>
+            <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0d9488,#065f46)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 12px rgba(13,148,136,0.4)'}}>LS</div>
             <div>
-              <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:P.cyan,fontWeight:700}}>LIFESTACK OS {"\u00B7"} PORTFOLIO INTELLIGENCE vOS</span>
-              <div style={{fontSize:10,color:P.t4}}>Institutional Review {"\u2014"} {source==="supabase"?<span style={{color:P.green}}>\u25CF Live Data</span>:<span>Real Data</span>}</div>
+              <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#14b8a6',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.45)'}}>Institutional Review — {source==="supabase"?<span style={{color:'#4ade80'}}>{"●"} Live Data</span>:<span>Real Data</span>}</div>
             </div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:12,color:P.t2,fontWeight:600}}>A. Bouter</div>
-            <div style={{fontSize:11,color:P.t4}}>{PORT.date} {"\u00B7"} NW {fmt(PORT.netWorth)}</div>
+          {/* Search + Notifications + Account */}
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{position:'relative',display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.06)',borderRadius:9999,padding:'6px 14px',border:'1px solid rgba(255,255,255,0.08)'}}>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>Search metrics...</span>
+            </div>
+            <div style={{position:'relative',cursor:'pointer'}} title="Notifications">
+              <span style={{fontSize:16,color:'rgba(255,255,255,0.5)'}}>&#128276;</span>
+              <div style={{position:'absolute',top:-2,right:-2,width:8,height:8,borderRadius:'50%',background:P.red,border:'2px solid rgba(10,16,32,0.9)'}}/>
+            </div>
+            <div style={{position:'relative'}}>
+              <div onClick={()=>setShowMenu(!showMenu)} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+                <div style={{width:28,height:28,borderRadius:10,background:'linear-gradient(135deg,#0d9488,#14b8a6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:11,fontWeight:800}}>A</div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:11,color:'#f1f5f9',fontWeight:600}}>A. Bouter</div>
+                  <div style={{fontSize:9,color:'rgba(255,255,255,0.40)'}}>{PORT.date} · NW {fmt(PORT.netWorth)}</div>
+                </div>
+              </div>
+              {showMenu&&<div style={{position:'absolute',top:'100%',right:0,marginTop:8,width:200,...GS,borderRadius:14,padding:'8px 0',zIndex:100}}>
+                {[{l:'Profile',i:'👤'},{l:'Settings',i:'⚙️'},{l:'Theme',i:'🎨'}].map((m,i)=><div key={i} style={{padding:'8px 16px',fontSize:12,color:'#cbd5e1',cursor:'pointer',display:'flex',gap:8,alignItems:'center'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><span>{m.i}</span>{m.l}</div>)}
+                <div style={{height:1,background:'rgba(255,255,255,0.06)',margin:'4px 0'}}/>
+                <div style={{padding:'8px 16px',fontSize:12,color:P.red,cursor:'pointer'}}>Logout</div>
+              </div>}
+            </div>
           </div>
         </div>
-        {/* Tab bar — Liquid Glass Pill Navigation */}
+        {/* Breadcrumb */}
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginBottom:2}}>LifeStack OS / Wealth Engine / {TABS.find(t=>t.k===tab)?.l||'Executive Summary'}</div>
+        {/* Tab bar */}
         <div style={{display:"flex",gap:4,overflowX:"auto",whiteSpace:"nowrap",padding:"6px 0",scrollbarWidth:'none'}}>
           {TABS.map((t,i) => {
             const active = tab===t.k;
             return (
             <button key={t.k} onClick={()=>setTab(t.k)} style={{
               position:'relative',overflow:'hidden',
-              background:active?"rgba(99,102,241,0.12)":"transparent",
+              background:active?"rgba(20,184,166,0.15)":"transparent",
               border:"none",
-              color:active?P.cyan:P.t3,padding:"8px 16px",fontSize:11.5,fontWeight:active?700:500,
-              cursor:"pointer",transition:"all 0.3s cubic-bezier(0.25,0.46,0.45,0.94)",whiteSpace:"nowrap",fontFamily:"inherit",
+              color:active?'#14b8a6':'rgba(255,255,255,0.45)',padding:"8px 16px",fontSize:13,fontWeight:active?700:500,
+              cursor:"pointer",transition:"all 0.2s ease",whiteSpace:"nowrap",fontFamily:"inherit",
               borderRadius:20,
               backdropFilter:active?'blur(16px) saturate(1.5)':'none',
               WebkitBackdropFilter:active?'blur(16px) saturate(1.5)':'none',
-              boxShadow:active?'0 4px 16px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 0 0 1px rgba(99,102,241,0.15)':'none',
+              boxShadow:active?'0 4px 16px rgba(20,184,166,0.20), inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(20,184,166,0.3)':'none',
             }}><span style={{fontSize:8,opacity:0.4,marginRight:3}}>{String(i+1).padStart(2,"0")}</span>{t.l}</button>
           );})}
         </div>
@@ -3630,8 +3711,9 @@ export default function PortfolioVOS(){
         {render()}
       </div>
       {/* Footer */}
-      <div style={{textAlign:"center",padding:"16px 28px",borderTop:"1px solid rgba(0,0,0,0.04)"}}>
-        <span style={{fontSize:9,color:P.t4}}>CONFIDENTIAL {"\u00B7"} Personal use only {"\u00B7"} Not investment advice {"\u00B7"} Data from Kubera {PORT.date} + {"\u00A3"}100k pro-rata correction {"\u00B7"} LifeStack OS vOS {"\u00B7"} BadgerBrain Intelligence Engine</span>
+      <div style={{position:'relative',overflow:'hidden',textAlign:"center",padding:"16px 28px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(16px) saturate(1.2)',WebkitBackdropFilter:'blur(16px) saturate(1.2)',background:'rgba(10,16,32,0.70)',pointerEvents:'none'}}/>
+        <span style={{position:'relative',zIndex:1,fontSize:9,color:'rgba(255,255,255,0.35)'}}>CONFIDENTIAL · Personal use only · Not investment advice · Data from Kubera {PORT.date} + £100k pro-rata correction · LifeStack OS vOS · BadgerBrain Intelligence Engine</span>
       </div>
     </div>
   );
