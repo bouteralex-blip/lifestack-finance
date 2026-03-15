@@ -49,33 +49,40 @@ const GLASS_BASE = {
 };
 
 // Dark glass plates over vibrant wallpaper — wallpaper bends through
+// Reduced plate opacity for wallpaper visibility + stronger specular highlights for glossy feel
+// SVG feTurbulence + feDisplacementMap refraction applied via url(#glass-refract) in backdrop-filter
 const glassLight = (tier=2) => {
-  const plate = tier===1 ? 'rgba(15,23,42,0.72)' : tier===3 ? 'rgba(15,23,42,0.45)' : 'rgba(15,23,42,0.62)';
-  const blur = tier===1 ? 26 : tier===3 ? 8 : 20;
-  const sat = tier===1 ? 1.7 : tier===3 ? 1.3 : 1.5;
+  const plate = tier===1 ? 'rgba(15,23,42,0.58)' : tier===3 ? 'rgba(15,23,42,0.32)' : 'rgba(15,23,42,0.48)';
+  const blur = tier===1 ? 28 : tier===3 ? 10 : 22;
+  const sat = tier===1 ? 1.9 : tier===3 ? 1.4 : 1.6;
+  const specular = tier===1 ? 0.18 : tier===3 ? 0.10 : 0.14;
+  const sheen = tier===3 ? 0.10 : tier===1 ? 0.08 : 0.07;
   return {
     background: plate,
-    backdropFilter:`blur(${blur}px) saturate(${sat})`,
+    backdropFilter:`blur(${blur}px) saturate(${sat}) url(#glass-refract)`,
     WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
-    border:`1px solid rgba(255,255,255,${tier===1?0.12:tier===3?0.06:0.09})`,
+    border:`1px solid rgba(255,255,255,${tier===1?0.16:tier===3?0.08:0.12})`,
     borderRadius:GLASS_BASE.radius,
-    boxShadow:`0 16px 48px rgba(0,0,0,0.45), 0 4px 14px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,${tier===1?0.12:0.08})`,
-    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${tier===3?0.06:0.04}), transparent 50%)`,
+    boxShadow:`0 16px 48px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 -1px 0 rgba(255,255,255,0.04)`,
+    backgroundImage:`linear-gradient(145deg, rgba(255,255,255,${sheen}) 0%, rgba(255,255,255,0.02) 40%, transparent 60%, rgba(255,255,255,0.03) 100%)`,
   };
 };
 const G = glassLight(2);
 const G1 = glassLight(1);
 const G3 = glassLight(3);
 const GS = {
-  background:"rgba(15,23,42,0.94)",
-  backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)",
-  border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,
-  boxShadow:"0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06)",
+  background:"rgba(15,23,42,0.88)",
+  backdropFilter:"blur(28px) saturate(1.4)",WebkitBackdropFilter:"blur(28px) saturate(1.4)",
+  border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,
+  boxShadow:"0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.03)",
+  backgroundImage:"linear-gradient(145deg, rgba(255,255,255,0.06), transparent 50%)",
 };
 // Panel header banner style — dark opaque strip with bold white text
 const HEADER_BANNER = {
-  background:'rgba(10,16,32,0.85)',padding:'10px 16px',borderRadius:'14px 14px 0 0',
+  background:'rgba(10,16,32,0.78)',padding:'10px 16px',borderRadius:'14px 14px 0 0',
   marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
+  backgroundImage:'linear-gradient(90deg, rgba(255,255,255,0.03), transparent 70%)',
+  borderBottom:'1px solid rgba(255,255,255,0.06)',
 };
 const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#fff',letterSpacing:1.5,textTransform:'uppercase'};
 const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.45)',marginTop:1};
@@ -384,19 +391,19 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
     position:'relative', borderRadius:14, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
-    {/* Shell — glass blur over wallpaper */}
+    {/* Shell — glass blur + refraction over wallpaper */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:'blur(22px) saturate(1.5)',WebkitBackdropFilter:'blur(22px) saturate(1.5)',
-      border:'1px solid rgba(255,255,255,0.10)',
-      backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%)',
-      boxShadow:'0 16px 48px rgba(0,0,0,0.40), 0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10)',
+      backdropFilter:'blur(24px) saturate(1.7) url(#glass-refract)',WebkitBackdropFilter:'blur(24px) saturate(1.7)',
+      border:'1px solid rgba(255,255,255,0.14)',
+      backgroundImage:'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%, rgba(255,255,255,0.04) 100%)',
+      boxShadow:'0 16px 48px rgba(0,0,0,0.30), 0 4px 14px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)',
       pointerEvents:'none',
     }}/>
-    {/* Plate — dark for readability */}
+    {/* Plate — dark for readability, reduced opacity for wallpaper visibility */}
     <div style={{
       position:'absolute',inset:0,borderRadius:'inherit',
-      background:'rgba(15,23,42,0.65)',
+      background:'rgba(15,23,42,0.50)',
       pointerEvents:'none',
     }}/>
     {/* Accent edge — bottom glow */}
@@ -1904,15 +1911,14 @@ const T4 = ()=>{
 
     {/* KPI ROW */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <KpiTile l="Vol" v={`${RISK.vol}%`} c={P.negative} sm delta="Annualised"/><KpiTile l="Sharpe" v={RISK.sharpe.toFixed(2)} c={RISK.sharpe>=0.5?P.positive:P.negative} sm delta="<0.5=poor"/>
-      <KpiTile l="Sortino" v={RISK.sortino.toFixed(2)} c={P.amber} sm delta="Downside-adj"/><KpiTile l="Max DD" v={`${RISK.maxDD}%`} c={P.negative} sm delta={`${RISK.ddDur}d`}/>
-      <KpiTile l="VaR 95" v={`${RISK.var95}%`} c={P.negative} sm delta="Monthly"/><KpiTile l="CVaR" v={`${RISK.cvar95}%`} c={P.negative} sm delta="Shortfall"/>
-      <KpiTile l="Omega" v={RISK.omega.toFixed(2)} c={P.amber} sm delta=">1.0 OK"/><KpiTile l="Beta" v={RISK.beta.toFixed(2)} c={P.t2} sm delta="vs MSCI"/>
+      <KpiTile l="Vol" v={`${RISK.vol}%`} c={P.negative} sm delta="Annualised" bench="12-16%"/><KpiTile l="Sharpe" v={RISK.sharpe.toFixed(2)} c={RISK.sharpe>=0.5?P.positive:P.negative} sm delta="<0.5=poor" bench=">1.0"/>
+      <KpiTile l="Sortino" v={RISK.sortino.toFixed(2)} c={P.amber} sm delta="Downside-adj" bench=">1.0"/><KpiTile l="Max DD" v={`${RISK.maxDD}%`} c={P.negative} sm delta={`${RISK.ddDur}d`} bench="<10%"/>
+      <KpiTile l="VaR 95" v={`${RISK.var95}%`} c={P.negative} sm delta="Monthly" bench="<3%"/><KpiTile l="CVaR" v={`${RISK.cvar95}%`} c={P.negative} sm delta="Shortfall" bench="<5%"/>
+      <KpiTile l="Omega" v={RISK.omega.toFixed(2)} c={P.amber} sm delta=">1.0 OK" bench=">1.5"/><KpiTile l="Beta" v={RISK.beta.toFixed(2)} c={P.t2} sm delta="vs MSCI" bench="1.0"/>
     </FlexRow>
 
     {/* Risk metrics table (full width, Glass-1 for density) */}
-    <PanelShell hover tier={1} style={{marginBottom:14}}>
-      <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>COMPLETE RISK METRICS</div>
+    <PanelShell hover tier={1} style={{marginBottom:14}} title="COMPLETE RISK METRICS" subtitle="Full risk dashboard — every metric rated and interpreted" takeaway="Crypto drives 80% of elevated risk readings. Excluding crypto, the equity sleeve risk profile would be institutional-grade.">
       <Tbl h={["Metric","Value","Rating","Interpretation"]}
         r={[
           ["Annualised Vol",`${RISK.vol}%`,"Elevated","Driven by 48% crypto vol on 13% weight"],
@@ -1930,8 +1936,7 @@ const T4 = ()=>{
 
     {/* Factor Radar + Risk vs Capital (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <PanelShell hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR EXPOSURE vs BENCHMARK</div>
+      <PanelShell hover title="FACTOR EXPOSURE vs BENCHMARK" subtitle="Portfolio vs benchmark factor weights" takeaway="Crypto beta (38 vs 0) is the dominant uncompensated factor. Equity beta (68 vs 100) shows defensive positioning.">
         <ResponsiveContainer width="100%" height={320}>
           <RadarChart data={radar}><PolarGrid stroke="rgba(0,0,0,0.04)" gridType="polygon"/>
             <PolarAngleAxis dataKey="factor" tick={{fill:P.t2,fontSize:11}}/>
@@ -1942,8 +1947,7 @@ const T4 = ()=>{
           </RadarChart>
         </ResponsiveContainer>
       </PanelShell>
-      <PanelShell hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>RISK vs CAPITAL CONTRIBUTION</div>
+      <PanelShell hover title="RISK vs CAPITAL CONTRIBUTION" subtitle="Risk budget allocation vs capital weight" takeaway="Crypto: 13% capital but 32% risk (2.5x overconsuming). Cash/FD: 16% capital but 2% risk (drag on returns).">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={riskContrib} margin={{left:5}}>
             <CartesianGrid stroke={P.b2}/>
@@ -1954,14 +1958,12 @@ const T4 = ()=>{
             <Bar dataKey="risk" name="Risk %" fill={P.red} fillOpacity={0.6} radius={[4,4,0,0]}/>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:11,color:P.t3,marginTop:4}}>Crypto: 13% capital → 32% risk (2.5x). Cash/FD: 16% capital → 2% risk (drag).</div>
       </PanelShell>
     </Grid>
 
     {/* Vol Trend + Factor Table (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <PanelShell hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>ROLLING VOLATILITY & MONTHLY RETURN</div>
+      <PanelShell hover title="ROLLING VOLATILITY & MONTHLY RETURN" subtitle="Trailing vol and monthly P&L" takeaway="Vol spiked to 28% in Nov-Dec driven by crypto drawdown, now stabilising. Return dispersion widening.">
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={volTrend}>
             <CartesianGrid stroke={P.b2}/>
@@ -1974,19 +1976,15 @@ const T4 = ()=>{
           </ComposedChart>
         </ResponsiveContainer>
       </PanelShell>
-      <PanelShell hover tier={1}>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:8}}>FACTOR ATTRIBUTION TABLE</div>
+      <PanelShell hover tier={1} title="FACTOR ATTRIBUTION TABLE" subtitle="Factor weights, returns, and risk contribution" takeaway="Only equity beta and UK domestic factors are compensated. Crypto beta: 32% risk for -8.4% return.">
         <Tbl h={["Factor","Port","Bench","Intent","Ret%","Risk%"]}
           r={FACTORS.map(f=>[f.f,`${f.p}`,`${f.b}`,f.intent,`${f.ret>0?"+":""}${f.ret}%`,`${f.risk}%`])} hl={4}/>
-        <div style={{fontSize:11,color:P.t3,marginTop:6}}>Crypto Beta: 32% risk, -8.4% return. Only equity beta and UK domestic are compensated.</div>
       </PanelShell>
     </Grid>
 
     {/* Risk Budget + Correlation (side-by-side) */}
     <Grid cols="1fr 1fr" gap={14}>
-      <PanelShell hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>RISK BUDGET UTILISATION</div>
-        <div style={{fontSize:11,color:P.t3,marginBottom:10}}>{"Risk/capital ratio. >1.5x = overconsuming. <0.5x = drag."}</div>
+      <PanelShell hover title="RISK BUDGET UTILISATION" subtitle="Risk/capital ratio — >1.5x overconsuming, <0.5x drag" takeaway="Crypto consumes 2.5x its capital weight in risk. Cash is 0.1x — pure drag on returns with zero risk contribution.">
         <div style={{display:"grid",gap:8}}>
           {riskContrib.map((rc,i)=>{
             const ratio = rc.capital > 0 ? (rc.risk / rc.capital) : 0;
@@ -2005,9 +2003,7 @@ const T4 = ()=>{
           })}
         </div>
       </PanelShell>
-      <PanelShell hover>
-        <div style={{fontSize:13,fontWeight:700,color:P.t1,marginBottom:4}}>CROSS-ASSET CORRELATION</div>
-        <div style={{fontSize:11,color:P.t3,marginBottom:8}}>Pairwise correlations. Low/negative = genuine diversification.</div>
+      <PanelShell hover title="CROSS-ASSET CORRELATION" subtitle="Pairwise correlations — low/negative = genuine diversification" takeaway="Equity-Crypto at 0.52 means less diversification than perceived. Cash/FD is the only true portfolio diversifier.">
         {(()=>{
           const corrData = REF_DATA?.correlation_matrix || {sleeves:["Equity","Crypto","Pension","Cash/FD","ZAR","Other"],matrix:[[1,0.52,0.8,-0.15,0.35,0.6],[0.52,1,0.3,-0.05,0.25,0.2],[0.8,0.3,1,-0.1,0.25,0.5],[-0.15,-0.05,-0.1,1,0.05,-0.1],[0.35,0.25,0.25,0.05,1,0.4],[0.6,0.2,0.5,-0.1,0.4,1]]};
           const sl = corrData.sleeves; const mx = corrData.matrix;
@@ -2023,7 +2019,6 @@ const T4 = ()=>{
           };
           return <ReactECharts option={heatOpt} style={{height:260}} opts={{renderer:'svg'}}/>;
         })()}
-        <div style={{fontSize:11,color:P.t3,marginTop:6}}>Equity-Crypto 0.52 = less diversification than perceived. Cash/FD is the only true diversifier.</div>
       </PanelShell>
     </Grid>
 
@@ -2040,16 +2035,15 @@ const T5 = ()=>{
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <KpiTile l="Scenarios" v={STRESS.length} c={P.t2} sm/><KpiTile l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off"/>
-      <KpiTile l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted"/>
+      <KpiTile l="Scenarios" v={STRESS.length} c={P.t2} sm bench="6-10"/><KpiTile l="Worst Case" v={`${Math.min(...STRESS.map(s=>s.impact))}%`} c={P.negative} sm delta="Combined risk-off" bench="<-15%"/>
+      <KpiTile l="Expected Loss" v={`${probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(1)}%`} c={P.negative} sm delta="Prob-weighted" bench="<-3%"/>
       <KpiTile l="Max NW Impact" v={fK(PORT.netWorth * Math.min(...STRESS.map(s=>s.impact)) / 100)} c={P.negative} sm delta="At worst case"/>
       <KpiTile l="Best Hedge" v="GBP/USD" c={P.positive} sm delta="+3.2% USD gain"/>
     </FlexRow>
 
     {/* SIDE-BY-SIDE: Impact Matrix + Probability Chart */}
     <Grid cols="7fr 5fr" gap={14}>
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:12}}>SCENARIO IMPACT MATRIX</div>
+    <PanelShell hover title="SCENARIO IMPACT MATRIX" subtitle="All scenarios ranked by portfolio impact" takeaway="Combined risk-off scenario at -17.4% is the tail risk anchor. GBP depreciation is the only positive scenario.">
       {STRESS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${P.b2}`}}>
         <div style={{flex:"1 1 160px",fontSize:14,color:P.t2,fontWeight:500}}>{s.s}</div>
         <div style={{width:120}}><div style={{height:8,background:"rgba(255,255,255,0.03)",borderRadius:4,overflow:"hidden"}}>
@@ -2060,8 +2054,7 @@ const T5 = ()=>{
         <div style={{flex:"0 0 120px",fontSize:13,color:P.t3,textAlign:"right"}}>{s.exp}</div>
       </div>)}
     </PanelShell>
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>PROBABILITY-WEIGHTED IMPACT</div>
+    <PanelShell hover title="PROBABILITY-WEIGHTED IMPACT" subtitle="Scenario impact × probability of occurrence" takeaway="Probability weighting reveals crypto crash as the highest expected-loss scenario despite moderate individual probability.">
       <ResponsiveContainer width="100%" height={360}>
         <BarChart data={probWeighted} margin={{left:5}}>
           <CartesianGrid stroke={P.b2}/>
@@ -2073,13 +2066,10 @@ const T5 = ()=>{
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <div style={{fontSize:12,color:P.t3,marginTop:6}}>Expected loss: {probWeighted.reduce((a,s)=>a+s.wImpact,0).toFixed(2)}% prob-weighted.</div>
     </PanelShell>
     </Grid>
     {/* SPRINT 2: Scenario Heatmap — sleeves × scenarios cross-matrix */}
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>SCENARIO SENSITIVITY HEATMAP</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Each cell shows estimated portfolio impact (%) from that sleeve under that scenario. Darker red = larger loss.</div>
+    <PanelShell hover title="SCENARIO SENSITIVITY HEATMAP" subtitle="Sleeve × scenario cross-matrix — each cell = estimated impact %" takeaway="Equity ETFs and crypto are the dominant risk transmitters. Cash/FD provides genuine downside protection across all scenarios.">
       {(()=>{
         const sleeves=[{n:"Equity ETFs",w:0.28,betas:{eq:1.0,cry:0.0,fx:-0.3,zar:0.0,rate:0.6}},{n:"Pension",w:0.22,betas:{eq:0.7,cry:0.0,fx:0.0,zar:0.0,rate:0.3}},{n:"Crypto",w:0.13,betas:{eq:0.0,cry:1.0,fx:0.0,zar:0.0,rate:0.0}},{n:"Cash/FD",w:0.16,betas:{eq:0.0,cry:0.0,fx:0.0,zar:0.0,rate:-0.2}},{n:"ZAR",w:0.10,betas:{eq:0.3,cry:0.0,fx:0.0,zar:1.0,rate:0.2}},{n:"Other",w:0.11,betas:{eq:0.4,cry:0.0,fx:0.0,zar:0.3,rate:0.3}}];
         const shocks=[{n:"Eq -20%",k:"eq",m:-20},{n:"Cry -40%",k:"cry",m:-40},{n:"BTC -60%",k:"cry",m:-60},{n:"GBP -10%",k:"fx",m:-10},{n:"ZAR -20%",k:"zar",m:-20},{n:"Combined",k:"eq",m:-20,k2:"cry",m2:-40},{n:"Stagflation",k:"eq",m:-15,k2:"rate",m2:4}];
@@ -2100,9 +2090,7 @@ const T5 = ()=>{
         return <ReactECharts option={opt} style={{height:240}} opts={{renderer:'svg'}}/>;
       })()}
     </PanelShell>
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>WEALTH PROJECTION — 5 SCENARIOS</div>
-      <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Salary: £170k +15%/yr · Bonus: 100% of salary · Tax: 47% · Expenses: £6k/mo +15%/yr · Returns vary by scenario</div>
+    <PanelShell hover title="WEALTH PROJECTION — 5 SCENARIOS" subtitle="Salary £170k +15%/yr · Bonus 100% · Tax 47% · Expenses £6k/mo" takeaway="Base case (15%) reaches £1M by 2030. Conservative (8%) by 2032. FIRE by 2032-34. Income growth is the dominant driver.">
       <ResponsiveContainer width="100%" height={420}>
         <AreaChart data={WEALTH_5.filter(w=>[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].includes(w.y))}><CartesianGrid stroke={P.b2}/>
           <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>`${(v/1000).toFixed(0)}m`}/>
@@ -2115,7 +2103,6 @@ const T5 = ()=>{
           <ReferenceLine y={1800} stroke={P.cyan} strokeDasharray="8 4" label={{value:"FIRE",fill:P.cyan,fontSize:13,fontWeight:700}}/>
         </AreaChart>
       </ResponsiveContainer>
-      <div style={{fontSize:13,color:P.t3,marginTop:6}}>Base case (15% returns) reaches £1M by 2030 (age 36). Conservative (8% returns) still reaches £1M by 2032. FIRE (£1.8M) achievable by 2032-34 depending on scenario. Income growth at 15%/yr is the dominant driver in all cases.</div>
     </PanelShell>
   </div>);
 };
@@ -2137,12 +2124,11 @@ const T6 = ()=>{
   return(<div>
     <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <KpiTile l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March"/><KpiTile l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber}/>
-      <KpiTile l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><KpiTile l="Expenses" v="£6k/mo" s="£72k/yr"/>
-      <KpiTile l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber} sm/><KpiTile l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative} sm/>
+      <KpiTile l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March" bench="£120k med"/><KpiTile l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber} bench="0-50%"/>
+      <KpiTile l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><KpiTile l="Expenses" v="£6k/mo" s="£72k/yr" bench="£5k avg"/>
+      <KpiTile l="Savings Rate" v={`${savingsRate.toFixed(0)}%`} s="of net income" c={savingsRate>30?P.positive:P.amber} sm bench=">30%"/><KpiTile l="Runway" v={`${runway.toFixed(1)}mo`} s="Liquid cash" c={runway>3?P.positive:P.negative} sm bench=">3mo"/>
     </FlexRow>
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>BALANCE SHEET</div>
+    <PanelShell hover title="BALANCE SHEET" subtitle="Assets, debts, and liquidity position" takeaway="Low leverage at 3.6% debt/assets, but Amex at 22% APR is the most expensive capital. Clearing it is a guaranteed 22% return.">
       <Tbl h={["Item","Amount","% NW","Interpretation"]} r={[
         ["Total Assets",fmt(PORT.assets),"---","Includes pro-rata £100k correction"],
         ["Amex Credit Card",`-${fmt(PORT.amexDebt)}`,"2.9%","22% APR — clear immediately from bonus"],
@@ -2154,8 +2140,7 @@ const T6 = ()=>{
       ]}/>
     </PanelShell>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-      <PanelShell hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>MONTHLY CASHFLOW</div>
+      <PanelShell hover title="MONTHLY CASHFLOW" subtitle="Salary net → expenses → investable surplus" takeaway="£8.1k/mo investable surplus after expenses. This is the wealth engine's primary fuel source.">
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={monthlyFlow}>
             <CartesianGrid stroke={P.b2}/>
@@ -2166,8 +2151,7 @@ const T6 = ()=>{
           </BarChart>
         </ResponsiveContainer>
       </PanelShell>
-      <PanelShell hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>DEPLOYMENT STATUS</div>
+      <PanelShell hover title="DEPLOYMENT STATUS" subtitle="Tax-advantaged wrapper utilisation" takeaway="ISA and pension allowances are massively underutilised. Maximising these is the highest-certainty alpha available.">
         <div style={{display:"grid",gap:14,marginTop:8}}>
           <Bar2 val={0} max={20000} c={P.red} label="ISA Allowance 2025/26 (29 days left)"/>
           <Bar2 val={5000} max={35000} c={P.amber} label="Pension Annual Allowance"/>
@@ -2177,9 +2161,7 @@ const T6 = ()=>{
       </PanelShell>
     </div>
     {/* SPRINT 2: Capital Conversion Efficiency */}
-    <PanelShell hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CAPITAL CONVERSION EFFICIENCY</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>What percentage of every pound earned actually compounds into wealth vs leaks to tax, expenses, debt, and friction.</div>
+    <PanelShell hover title="CAPITAL CONVERSION EFFICIENCY" subtitle="What % of every £1 earned reaches the investment engine" takeaway="Of every £1 earned, £0.30 reaches the compounding engine. Tax+NI at 47% is the largest leak, followed by £72k expenses.">
       {(()=>{
         const grossIncome = PORT.grossSalary + PORT.grossBonus;
         const taxNI = grossIncome * (PORT.taxRate + PORT.niRate);
@@ -2233,8 +2215,7 @@ const T7 = ()=>{
       <K l="Amex Clear" v={fmt(PORT.amexDebt)} s="22% APR" c={P.red} sm/><K l="Scenarios" v="3" s="Def/Bal/Agg" c={P.amber} sm/>
     </FlexRow>
     <Grid cols="7fr 5fr" gap={14}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>SCENARIO COMPARISON — ALLOCATION (£k)</div>
+      <PanelShell hover title="SCENARIO COMPARISON — ALLOCATION (£k)" subtitle="Three deployment strategies stacked by bucket" takeaway="Balanced strategy optimises for certainty: clears debt, maxes ISA/pension, then deploys into equities.">
         <ResponsiveContainer width="100%" height={360}>
           <BarChart data={compData}>
             <CartesianGrid stroke={P.b2}/>
@@ -2251,10 +2232,8 @@ const T7 = ()=>{
             <Bar dataKey="travel" name="Travel" stackId="a" fill={P.orange}/>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>DEPLOYMENT IRR BY BUCKET</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:12}}>All options ranked by implied annualised return. Highest-certainty guaranteed returns first.</div>
+      </PanelShell>
+      <PanelShell hover title="DEPLOYMENT IRR BY BUCKET" subtitle="All options ranked by implied annualised return" takeaway="Pension at 67% effective return beats everything. Amex at 22% guaranteed is next. IRR forces rational ordering.">
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={irrData} layout="vertical" margin={{left:110}}>
             <CartesianGrid stroke={P.b2}/>
@@ -2264,8 +2243,7 @@ const T7 = ()=>{
             <Bar dataKey="irr" name="Implied IRR %" radius={[0,6,6,0]}>{irrData.map((d,i)=><Cell key={i} fill={d.c} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Pension at 67% effective return beats everything. Amex at 22% guaranteed is next. The IRR framework forces rational ordering over emotional allocation.</div>
-      </Card>
+      </PanelShell>
     </Grid>
     <Grid cols="1fr 1fr 1fr" gap={12}>
       {scen.map((s,i)=><Card key={i} style={{borderLeft:`3px solid ${s.c}`}} hover>
@@ -2336,14 +2314,11 @@ const T8 = ()=>{
       <K l="Avg Conviction" v={(OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={P.t2} sm/><K l="Avg Timing" v={(OPPS.reduce((a,o)=>a+o.tm,0)/OPPS.length).toFixed(1)} c={P.t2} sm/>
     </FlexRow>
 
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>CONVICTION vs TIMING MATRIX — ALL 10 OPPORTUNITIES</div>
-      <div style={{fontSize:13,color:P.t3,marginBottom:10}}>Bubble size = estimated annual value (£). Top-right quadrant = execute immediately. Scores from 1-10.</div>
+    <PanelShell hover title="CONVICTION vs TIMING MATRIX" subtitle="Bubble size = est. annual value. Top-right = execute now. 1-10 scale" takeaway="3 opportunities in the Execute Now quadrant. Pension sacrifice and ISA max have highest composite scores.">
       <ConvictionMatrix/>
-    </Card>
+    </PanelShell>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>TOP 5 BY ANNUAL VALUE (£)</div>
+      <PanelShell hover title="TOP 5 BY ANNUAL VALUE (£)" subtitle="Highest-value opportunities ranked" takeaway="Top 5 opportunities deliver £32k+/yr in combined value. Pension and ISA dominate.">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={valRanked.slice(0,5)} layout="vertical" margin={{left:80}}>
             <CartesianGrid stroke={P.b2}/>
@@ -2353,9 +2328,8 @@ const T8 = ()=>{
             <Bar dataKey="val" name="Annual Value £" radius={[0,6,6,0]}>{valRanked.slice(0,5).map((d,i)=><Cell key={i} fill={d.col} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>COMPOSITE SCORE (CONVICTION × TIMING)</div>
+      </PanelShell>
+      <PanelShell hover title="COMPOSITE SCORE (CONVICTION × TIMING)" subtitle="All opportunities ranked by conviction × timing" takeaway="Highest composite scores cluster around tax-efficient wrappers — certainty trumps expected return.">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={[...OPPS].sort((a,b)=>(b.c*b.tm)-(a.c*a.tm))} layout="vertical" margin={{left:80}}>
             <CartesianGrid stroke={P.b2}/>
@@ -2365,13 +2339,12 @@ const T8 = ()=>{
             <Bar dataKey="c" name="Score" radius={[0,6,6,0]}>{[...OPPS].sort((a,b)=>(b.c*b.tm)-(a.c*a.tm)).map((d,i)=><Cell key={i} fill={d.col} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
+      </PanelShell>
     </div>
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>FULL OPPORTUNITY RANKING — ALL 10</div>
+    <PanelShell hover title="FULL OPPORTUNITY RANKING — ALL 10" subtitle="Complete scoring matrix with wrapper, alpha source, and priority" takeaway="Combined annual value of all 10 opportunities: £45k+. The top 3 guaranteed actions alone deliver £12.7k/yr.">
       <Tbl h={["#","Opportunity","Conv","Time","Score","Alpha","Wrapper","Est. Value","Priority"]}
         r={valRanked.map((o,i)=>[`${i+1}`,o.t,`${o.c}/10`,`${o.tm}/10`,`${o.c*o.tm}`,o.alpha,o.w,`£${(o.val/1000).toFixed(1)}k/yr`,i<3?"Immediate":i<6?"This Quarter":"This Year"])} hl={7}/>
-    </Card>
+    </PanelShell>
     {OPPS_TOP5.map((o,i)=><Card key={i} style={{borderLeft:`3px solid ${o.col}`}} hover>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <div><div style={{fontSize:18,fontWeight:800,color:P.t1}}>{o.t}</div>
@@ -2422,19 +2395,16 @@ const T9 = ()=>{
       <K l="Post-Fix Drag" v={fmt(Math.max(postFixDrag,0))} c={P.amber} sm delta="After 3 fixes"/><K l="Savings" v={fmt(tot-Math.max(postFixDrag,0))} c={P.positive} sm delta="Annual uplift"/>
     </FlexRow>
     {/* SPRINT 2: Wrapper Efficiency Score */}
-    <Card hover>
+    <PanelShell hover title={`WRAPPER EFFICIENCY — ${wrapperEff}% SHELTERED`} subtitle="Growth assets sheltered in ISA or pension" takeaway={`Only ${wrapperEff}% sheltered vs 60%+ target. Every £1 moved from GIA to ISA eliminates tax drag permanently.`}>
       <div style={{display:"flex",alignItems:"center",gap:20}}>
         <Gauge score={+(wrapperEff/10).toFixed(1)} max={10} label="Wrapper Eff." size={90}/>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>WRAPPER EFFICIENCY — {wrapperEff}% SHELTERED</div>
-          <div style={{fontSize:13,color:P.t3,lineHeight:1.6}}>Only {wrapperEff}% of growth assets (ETFs, crypto, stocks, investments) are sheltered in ISA or pension. Target: above 60%. Every £1 moved from GIA to ISA eliminates tax drag permanently. At 45% marginal + 24% CGT, the annual cost of this inefficiency is ~£2,400/yr.</div>
           <Bar2 val={wrapperEff} max={100} c={wrapperEff>60?P.positive:wrapperEff>30?P.amber:P.negative} label={`${wrapperEff}% sheltered → target 60%+`}/>
         </div>
       </div>
-    </Card>
+    </PanelShell>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL DRAG BREAKDOWN</div>
+      <PanelShell hover title="ANNUAL DRAG BREAKDOWN" subtitle="Each friction source priced annually" takeaway="Amex interest and GIA tax drag are the two largest fixable friction sources — combined £4.7k/yr.">
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={drags} margin={{left:5,bottom:5}}>
             <CartesianGrid stroke={P.b2}/>
@@ -2444,9 +2414,8 @@ const T9 = ()=>{
             <Bar dataKey="a" name="Annual Cost (£)" radius={[6,6,0,0]}>{drags.map((d,i)=><Cell key={i} fill={d.c} fillOpacity={0.75}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE DRAG OVER TIME</div>
+      </PanelShell>
+      <PanelShell hover title="CUMULATIVE DRAG OVER TIME" subtitle="Compounded friction cost over 1-10 years" takeaway="£7.5k/yr drag compounds to £87k+ over 10 years. Fixing 3 structural issues saves £60k+ in lifetime wealth.">
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={cumDrag}>
             <CartesianGrid stroke={P.b2}/>
@@ -2456,12 +2425,10 @@ const T9 = ()=>{
             <Area type="monotone" dataKey="v" name="Cumulative Drag (£)" stroke={P.red} fill={P.red} fillOpacity={0.10} strokeWidth={2.5}/>
           </AreaChart>
         </ResponsiveContainer>
-      </Card>
+      </PanelShell>
     </div>
     {/* SPRINT 2: Efficiency Uplift Waterfall — before vs after fixing */}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>EFFICIENCY UPLIFT — BEFORE vs AFTER FIXES</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Current annual drag {fmt(tot)} → post-fix {fmt(Math.max(postFixDrag,0))}. Delta: {fmt(tot-Math.max(postFixDrag,0))}/yr structural improvement.</div>
+    <PanelShell hover title="EFFICIENCY UPLIFT — BEFORE vs AFTER FIXES" subtitle={`Current ${fmt(tot)} → post-fix ${fmt(Math.max(postFixDrag,0))} · Δ${fmt(tot-Math.max(postFixDrag,0))}/yr`} takeaway="Three structural fixes eliminate 70%+ of annual drag. Clear Amex + ISA migration + cash redeployment.">
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {upliftData.map((d,i)=>{
           const isReduction = d.v < 0;
@@ -2477,11 +2444,9 @@ const T9 = ()=>{
           );
         })}
       </div>
-    </Card>
+    </PanelShell>
     {/* SPRINT 2: Compound Drag Sensitivity — with fixes vs without */}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>COMPOUND DRAG — WITH vs WITHOUT FIXES</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Cumulative wealth destroyed by friction at 15% portfolio return. The 20Y gap is the behaviour-changing number.</div>
+    <PanelShell hover title="COMPOUND DRAG — WITH vs WITHOUT FIXES" subtitle="Cumulative wealth destroyed at 15% return. 20Y gap is the behaviour-changing number" takeaway={`At 20 years: without fixes = £${(compoundWith[4]?.w/1000).toFixed(0)}k destroyed. With fixes = £${(compoundWith[4]?.wo/1000).toFixed(0)}k. Execute the 3 fixes today.`}>
       <ResponsiveContainer width="100%" height={320}>
         <AreaChart data={compoundWith}>
           <CartesianGrid stroke={P.b2}/>
@@ -2492,8 +2457,7 @@ const T9 = ()=>{
           <Area type="monotone" dataKey="wo" name="With Fixes (£)" stroke={P.green} fill={P.green} fillOpacity={0.08} strokeWidth={2} strokeDasharray="6 3"/>
         </AreaChart>
       </ResponsiveContainer>
-      <div style={{fontSize:13,color:P.t3,marginTop:6}}>At 20 years: without fixes = £{(compoundWith[4]?.w/1000).toFixed(0)}k destroyed. With fixes = £{(compoundWith[4]?.wo/1000).toFixed(0)}k. Gap: <span style={{color:P.red,fontWeight:700}}>£{((compoundWith[4]?.w-compoundWith[4]?.wo)/1000).toFixed(0)}k of lifetime wealth saved</span> by executing 3 structural fixes today.</div>
-    </Card>
+    </PanelShell>
     <Ins text={`Total annual drag of ${fmt(tot)} (${(tot/PORT.netWorth*100).toFixed(1)}% of NW). Over 10 years with compounding: ~${fK(tot*10*1.18)}. Top three fixes: (1) Clear Amex = £2,343/yr certain, (2) Bed & ISA GIA positions = £2,400/yr tax saving, (3) Redeploy excess rainy day above £18k buffer = £1,180/yr. Combined: £5,923/yr structural improvement.`}/>
   </div>);
 };
@@ -2528,9 +2492,7 @@ const T10 = ()=>{
       <K l="Base 2035" v={`£${(base2035/1000).toFixed(1)}m`} s="15% return" c={P.positive} sm/>
     </FlexRow>
     <Grid cols="7fr 5fr" gap={14}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>HUMAN CAPITAL vs FINANCIAL (£k)</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:6}}>Salary £170k +15%/yr, bonus 100%, tax 47%, assets +15%/yr, discount 7%, career to 55.</div>
+      <PanelShell hover title="HUMAN CAPITAL vs FINANCIAL (£k)" subtitle="Salary £170k +15%/yr, bonus 100%, discount 7%, career to 55" takeaway={`Total wealth grows from £${(latestHC.total/1000).toFixed(1)}m to £${(HC_DATA[9].total/1000).toFixed(1)}m. Financial capital dominates by ~2038.`}>
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={hcFiltered}><CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
@@ -2548,11 +2510,8 @@ const T10 = ()=>{
             <Area type="monotone" dataKey="fin" name="Financial" stackId="1" stroke={P.cyan} fill={P.cyan} fillOpacity={0.15}/>
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Total wealth grows from £{(latestHC.total/1000).toFixed(1)}m to £{(HC_DATA[9].total/1000).toFixed(1)}m. Financial capital dominates by ~2038.</div>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>SAVINGS vs RETURNS CONTRIBUTION</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:6}}>Crossover: when compounding returns exceed new savings as the primary growth driver.</div>
+      </PanelShell>
+      <PanelShell hover title="SAVINGS vs RETURNS CONTRIBUTION" subtitle="Crossover point: when returns exceed savings as primary driver" takeaway="Returns overtake savings around 2031-32 at ~£1.5-2m. Before crossover, maximising savings rate matters most.">
         <ResponsiveContainer width="100%" height={380}>
           <AreaChart data={crossover.filter(c=>[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035].includes(c.y))}><CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>`${v}%`}/>
@@ -2561,13 +2520,10 @@ const T10 = ()=>{
             <Area type="monotone" dataKey="returns" name="Returns %" stackId="1" stroke={P.indigo} fill={P.indigo} fillOpacity={0.18}/>
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{fontSize:12,color:P.t3,marginTop:6}}>Returns overtake savings around 2031-32 when assets reach ~£1.5-2m. Before crossover, maximising savings rate matters most.</div>
-      </Card>
+      </PanelShell>
     </Grid>
     <Grid cols="7fr 5fr" gap={14}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:6}}>5 FORECAST SCENARIOS</div>
-        <div style={{fontSize:12,color:P.t3,marginBottom:8}}>All share: salary £170k +15%/yr, bonus 100%, tax 47%, expenses £6k/mo +15%/yr.</div>
+      <PanelShell hover title="5 FORECAST SCENARIOS" subtitle="All share: salary £170k +15%/yr, bonus 100%, tax 47%" takeaway="Wrapper alpha (+1.2%) accelerates every milestone by ~1 year — highest-certainty alpha available with zero market views.">
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={wFiltered}><CartesianGrid stroke={P.b2}/>
             <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
@@ -2587,9 +2543,8 @@ const T10 = ()=>{
             <ReferenceLine y={1800} stroke={P.cyan} strokeDasharray="8 4" label={{value:"FIRE",fill:P.cyan,fontSize:12,fontWeight:700}}/>
           </AreaChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>SCENARIO DEFINITIONS</div>
+      </PanelShell>
+      <PanelShell hover title="SCENARIO DEFINITIONS" subtitle="Return assumptions, milestones, and terminal values" takeaway="Base: £1M by 2030, FIRE by 2032. Conservative (8%): £1M by 2033. The gap between scenarios widens exponentially.">
         <Tbl h={["Scenario","Return","£1M By","FIRE By","2035 NW"]}
           r={[
             ["1. Conservative","8%",`${SC_CONSERV.find(s=>s.v>=1000)?.y||'2033'}`,`${SC_CONSERV.find(s=>s.v>=1800)?.y||'2035+'}`,`£${(SC_CONSERV[9].v/1000).toFixed(1)}m`],
@@ -2635,9 +2590,7 @@ const T10 = ()=>{
       });
       return(<>
         <Grid cols="7fr 5fr" gap={14}>
-          <Card hover>
-            <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MONTE CARLO FAN CHART ({N.toLocaleString()} SIMULATIONS)</div>
-            <div style={{fontSize:12,color:P.t3,marginBottom:8}}>BoE-style percentile cone. Mean 12% return, 18% vol, salary +15%/yr.</div>
+          <PanelShell hover title={`MONTE CARLO FAN CHART (${N.toLocaleString()} SIMS)`} subtitle="BoE-style percentile cone — mean 12%, vol 18%, salary +15%/yr" takeaway="P50 median path crosses £1M by 2030. Even P10 (worst 10%) reaches £1M by 2033 — income dominates.">
             <ResponsiveContainer width="100%" height={360}>
               <AreaChart data={fanData}><CartesianGrid stroke={P.b2}/>
                 <XAxis dataKey="y" tick={{fill:P.t3,fontSize:13}}/><YAxis tick={{fill:P.t3,fontSize:13}} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}m`:`${v}k`}/>
@@ -2670,10 +2623,8 @@ const T10 = ()=>{
                 </div>
               ))}
             </div>
-          </Card>
-          <Card hover>
-            <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MILESTONE PROBABILITIES</div>
-            <div style={{fontSize:12,color:P.t3,marginBottom:10}}>% of {N.toLocaleString()} simulations reaching each wealth level by year.</div>
+          </PanelShell>
+          <PanelShell hover title="MILESTONE PROBABILITIES" subtitle={`% of ${N.toLocaleString()} simulations reaching each wealth level`} takeaway="£500k near-certain by 2029. £1M probability reaches 85%+ by 2031. FIRE achievable in most scenarios by 2033.">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={probData}>
                 <CartesianGrid stroke={P.b2}/>
@@ -2699,14 +2650,11 @@ const T10 = ()=>{
                 </React.Fragment>)}
               </div>
             </div>
-            <div style={{fontSize:11,color:P.t3,marginTop:8}}>£500k near-certain by {years[3]}. £1M reaches {probData[5]?.m1}% by {years[5]}. FIRE at {probData[7]?.m2}% by {years[7]}.</div>
-          </Card>
+          </PanelShell>
         </Grid>
       </>);
     })()}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>REAL vs NOMINAL WEALTH PATH</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:10}}>Nominal NW vs real NW (today's purchasing power at {((PORT.inflation||0.032)*100).toFixed(1)}% CPI).</div>
+    <PanelShell hover title="REAL vs NOMINAL WEALTH PATH" subtitle={`Nominal vs real purchasing power at ${((PORT.inflation||0.032)*100).toFixed(1)}% CPI`} takeaway="FIRE target should be inflation-indexed. £1.8M today is ~£2.5M nominal by 2035. Real returns matter.">
       {(()=>{
         const inf = PORT.inflation || 0.032;
         const realPath = wFiltered.map((w,i)=>({y:w.y,nominal:w.base,real:Math.round(w.base / Math.pow(1+inf, i))}));
@@ -2729,8 +2677,7 @@ const T10 = ()=>{
           </ResponsiveContainer>
         );
       })()}
-      <div style={{fontSize:12,color:P.t3,marginTop:6}}>By 2035, nominal £{(wFiltered[9]?.base/1000).toFixed(1)}m is really £{(wFiltered[9]?.base/Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m in today's money. FIRE target should be inflation-indexed: £1.8M today = ~£{(1800*Math.pow(1+(PORT.inflation||0.032),9)/1000).toFixed(1)}m nominal by 2035.</div>
-    </Card>
+    </PanelShell>
     <Ins text={`The income engine (£340k gross growing 15%/yr) is the most powerful variable. Even conservative 8% returns reach £1M by 2032 because net savings of £108k+/yr compound aggressively. Wrapper optimisation alpha (+1.2%) is highest-certainty — no market views required. All 5 opportunities combined add +2.5% annually, worth ~£${((SC_ALLOPPS[9].v-SC_BASE[9].v)/1000).toFixed(1)}m by 2035 vs base.`}/>
   </div>);
 };
@@ -2770,8 +2717,7 @@ const T11 = ()=>{
       <K l="BTC Progress" v={`${progress.toFixed(0)}%`} s={`${btcHeld.toFixed(3)} / ${target}`} c={P.btc} sm/>
     </FlexRow>
     <Ins type="opp" text={`${bullish}/${signals.length} on-chain signals bullish — highest density since late 2022. MVRV 0.49, Fear 18, RSI 27.5, whale accumulation 270K BTC. Smart money is buying what retail is selling. 32% risk from 13% capital = 2.5x risk-to-capital ratio remains excessive. Strategy: consolidate, not expand.`}/>
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ON-CHAIN SIGNAL DASHBOARD</div>
+    <PanelShell hover title="ON-CHAIN SIGNAL DASHBOARD" subtitle="10 institutional-grade on-chain metrics with regime signals" takeaway={`${bullish}/${signals.length} bullish — highest density since late 2022. Smart money is accumulating. Retail is selling.`}>
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
         {signals.map((s,i)=><div key={i} style={{...G,padding:"10px 12px"}}>
           <div style={{fontSize:10,color:P.t3,textTransform:"uppercase",marginBottom:2,letterSpacing:0.8}}>{s.m}</div>
@@ -2782,19 +2728,17 @@ const T11 = ()=>{
           </div>
         </div>)}
       </div>
-    </Card>
+    </PanelShell>
     <Grid cols="4fr 5fr 3fr" gap={12}>
-      <Card hover>
+      <PanelShell hover title="CYCLE POSITION" subtitle="Composite on-chain cycle indicator" takeaway={`Score ${composite}/100 = ${zone.l}. Historically, buying at this level produces strong 12mo forward returns.`}>
         <div style={{textAlign:"center"}}>
-          <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CYCLE POSITION</div>
           <Gauge score={+(composite/10).toFixed(1)} max={10} label="" size={100}/>
           <div style={{fontSize:22,fontWeight:800,color:zone.c,marginTop:6}}>{composite}/100</div>
           <div style={{fontSize:12,fontWeight:700,color:zone.c,padding:"3px 10px",background:`${zone.c}15`,borderRadius:8,display:"inline-block",marginTop:4}}>{zone.l}</div>
           <div style={{fontSize:10,color:P.t3,marginTop:8,lineHeight:1.5}}>MVRV {mvrvScore.toFixed(0)} {"  "} NUPL {nuplScore.toFixed(0)} {"  "} Fear {fearScore.toFixed(0)} {"  "} RR {rrScore.toFixed(0)} {"  "} SOPR {soprScore.toFixed(0)}</div>
         </div>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>BTC ACCUMULATION PROGRESS</div>
+      </PanelShell>
+      <PanelShell hover title="BTC ACCUMULATION PROGRESS" subtitle={`${btcHeld.toFixed(3)} / ${target} BTC target`} takeaway={`${progress.toFixed(0)}% complete. At £${monthlyDCA}/mo DCA, ~${monthsToTarget} months to target.`}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
           <span style={{fontSize:12,color:P.t3}}>Current: <span style={{color:P.btc,fontWeight:700}}>{btcHeld.toFixed(3)} BTC</span></span>
           <span style={{fontSize:12,color:P.t3}}>Target: <span style={{color:P.t1,fontWeight:700}}>{target.toFixed(1)} BTC</span></span>
@@ -2808,20 +2752,17 @@ const T11 = ()=>{
           ["Current Price",`$${cm.btcPrice.toLocaleString()}`],["Monthly DCA",`£${monthlyDCA}`],
           ["Months to 1.0",`~${monthsToTarget}`],["Target Date",`~End ${2026+Math.floor(monthsToTarget/12)}`],
         ]}/>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>HOLDINGS P&L</div>
+      </PanelShell>
+      <PanelShell hover title="HOLDINGS P&L" subtitle="Current crypto positions vs 6-month prior" takeaway="32% of portfolio risk from 13% of capital. Risk/capital ratio: 2.5x — structural overconcentration.">
         <Tbl h={["Asset","Now","Return"]} r={[
           ["BTC",fK(29854),"-39.5%"],["EC10",fK(15845),"-44.4%"],
           ["ETH",fK(2986),"-54.4%"],["SOL",fK(1570),"-63.6%"],
           ["NEXO","£57","-29.6%"],["Total",fK(cryptoTotal),pc((cryptoTotal-cryptoPrev)/cryptoPrev*100)],
         ]} hl={3}/>
-        <div style={{fontSize:11,color:P.t3,marginTop:6}}>32% of portfolio risk from 13% of capital. Risk/capital ratio: 2.5x.</div>
-      </Card>
+      </PanelShell>
     </Grid>
     <Grid cols="1fr 1fr" gap={14}>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>CRYPTO HOLDINGS — CURRENT vs 6 MONTHS AGO</div>
+      <PanelShell hover title="CRYPTO HOLDINGS — CURRENT vs 6mo AGO" subtitle="Comparison chart showing drawdown severity" takeaway="BTC -39.5%, EC10 -44.4%, ETH -54.4%, SOL -63.6%. Consolidate to BTC only.">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={cryptoHoldings}>
             <CartesianGrid stroke={P.b2}/>
@@ -2832,9 +2773,8 @@ const T11 = ()=>{
             <Bar dataKey="current" name="Current" fill={P.btc} fillOpacity={0.7} radius={[4,4,0,0]}/>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:8}}>DETAILED HOLDINGS TABLE</div>
+      </PanelShell>
+      <PanelShell hover title="DETAILED HOLDINGS TABLE" subtitle="Full P&L and recommended action per position" takeaway="Consolidate EC10+ETH+SOL into BTC. Exit NEXO dust. Target: 1-2 crypto positions max.">
         <Tbl h={["Asset","Current","6mo Ago","P&L","Return","Action"]} r={[
           ["BTC",fK(29854),fK(49310),`-${fK(19456)}`,"-39.5%","Core — hold, accumulate"],
           ["EC10",fK(15845),fK(28508),`-${fK(12663)}`,"-44.4%","Consolidate to BTC"],
@@ -2880,9 +2820,7 @@ const T12 = ()=>{
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>ACTION IMPACT RANKING (Annual £ Value)</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>All actions competing on one axis. Guaranteed returns rank highest regardless of market views.</div>
+    <PanelShell hover title="ACTION IMPACT RANKING (Annual £ Value)" subtitle="All actions competing on one axis — guaranteed returns first" takeaway="Combined annual value: £17.8k/yr. Top 3 guaranteed-return actions deliver £12.7k/yr with zero market risk.">
       {(()=>{
         const actionImpacts = [
           {n:"Salary Sacrifice",v:6750,c:"#06b6d4",cert:"Guaranteed"},
@@ -2905,8 +2843,7 @@ const T12 = ()=>{
           </ResponsiveContainer>
         );
       })()}
-      <div style={{fontSize:12,color:P.t3,marginTop:6}}>Combined annual value: £{(6750+3600+2343+1800+2400+720+160).toLocaleString()}/yr. The top 3 guaranteed-return actions alone deliver £12.7k/yr with zero market risk.</div>
-    </Card>
+    </PanelShell>
     {blocks.map((b,bi)=><Card key={bi} style={{borderLeft:`3px solid ${b.c}`}} hover>
       <div style={{fontSize:16,fontWeight:800,color:b.c,marginBottom:12}}>{b.tf}</div>
       {b.acts.map((a,ai)=><div key={ai} style={{display:"flex",gap:10,padding:"10px 0",borderBottom:`1px solid ${P.b2}`}}>
@@ -2919,9 +2856,7 @@ const T12 = ()=>{
       </div>)}
     </Card>)}
     {/* SPRINT 2 #28: 30-60-90 Day Execution Roadmap */}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>30-60-90 DAY EXECUTION ROADMAP</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:14}}>All actions mapped to tight time windows. Urgency creates accountability.</div>
+    <PanelShell hover title="30-60-90 DAY EXECUTION ROADMAP" subtitle="All actions mapped to tight time windows — urgency creates accountability" takeaway="30-day window contains the 3 highest-value actions. ISA deadline (5 Apr) is non-negotiable.">
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
         {[
           {window:"30 DAYS",c:P.red,items:["Max ISA £20k (deadline 5 Apr)","Clear Amex £10.7k in full","Start salary sacrifice £1,250/mo","Exit NEXO dust position"]},
@@ -2939,7 +2874,7 @@ const T12 = ()=>{
           </div>
         ))}
       </div>
-    </Card>
+    </PanelShell>
     <Card style={{background:`linear-gradient(135deg,${P.cyanD},transparent)`,borderLeft:`3px solid ${P.cyan}`}}>
       <div style={{fontSize:16,fontWeight:800,color:P.cyan,marginBottom:10}}>FIVE CONCLUSIONS</div>
       {[
@@ -3019,8 +2954,7 @@ const T14 = ()=>{
     </FlexRow>
     <Ins text={`Combined annual tax optimisation value: ${fmt(totalSaving)}/yr. The pre-tax equivalent at 45% marginal rate is ${fmt(Math.round(totalSaving/0.55))}/yr — meaning you'd need to earn that much gross to have the same after-tax impact. Over 10 years with compounding, these strategies are worth approximately ${fK(totalSaving*10*1.28)}. The three highest-certainty moves (salary sacrifice + ISA + Amex) alone deliver ${fmt(6750+3600+2343)}/yr.`}/>
     <Grid cols="7fr 5fr" gap={14}>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>ANNUAL TAX SAVING BY STRATEGY</div>
+      <PanelShell hover style={{flex:"1 1 320px"}} title="ANNUAL TAX SAVING BY STRATEGY" subtitle="Each strategy ranked by annual £ saving" takeaway="Salary sacrifice at £6.75k/yr is the single largest tax alpha. Combined strategies: £18.2k/yr.">
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={taxBreakdown} layout="vertical" margin={{left:75}}>
             <CartesianGrid stroke={P.b2}/>
@@ -3030,9 +2964,8 @@ const T14 = ()=>{
             <Bar dataKey="v" name="Annual Saving (£)" radius={[0,6,6,0]}>{taxBreakdown.map((d,i)=><Cell key={i} fill={d.c} fillOpacity={0.7}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
-      <Card style={{flex:"1 1 320px"}} hover>
-        <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>CUMULATIVE TAX SAVINGS OVER TIME</div>
+      </PanelShell>
+      <PanelShell hover style={{flex:"1 1 320px"}} title="CUMULATIVE TAX SAVINGS & WRAPPER MIGRATION" subtitle="10-year compound value of all tax strategies" takeaway="At 15% return rate, £18.2k/yr of tax savings compounds to six figures within a decade.">
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={cumTax}>
             <CartesianGrid stroke={P.b2}/>
@@ -3075,19 +3008,15 @@ const T14 = ()=>{
               </div>
             );
           })()}
-          <div style={{fontSize:12,color:P.t3,marginTop:8}}>At 15% portfolio return rate, {fmt(totalSaving)}/yr of tax savings compounds to six figures within a decade. This is the single most powerful argument for executing every wrapper optimisation strategy immediately.</div>
         </div>
-      </Card>
+      </PanelShell>
     </Grid>
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:10}}>TAX STRATEGY PRIORITY TABLE</div>
+    <PanelShell hover title="TAX STRATEGY PRIORITY TABLE" subtitle="All strategies ranked by annual saving with action steps" takeaway="The 3 immediate actions (salary sacrifice, ISA, Amex) deliver £12.7k/yr guaranteed.">
       <Tbl h={["Strategy","Annual Saving","Certainty","Priority","Action Required"]}
         r={taxItems.filter(t=>t.saving>0).sort((a,b)=>b.saving-a.saving).map(t=>[t.area,fmt(t.saving),`${t.certainty}/10`,t.priority,t.action.split(".")[0]+"."])} hl={1}/>
-    </Card>
+    </PanelShell>
     {/* SPRINT 3 #16: Marginal Rate Zone Analysis — income bands mapped to effective rates */}
-    <Card hover>
-      <div style={{fontSize:14,fontWeight:700,color:P.t1,marginBottom:4}}>MARGINAL RATE ZONE ANALYSIS</div>
-      <div style={{fontSize:12,color:P.t3,marginBottom:12}}>Your income mapped against UK tax bands. The 60% PA taper trap between £100k-£125k is the single most important zone to optimise via salary sacrifice.</div>
+    <PanelShell hover title="MARGINAL RATE ZONE ANALYSIS" subtitle="Income mapped against UK tax bands — 60% PA taper trap is the key zone" takeaway="£25k sits in the 60% effective trap. Salary sacrifice of £15k/yr drops taxable income into 45% band, recovering the personal allowance.">
       {(()=>{
         const taxBands = REF_DATA?.uk_tax_bands?.bands || [
           {from:0,to:12570,rate:0,name:"Personal Allowance"},{from:12571,to:50270,rate:0.20,name:"Basic Rate"},
@@ -3140,11 +3069,10 @@ const T14 = ()=>{
                 <div style={{fontSize:18,fontWeight:800,color:P.amber,fontFamily:P.mono}}>{(PORT.taxRate*100+PORT.niRate*100).toFixed(0)}%</div>
               </div>
             </div>
-            <div style={{fontSize:12,color:P.t3,marginTop:8}}>At £{(gross/1000).toFixed(0)}k gross, £{Math.min(25140, Math.max(0,gross-100000)).toLocaleString()} sits in the 60% effective trap. Salary sacrifice of £15k/yr drops taxable income into the 45% band and recovers the personal allowance — saving £6,750/yr with zero risk.</div>
           </div>
         );
       })()}
-    </Card>
+    </PanelShell>
     <Grid cols="1fr 1fr" gap={12}>
     {taxItems.filter(t=>t.saving>0).sort((a,b)=>b.saving-a.saving).map((t,i)=>(
       <Card key={i} style={{borderLeft:`3px solid ${t.certainty>=9?P.green:t.certainty>=7?P.amber:P.t3}`}} hover>
@@ -4103,24 +4031,38 @@ export default function PortfolioVOS(){
   const [showMenu,setShowMenu]=useState(false);
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:`linear-gradient(135deg, #0a2e2a 0%, #0c3b34 15%, #0a3530 25%, #082e2e 35%, #0b3a35 45%, #0d4038 55%, #0a3530 65%, #072a28 75%, #0c3830 85%, #0a2e2a 100%)`,
+      background:`linear-gradient(135deg, #0f3d36 0%, #145c4e 15%, #12534a 25%, #0e4440 35%, #156455 45%, #18705e 55%, #145c4e 65%, #0c3a35 75%, #156050 85%, #0f3d36 100%)`,
       backgroundAttachment:'fixed',
     }}>
       {/* Animated wallpaper overlay for teal/green wave depth */}
       <div style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',
-        background:'radial-gradient(ellipse at 30% 20%, rgba(13,148,136,0.25) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(6,95,70,0.30) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(20,184,166,0.15) 0%, transparent 40%), radial-gradient(ellipse at 20% 70%, rgba(6,78,59,0.35) 0%, transparent 45%)',
+        background:'radial-gradient(ellipse at 30% 20%, rgba(13,148,136,0.40) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(6,128,90,0.45) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(20,184,166,0.30) 0%, transparent 40%), radial-gradient(ellipse at 20% 70%, rgba(16,120,80,0.40) 0%, transparent 45%), radial-gradient(ellipse at 85% 30%, rgba(20,184,166,0.20) 0%, transparent 35%)',
       }}/>
       {/* SVG refraction filter for glass elements */}
-      <svg style={{position:'absolute',width:0,height:0}}>
+      <svg style={{position:'absolute',width:0,height:0}} aria-hidden="true">
         <defs>
-          <filter id="glass-refract"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="2" seed="42" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/></filter>
-          <filter id="glass-refract-strong"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="2" seed="42" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="glass-refract" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.006" numOctaves="3" seed="42" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <filter id="glass-refract-strong" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.006" numOctaves="3" seed="42" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <filter id="glass-specular" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.01 0.008" numOctaves="2" seed="7" result="noise"/>
+            <feSpecularLighting surfaceScale="2" specularConstant="0.6" specularExponent="35" in="noise" result="specular" lightingColor="rgba(255,255,255,1)">
+              <fePointLight x="200" y="-100" z="300"/>
+            </feSpecularLighting>
+            <feComposite in="specular" in2="SourceGraphic" operator="in" result="specComp"/>
+            <feComposite in="SourceGraphic" in2="specComp" operator="arithmetic" k1="0" k2="1" k3="0.15" k4="0"/>
+          </filter>
         </defs>
       </svg>
-      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}html{scroll-behavior:smooth}`}</style>
+      <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes glassSheen{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}html{scroll-behavior:smooth}`}</style>
       {/* Top header bar — frosted glass */}
       <div style={{position:"sticky",top:0,zIndex:50,overflow:'hidden',borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(28px) saturate(1.6)',WebkitBackdropFilter:'blur(28px) saturate(1.6)',background:'rgba(10,16,32,0.75)',boxShadow:'0 4px 24px rgba(0,0,0,0.30)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(32px) saturate(1.8) url(#glass-refract)',WebkitBackdropFilter:'blur(32px) saturate(1.8)',background:'rgba(10,16,32,0.60)',boxShadow:'0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10)',backgroundImage:'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 50%)',pointerEvents:'none'}}/>
         <div style={{position:'relative',zIndex:1,padding:"0 28px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -4183,7 +4125,7 @@ export default function PortfolioVOS(){
       </div>
       {/* Footer */}
       <div style={{position:'relative',overflow:'hidden',textAlign:"center",padding:"16px 28px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-        <div style={{position:'absolute',inset:0,backdropFilter:'blur(16px) saturate(1.2)',WebkitBackdropFilter:'blur(16px) saturate(1.2)',background:'rgba(10,16,32,0.70)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,backdropFilter:'blur(20px) saturate(1.5) url(#glass-refract)',WebkitBackdropFilter:'blur(20px) saturate(1.5)',background:'rgba(10,16,32,0.55)',backgroundImage:'linear-gradient(0deg, rgba(255,255,255,0.04), transparent 50%)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.06)',pointerEvents:'none'}}/>
         <span style={{position:'relative',zIndex:1,fontSize:9,color:'rgba(255,255,255,0.35)'}}>CONFIDENTIAL · Personal use only · Not investment advice · Data from Kubera {PORT.date} + £100k pro-rata correction · LifeStack OS vOS · BadgerBrain Intelligence Engine</span>
       </div>
     </div>
