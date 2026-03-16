@@ -525,6 +525,12 @@ const P2=()=>(<div>
 // =========================================================================
 const P3=()=>(<div>
 <Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Top Risk" value="Iran Shock" sub="Gilt +40bp · BoE cut <20% prob" mat="red"/>
+  <MatStat label="Value Rotation" value="99.8th pct" sub="+7.8% YTD vs Growth -1.9%" mat="amber"/>
+  <MatStat label="BTC Signal" value="DIVERGENCE" sub="Sentiment -82 · ETF +$500M" mat="teal"/>
+  <MatStat label="Sentiment Index" value="StockGeist" sub="NLP-driven contrarian scanner" mat="indigo"/>
+</Row>
 <Glass><PH title="TOP 5 MARKET-MOVING STORIES"/>
 {[{s:"Iran escalation reprices global rate path",d:"Brent $93, gas +40%, gilt 40bp surge. BoE cut probability collapsed. Stagflation risk rising.",c:T.coral},
 {s:"Value rotation hits 99.8th percentile weekly spread",d:"Bloomberg Pure Value vs Pure Growth spread: +4.06pp in one week — second largest since 2000.",c:T.amber},
@@ -585,6 +591,12 @@ const P4=()=>(<div>
 // =========================================================================
 const P5=()=>(<div>
 <Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Gilt 10Y" value="4.62%" sub="+40bp weekly · mini-budget level" mat="red"/>
+  <MatStat label="Duration Status" value="DANGEROUS" sub="Avoid adding long gilts/TLT" mat="amber"/>
+  <MatStat label="Best 1Y Fix" value={`${M.bestSave}%`} sub="Beats S&P earnings yield 3.4%" mat="teal"/>
+  <MatStat label="Bund 10Y" value="~2.80%" sub="Lower than UK/US · ECB cutting" mat="indigo"/>
+</Row>
 <Row><KPI label="UST 10Y" value="4.30%" delta="Bear steepening" dt="down"/><KPI label="Gilt 10Y" value={`${M.gilt10y}%`} delta="40bp weekly surge" dt="down" ac={T.negative}/><KPI label="Gilt 2Y" value={`${M.gilt2y}%`} delta="Short end stable" dt="neutral"/><KPI label="Bund 10Y" value="~2.8%" delta="Lower than UK/US" dt="neutral"/><KPI label="5Y5Y Breakeven" value="~2.6%" delta="Rising on oil" dt="down" ac={T.coral}/></Row>
 
 <Glass><PH title="SOVEREIGN YIELD CURVES — UST vs GILT"/>
@@ -606,6 +618,12 @@ const P5=()=>(<div>
 // =========================================================================
 const P6=()=>(<div>
 <Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="DXY Index" value={M.dxy.toString()} sub="-10% from 110 · multi-year low" mat="teal"/>
+  <MatStat label="GBP/USD" value={M.gbpusd.toFixed(3)} sub="+3.8% YoY · USD weakness" mat="indigo"/>
+  <MatStat label="GBP/ZAR" value={M.gbpzar.toFixed(2)} sub="Rand +7% YoY · don't add >23" mat="amber"/>
+  <MatStat label="EM Signal" value="BULLISH" sub="$4B inflows Jan · rotation confirmed" mat="dark"/>
+</Row>
 <Row><KPI label="GBP/USD" value={M.gbpusd.toFixed(3)} delta="52wk: 1.27-1.39" dt="neutral"/><KPI label="GBP/ZAR" value={M.gbpzar.toFixed(2)} delta="-7% YoY" dt="down" ac={T.amber}/><KPI label="DXY" value={M.dxy.toString()} delta="-10% from 110" dt="up" ac={T.teal}/><KPI label="EM Carry" value="Attractive" delta="Real yields positive" dt="up" ac={T.teal}/></Row>
 
 <Glass><PH title="GBP BASE-CURRENCY BOARD"/>
@@ -652,6 +670,12 @@ const P7=()=>(<div>
 // =========================================================================
 const P8=()=>(<div>
 <Hd t="HOUSING, PROPERTY & REAL ESTATE" s="Affordability, mortgage rates, segment split, REITs" tag="PROPERTY"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Mortgage Rate 5Y" value="~4.5%+" sub="Rising on gilt surge · caution" mat="red"/>
+  <MatStat label="UK HPI Forecast" value="+1.5–3.5%" sub="Gilt shock threatens recovery" mat="amber"/>
+  <MatStat label="REIT Disc to NAV" value="~13%" sub="Data centres + logistics winners" mat="teal"/>
+  <MatStat label="FTSE 250 PE" value="~13x" sub="Deep value · domestic UK play" mat="indigo"/>
+</Row>
 <MetricGrid items={[{l:"UK House Price Forecast",v:"+1.5-3.5%",n:"But gilt shock threatens",c:T.amber},{l:"Mortgage Rate (5Y fix)",v:"~4.5%+",n:"Rising on gilt surge",c:T.coral},{l:"Best Cash ISA Rate",v:"~4.05%",n:"Falling with BoE cuts",c:T.neutral},{l:"FTSE 250 (domestic)",v:"23,727",n:"Lagging at 13x PE. Deep value.",c:T.teal},{l:"Data Centre REITs",v:"Strong",n:"DLR, EQIX structural winners",c:T.teal},{l:"Office REITs",v:"Distressed",n:"Structural loser. WFH permanent.",c:T.coral},{l:"REIT Disc to NAV",v:"~13%",n:"Widening on rate fears",c:T.amber},{l:"Construction",v:"Recovering",n:"Permits improving but fragile",c:T.neutral}]}/>
 <Ins type="warning" text={`Gilt surge to 4.62% is directly pushing mortgage rates higher. The 5% deposit era is over. Best 1Y fix at 4.30% and falling. Property provides zero diversification when rates are the stress driver — both equities and property sell off together. Data centres and logistics are structural winners; office is a structural loser. FTSE 250 at 13x earnings and 13% average IT discount to NAV is a deep value opportunity IF rate cuts resume.`}/>
 <SourceTag sources={["FRED Case-Shiller","ONS HPI","UK Land Registry","BoE Mortgage Stats","Zillow Research"]}/>
@@ -720,6 +744,12 @@ const P9=()=>(<div>
 // =========================================================================
 const P10=()=>(<div>
 <Hd t="CAPITAL FLOWS, POSITIONING & MARKET STRUCTURE" s="ETF flows, CFTC positioning, retail vs institutional, cross-asset alignment" tag="FLOW INTELLIGENCE"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="EM Inflows Jan" value="$4B+" sub="Strongest since 2015 · rotation real" mat="teal"/>
+  <MatStat label="BTC ETF 5 Mar" value="+$500M" sub="6-week outflow streak snapped" mat="amber"/>
+  <MatStat label="CFTC Oil Longs" value="Multi-yr high" sub="Crowded · Iran-driven · watch reversal" mat="red"/>
+  <MatStat label="Alignment" value="DIVERGING" sub="Equities up · crypto down · watch" mat="indigo"/>
+</Row>
 <MetricGrid items={[{l:"EM ETF Inflows (Jan)",v:"$4B+",n:"Strongest since 2015",c:T.teal},{l:"US Equity Flows",v:"Flat",n:"Rotation away from US",c:T.neutral},{l:"BTC ETF (5 Mar)",v:"+$500M",n:"Snapped 6-week outflow",c:T.teal},{l:"CFTC Oil Longs",v:"Multi-year high",n:"Iran-driven. Crowded.",c:T.coral},{l:"Put/Call Ratio",v:"Elevated",n:"Hedging demand rising",c:T.amber},{l:"Software Short Int",v:"Elevated",n:"Post-SaaSpocalypse",c:T.coral},{l:"Pension Allocation",v:"Increasing to infra",n:"Slow-money structural",c:T.teal},{l:"Cross-Asset Alignment",v:"DIVERGING",n:"Equities up, crypto down",c:T.amber}]}/>
 <Ins type="warning" text={`Cross-asset flow alignment is diverging: equities (especially international) are attracting strong institutional flows, while crypto is in sustained outflow (until the 5 March reversal). Commodities are seeing Iran-driven positioning that's becoming crowded (CFTC oil longs at multi-year highs). This divergence means crypto is NOT providing portfolio diversification — it's a correlated risk asset that just happens to be in a deeper drawdown.`}/>
 <SourceTag sources={["CFTC COT (weekly CSV)","etfdb.com","ICI mutual fund flows","CBOE put/call","FINRA short interest"]}/>
@@ -734,6 +764,12 @@ const P10=()=>(<div>
 // =========================================================================
 const P11=()=>(<div>
 <Hd t="VALUATION, FACTORS & MARKET QUALITY" s="Regional valuations, ERP, factor scorecard, crypto valuation, infra multiples" tag="VALUATION DISCIPLINE"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="S&P 500 CAPE" value="40x" sub="Dot-com levels · avoid adding" mat="red"/>
+  <MatStat label="FTSE 250 PE" value="~13x" sub="25-year discount to large cap" mat="teal"/>
+  <MatStat label="MSCI EM PE" value="~12x" sub="20-year discount to DM · best R/R" mat="indigo"/>
+  <MatStat label="Verdict" value="ROTATE" sub="US expensive · international cheap" mat="amber"/>
+</Row>
 <MetricGrid items={[{l:"S&P 500 PE",v:`${M.sp500PE}x`,n:"CAPE 40x. Dot-com levels.",c:T.coral},{l:"FTSE 100 PE",v:"~18x",n:"Fair value range",c:T.neutral},{l:"FTSE 250 PE",v:"~13x",n:"Deep value. 25-year discount to large.",c:T.teal},{l:"MSCI EM PE",v:"~12x",n:"20-year discount to DM",c:T.teal},{l:"US ERP",v:"~3.4%",n:"Compressed. Cash competitive.",c:T.coral},{l:"Intl ERP",v:"~6-7%",n:"Much higher. Equity justified.",c:T.teal},{l:"Software PE",v:"~20x fwd",n:"Crashed from 35x. 2014 levels.",c:T.amber},{l:"BTC MVRV Z",v:M.mvrvZ.toFixed(2),n:"Near undervalued zone",c:T.teal}]}/>
 <Ins type="insight" text={`S&P at 29x trailing PE and 40x CAPE is dot-com territory. US ERP at ~3.4% barely compensates for risk above cash at 4.3%. International ERP at 6-7% is vastly more attractive. FTSE 250 at 13x and EM at 12x represent genuine deep value. The valuation + momentum fusion score ranks EM as the best risk-reward globally: cheap AND improving momentum.`}/>
 <SourceTag sources={["Shiller CAPE","Damodaran ERP","FMP MCP (forward estimates)","Financial Datasets MCP","Kenneth French"]}/>
@@ -748,6 +784,12 @@ const P11=()=>(<div>
 // =========================================================================
 const P12=()=>(<div>
 <Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="VIX" value={M.vix.toFixed(1)} sub="+19% on 5 Mar · elevated vol" mat="red"/>
+  <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol · 118 = crisis territory" mat="amber"/>
+  <MatStat label="BTC Realised Vol" value="~50%" sub="3.5x equity vol · drives 32% risk" mat="dark"/>
+  <MatStat label="Stress Signal" value="ELEVATED" sub="Dual stress · tighten risk budget" mat="indigo"/>
+</Row>
 <Row><KPI label="VIX" value={M.vix.toFixed(1)} delta="+19% on 5 Mar" dt="down" ac={T.coral}/><KPI label="MOVE" value={M.move.toString()} delta="Rate vol high" dt="down" ac={T.coral}/><KPI label="S&P Impl Vol" value="16.1%" delta="vs 13% realised" dt="down"/><KPI label="BTC Vol" value="~50%" delta="3.5x S&P" dt="down" ac={T.coral}/><KPI label="FTSE Vol" value="~9.4%" dt="up" ac={T.teal}/></Row>
 
 <Glass><PH title="VOL REGIME — VIX vs MOVE vs CRYPTO (annualised)"/>
@@ -769,6 +811,12 @@ const P12=()=>(<div>
 // =========================================================================
 const P13=()=>(<div>
 <Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Top Theme" value="AI Power Grid" sub="9/10 conviction · utilities/infra" mat="teal"/>
+  <MatStat label="Defence Tech" value="8/10" sub="Babcock +147% · priced in at index" mat="indigo"/>
+  <MatStat label="Max Satellite" value="5% NAV" sub="3 concurrent bets · 90d review" mat="dark"/>
+  <MatStat label="New Watchlist" value="3 Added" sub="Space robotics · synbio · RWA token" mat="amber"/>
+</Row>
 <Glass><PH title="NASCENT THEME SCANNER — CONVICTION vs MATURITY"/>
 <Tbl h={["Theme","Conviction","Timing","Vehicle","Status"]} r={[
 ["AI Power / Grid Infrastructure","9/10","8/10","GII, XLU, NEE, utilities","Research — high conviction"],
@@ -796,6 +844,12 @@ const P13=()=>(<div>
 // =========================================================================
 const P14=()=>(<div>
 <Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Base Case" value="50%" sub="Late-cycle grind · 2 rate cuts" mat="indigo"/>
+  <MatStat label="Bull Case" value="20%" sub="Iran de-escalation · 4 cuts · S&P 7,600" mat="teal"/>
+  <MatStat label="Bear Case" value="20%" sub="Stagflation · 0 cuts · S&P 6,200" mat="amber"/>
+  <MatStat label="Crisis" value="10%" sub="Recession · gilt crisis · S&P 5,500" mat="red"/>
+</Row>
 <Glass><PH title="SCENARIO STACK"/>
 {SCENARIOS.map((x,i)=>(<div key={i} style={{padding:"10px 13px",marginBottom:7,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.col}`}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:700,color:T.t1}}>{x.s}</span><span style={{fontSize:12,fontWeight:700,color:x.col,fontFamily:"'JetBrains Mono',monospace"}}>{x.pr}%</span></div>
@@ -827,6 +881,12 @@ const P14=()=>(<div>
 // =========================================================================
 const P15=()=>(<div>
 <Hd t="CASH, DEFENCE & DEPLOYMENT STRATEGY" s="Cash ladder, real yield, buffer, drag, defensive assets, dry powder rules" tag="CAPITAL PRESERVATION"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Liquid Cash" value="£16.3K" sub="Monzo + other · 2.7 months buffer" mat="amber"/>
+  <MatStat label="Fixed Deposit" value="£45.8K" sub="At 5% locked · competitive return" mat="teal"/>
+  <MatStat label="ISA Remaining" value="£20K" sub={`${M.isaDeadlineDays} days to 5 April · DEPLOY NOW`} mat="red"/>
+  <MatStat label="Amex Debt" value="£10,652" sub="22% APR · guaranteed return on clearance" mat="dark"/>
+</Row>
 <MetricGrid items={[{l:"Liquid Cash",v:"\u00A316.3K",n:"Monzo + other",c:T.amber},{l:"Fixed Deposit",v:"\u00A345.8K",n:"At 5% (locked)",c:T.teal},{l:"Buffer (months)",v:"2.7",n:"vs 3.0 target. Risk.",c:T.coral},{l:"Best 1Y Fix",v:`${M.bestSave}%`,n:"MBNA/Lloyds",c:T.blue},{l:"Real Cash Yield",v:"~0.8%",n:"After 40% tax + 3% CPI",c:T.amber},{l:"Cash Drag",v:"~\u00A3800/yr",n:"Idle cash vs equity ERP",c:T.coral},{l:"ISA Deployed",v:"\u00A30 / \u00A320K",n:`${M.isaDeadlineDays} days remaining!`,c:T.negative},{l:"Amex Balance",v:"\u00A310,652",n:"22% APR. Guaranteed return.",c:T.negative}]}/>
 
 <Ins type="action" text={`Three highest-alpha actions ranked by certainty: (1) Pay Amex balance — guaranteed 22% return. (2) Deploy ISA \u00A320K — 80-120bps structural alpha per year, every year, forever. (3) Continue BTC DCA — accumulation at extreme fear with historic contrarian signals. These three actions alone are worth more than any amount of research. Execute them.`}/>
@@ -954,13 +1014,27 @@ items={[
 ]} sources={["FRED base rates","BoE SONIA swaps","EIB Project Database (free)","DFI annual reports","Published deal terms"]}
 verdict="FINANCING TIGHTENING — SPONSORS MUST BE MORE SELECTIVE" imp={["Gilt 4.62% directly impacts UK infra deal IRRs. Leveraged returns compress.","EIB and DFI databases are free and comprehensive for pipeline tracking.","If financing loosens (rate cuts resume), expect rapid acceleration in deal velocity."]} mon={["Gilt trajectory","Bank lending surveys","Published deal financing terms","EIB/EBRD pipeline updates"]}/>;
 
-const C4=()=><CareerTab name="LISTED INFRA & PUBLIC-PRIVATE BRIDGE" tag="SIGNAL BRIDGE" items={[
+const C4=()=><CareerTab name="LISTED INFRA & PUBLIC-PRIVATE BRIDGE" tag="SIGNAL BRIDGE"
+hero={[
+  {label:"AI Power Capex",value:"$660-690B",sub:"Hyperscaler spend 2026 · grid bottleneck",mat:"teal"},
+  {label:"EU Grid Need",value:"€1.4T",sub:"ENTSO-E · structural multi-year cycle",mat:"indigo"},
+  {label:"DC REITs",value:"Strong",sub:"DLR · EQIX structural winners",mat:"amber"},
+  {label:"Nuclear / SMR",value:"Rising",sub:"Uranium $78.50 · AI power narrative",mat:"dark"},
+]}
+items={[
 {l:"AI Power Demand",v:"$660-690B capex",n:"Hyperscaler spending in 2026",c:T.violet},{l:"Grid Investment",v:"Accelerating",n:"\u20AC1.4T needed for EU grid upgrades",c:T.teal},{l:"Data Centre REITs",v:"Strong",n:"DLR, EQIX structural winners",c:T.teal},{l:"Utility Capex",v:"Rising",n:"NEE, SO, DUK expanding generation",c:T.blue},
 {l:"Renewables LCOE",v:"Declining",n:"IRENA + Lazard data (free)",c:T.teal},{l:"Transport Infra",v:"Recovering",n:"Airport volumes normalising",c:T.neutral},{l:"Pub-Priv Gap",v:"Narrowing",n:"Listed re-rating toward private comps",c:T.amber},{l:"Nuclear / SMR",v:"Narrative rising",n:"Uranium $78.50 (CarbonCredits.com)",c:T.cyan}
 ]} sources={["SEC EDGAR (hyperscaler 10-Q)","IRENA (LCOE, free)","Lazard LCOE (free)","ENTSO-E (grid data, free)","IEA Electricity Report","CarbonCredits.com (uranium)"]}
 verdict="AI POWER DEMAND = RICHEST CROSSOVER BETWEEN JOB AND INVESTING" imp={["Hyperscaler capex confirms multi-year power demand cycle. Grid + utilities = structural winners.","IRENA, Lazard, ENTSO-E all provide free data for renewables and grid economics.","Nuclear/SMR narrative strengthening. Uranium at $78.50 via CarbonCredits.com (free, replacing UxC paid)."]} mon={["Hyperscaler Q1 capex guidance","ENTSO-E grid data","IRENA annual cost report","Listed infra vs broad index performance"]}/>;
 
-const C5=()=><CareerTab name="PE, PRIVATE CREDIT & SECONDARIES" tag="ALTERNATIVES" items={[
+const C5=()=><CareerTab name="PE, PRIVATE CREDIT & SECONDARIES" tag="ALTERNATIVES"
+hero={[
+  {label:"Secondaries Vol",value:"$103B",sub:"H1 2025 record · Jefferies (free)",mat:"teal"},
+  {label:"LP Pricing",value:"90% NAV",sub:"Discount narrowing · confidence rising",mat:"indigo"},
+  {label:"PE Temperature",value:"Warming",sub:"Exits reopening · IPO pipeline building",mat:"amber"},
+  {label:"Priv Credit",value:"Stress rising",sub:"Proskauer default index · free quarterly",mat:"red"},
+]}
+items={[
 {l:"PE Temperature",v:"Warming",n:"Exits reopening. IPO pipeline building.",c:T.teal},{l:"Secondaries Volume",v:"Record $103B",n:"H1 2025 Jefferies report (free)",c:T.teal},{l:"LP Pricing",v:"90% NAV",n:"Discount narrowing",c:T.amber},{l:"Private Credit",v:"Stress rising",n:"Proskauer default index (free quarterly)",c:T.coral},
 {l:"Infra Secondaries",v:"Active",n:"GP-led continuation vehicles growing",c:T.blue},{l:"VC Late-Stage",v:"Selective",n:"AI funding robust. Other sectors challenged.",c:T.amber},{l:"Real Estate",v:"Bifurcated",n:"Data centres premium. Office distressed.",c:T.amber},{l:"Alt Policy",v:"Max 5% NAV",n:"Liquidity limits enforced",c:T.accent}
 ]} sources={["Jefferies Secondary Market Review (free)","Bain Global PE Report (free)","McKinsey Private Markets Review (free)","Proskauer Default Index (free)","Campbell Lutyens (free)"]}
@@ -979,7 +1053,14 @@ items={[
 ]} sources={["AfDB Economic Outlook (free)","IMF Data Portal (free)","World Bank Africa (free)","AfDB Open Data (free)","GMD v2026 (free)","World Bank PPI (free)"]}
 verdict="SA IMPROVING BUT FINANCING GAP DEMANDS PRIVATE CAPITAL" imp={["All Africa macro data available FREE: AfDB, IMF, World Bank, GMD. Zero paid sources needed.","GBP/ZAR at 21.87: existing ZAR assets worth more. Don't add until above 23.","Africa data centre gap (<1% global) is the biggest digital infra opportunity — aligns with AI power theme."]} mon={["AfDB Annual Report","SA load-shedding status","Nigeria FX reform","GBP/ZAR trajectory"]}/>;
 
-const C7=()=><CareerTab name="AFRICA INVESTOR & DEAL TRACKER" tag="AFRICA BUYERS" items={[
+const C7=()=><CareerTab name="AFRICA INVESTOR & DEAL TRACKER" tag="AFRICA BUYERS"
+hero={[
+  {label:"WB PPI Africa",value:"47 Deals",sub:"$12.8B SSA · energy dominant · FREE",mat:"teal"},
+  {label:"DFI Appetite",value:"Strong",sub:"IFC · AfDB · EBRD co-lending active",mat:"indigo"},
+  {label:"Priority Market",value:"SA + Kenya",sub:"Strongest reform + growth combo",mat:"amber"},
+  {label:"DC Opportunity",value:"<1% Global",sub:"Africa data centre gap · AI theme",mat:"dark"},
+]}
+items={[
 {l:"Helios Investment",v:"PE/Climate/Digital",n:"Pan-African. West Africa focus.",c:T.violet},{l:"AIIM",v:"Long-term Infra",n:"Institutional. Southern Africa.",c:T.blue},{l:"Africa Finance Corp",v:"Principal Investing",n:"Infrastructure mobilisation. Free reports.",c:T.teal},{l:"Actis",v:"Sustainable Infra",n:"Energy transition focus.",c:T.cyan},
 {l:"Adenia",v:"Control-Growth",n:"Francophone Africa. Mid-market.",c:T.amber},{l:"WB PPI (Africa)",v:"47 SSA deals",n:"$12.8B value. Energy dominant.",c:T.teal},{l:"DFI Co-Lending",v:"Strong",n:"IFC, AfDB, EBRD active in Africa",c:T.teal},{l:"Priority",v:"SA + Kenya",n:"Strongest reform + growth combo",c:T.accent}
 ]} sources={["GP Websites (free)","Infrastructure Investor (free)","AFC Annual Report (free)","World Bank PPI (free)","DFI Reports (free)"]}
