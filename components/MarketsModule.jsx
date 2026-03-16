@@ -381,33 +381,96 @@ const SourceTag=({sources})=>(
   </div>
 );
 
+// Chip — interactive glass pill badge
+const Chip=({label,value,color,onClick})=>{
+  const c=color||P.cyan;
+  const[hov,setHov]=useState(false);
+  return(
+    <div onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 9px',borderRadius:999,cursor:onClick?'pointer':'default',userSelect:'none',
+        background:hov?`${c}28`:`${c}14`,border:`1px solid ${hov?c+'55':c+'28'}`,
+        backdropFilter:'blur(12px) saturate(1.3)',WebkitBackdropFilter:'blur(12px) saturate(1.3)',
+        boxShadow:hov?`0 0 14px ${c}30, inset 0 1px 0 rgba(255,255,255,0.14)`:`inset 0 1px 0 rgba(255,255,255,0.08)`,
+        transition:'all 0.18s ease',
+      }}>
+      {label&&<span style={{fontSize:9,color:'rgba(255,255,255,0.50)',fontWeight:700,letterSpacing:0.6,textTransform:'uppercase'}}>{label}</span>}
+      {value&&<span style={{fontSize:11,color:c,fontWeight:800,fontFamily:P.mono}}>{value}</span>}
+    </div>
+  );
+};
+
+// PH — Panel header banner (use inside Glass to add header treatment)
+// Usage: <Glass><PH title="PANEL TITLE"/>{...content...}</Glass>
+const PH=({title,sub,ac=P.cyan,right})=>(
+  <div style={{margin:'-18px -18px 14px',borderRadius:'14px 14px 0 0',overflow:'hidden',flexShrink:0}}>
+    <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.18) 30%,${ac}55 50%,rgba(255,255,255,0.18) 70%,transparent 92%)`}}/>
+    <div style={{...HEADER_BANNER,borderRadius:0}}>
+      <div style={{flex:1}}>
+        <div style={HEADER_TITLE}>{title}</div>
+        {sub&&<div style={HEADER_SUB}>{sub}</div>}
+      </div>
+      {right&&<div style={{fontSize:11,fontWeight:700,color:ac,fontFamily:P.mono}}>{right}</div>}
+    </div>
+    <div style={{height:2,background:`linear-gradient(90deg,${ac}80,${ac}35 50%,transparent)`}}/>
+  </div>
+);
+
+// MAT Stat card — solid gradient material tile for hero KPIs
+const MatStat=({label,value,sub,mat="teal",icon})=>(
+  <div style={{...MAT[mat]||MAT.teal,overflow:'hidden',position:'relative',padding:'16px 18px',flex:'1 1 140px',minWidth:130}}>
+    <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'linear-gradient(135deg,rgba(255,255,255,0.08) 0%,transparent 50%)',pointerEvents:'none'}}/>
+    <div style={{position:'relative',zIndex:1}}>
+      {icon&&<div style={{fontSize:18,marginBottom:6}}>{icon}</div>}
+      <div style={{fontSize:9,color:'rgba(255,255,255,0.55)',fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',marginBottom:4}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:800,color:'#e8f4f5',fontFamily:P.mono,letterSpacing:-0.5,lineHeight:1.1}}>{value}</div>
+      {sub&&<div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:4,lineHeight:1.3}}>{sub}</div>}
+    </div>
+  </div>
+);
+
 // =========================================================================
 // P1 — GLOBAL MACRO REGIME DASHBOARD (Upgrades: #1 GMD, #6 MacroMicro MOVE, #14 Liquidity Divergence)
 // =========================================================================
 const P1=()=>(<div>
 <Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE"/>
-<RegimeCard label={M.regime} conf={M.regimeConf} color={T.amber}/>
+
+{/* Regime hero — MAT tile */}
+<Row style={{marginBottom:0}}>
+  <MatStat label="Macro Regime" value={M.regime} sub={`${M.regimeConf}% confidence`} mat="amber"/>
+  <MatStat label="S&P 500" value={M.sp500.toLocaleString()} sub={`PE ${M.sp500PE}x · CAPE ${M.sp500CAPE}x`} mat="dark"/>
+  <MatStat label="Gold" value={`$${M.gold.toLocaleString()}`} sub="+80% 12M · HALO trade" mat="teal"/>
+  <MatStat label="Brent Crude" value={`$${M.brent}`} sub="Iran shock · +22% 12M" mat="red"/>
+</Row>
+
 <Ins type="regime" text={`Late-cycle dynamics confirmed. US growth decelerating, UK stagnant (0.1% QoQ). Inflation sticky above target in both regions. Iran escalation (Brent $93, wholesale gas +40%) has injected an inflation scare into the disinflationary glide path. BoE March cut probability collapsed from 80% to <20%. Gilt 10Y surged 40bp in one week (mini-budget levels). Not yet recession watch, but risk budget must tighten.`}/>
 <SourceTag sources={["GMD v2026","FRED API","MacroMicro","IMF WEO","ONS","ECB SDW","BoE Stats"]}/>
 
-<Row><KPI label="S&P 500" value={M.sp500.toLocaleString()} delta={`ATH ${M.sp500ATH.toLocaleString()}`} dt="down" sub="PE 29x | CAPE 40x"/>
+<Row>
+<KPI label="S&P 500" value={M.sp500.toLocaleString()} delta={`ATH ${M.sp500ATH.toLocaleString()}`} dt="down" sub="PE 29x | CAPE 40x"/>
 <KPI label="FTSE 100" value={M.ftse100.toLocaleString()} delta="+19% 12m" dt="up"/>
 <KPI label="VIX" value={M.vix.toFixed(1)} delta="Elevated" dt="down" ac={T.coral}/>
 <KPI label="MOVE" value={M.move.toString()} delta="Rate vol high" dt="down" ac={T.coral}/>
 <KPI label="Brent" value={`$${M.brent}`} delta="Iran shock" dt="down" ac={T.coral}/>
 <KPI label="Gold" value={`$${M.gold.toLocaleString()}`} delta="+80% 12m" dt="up" ac={T.amber}/>
-<KPI label="DXY" value={M.dxy.toString()} delta="-10% from highs" dt="up"/></Row>
+<KPI label="DXY" value={M.dxy.toString()} delta="-10% from highs" dt="up"/>
+</Row>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>MACRO INDICATOR PANEL</div>
-<MetricGrid items={[{l:"US GDP",v:"2.3%",n:"Slowing",c:T.amber},{l:"UK GDP QoQ",v:"0.1%",n:"Stagnant",c:T.coral},{l:"US Core CPI",v:"3.1%",n:"Sticky",c:T.coral},{l:"UK CPI",v:`${M.ukCPI}%`,n:"Falling but above target",c:T.amber},{l:"Fed Funds",v:`${M.fed}%`,n:"On hold",c:T.neutral},{l:"BoE Rate",v:`${M.boeRate}%`,n:"Cuts paused — Iran",c:T.amber},{l:"UK 10Y Gilt",v:`${M.gilt10y}%`,n:"40bp weekly surge",c:T.negative},{l:"MOVE Index",v:M.move.toString(),n:"Rate vol elevated (MacroMicro)",c:T.coral}]}/></Glass>
+<Glass>
+<PH title="MACRO INDICATOR PANEL" sub="Growth · Inflation · Rates · Volatility"/>
+<MetricGrid items={[{l:"US GDP",v:"2.3%",n:"Slowing",c:T.amber},{l:"UK GDP QoQ",v:"0.1%",n:"Stagnant",c:T.coral},{l:"US Core CPI",v:"3.1%",n:"Sticky",c:T.coral},{l:"UK CPI",v:`${M.ukCPI}%`,n:"Falling but above target",c:T.amber},{l:"Fed Funds",v:`${M.fed}%`,n:"On hold",c:T.neutral},{l:"BoE Rate",v:`${M.boeRate}%`,n:"Cuts paused — Iran",c:T.amber},{l:"UK 10Y Gilt",v:`${M.gilt10y}%`,n:"40bp weekly surge",c:T.negative},{l:"MOVE Index",v:M.move.toString(),n:"Rate vol elevated (MacroMicro)",c:T.coral}]}/>
+</Glass>
 
 <Grid cols="1fr 1fr">
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>YIELD CURVE — UST vs UK GILT</div>
-<div style={{height:220}}><ResponsiveContainer><LineChart data={YIELD_CURVE}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="t" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} domain={[3.4,5.0]} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="us" stroke={T.blue} strokeWidth={2.5} dot={{fill:T.blue,r:3}} name="US Treasury"/><Line type="monotone" dataKey="uk" stroke={T.coral} strokeWidth={2.5} dot={{fill:T.coral,r:3}} name="UK Gilt"/></LineChart></ResponsiveContainer></div></Glass>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>LIQUIDITY DIVERGENCE METRIC — M2 Growth % minus S&P Growth %</div>
+<Glass>
+<PH title="YIELD CURVE — UST vs UK GILT" ac={P.s5}/>
+<div style={{height:220}}><ResponsiveContainer><LineChart data={YIELD_CURVE}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="t" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} domain={[3.4,5.0]} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="us" stroke={T.blue} strokeWidth={2.5} dot={{fill:T.blue,r:3}} name="US Treasury"/><Line type="monotone" dataKey="uk" stroke={T.coral} strokeWidth={2.5} dot={{fill:T.coral,r:3}} name="UK Gilt"/></LineChart></ResponsiveContainer></div>
+</Glass>
+<Glass>
+<PH title="LIQUIDITY DIVERGENCE — M2 vs S&P Growth %" ac={P.cyan}/>
 <div style={{height:200}}><ResponsiveContainer><ComposedChart data={LIQ_DIV}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="m" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Bar dataKey="div" name="Divergence %" radius={[4,4,0,0]}>{LIQ_DIV.map((e,i)=><Cell key={i} fill={e.div>0?T.teal:T.coral}/>)}</Bar><ReferenceLine y={5} stroke={T.teal} strokeDasharray="6 3" strokeOpacity={0.5} label={{value:"Bullish >5%",fill:T.teal,fontSize:9}}/><ReferenceLine y={-5} stroke={T.coral} strokeDasharray="6 3" strokeOpacity={0.5} label={{value:"Bearish <-5%",fill:T.coral,fontSize:9}}/><ReferenceLine y={0} stroke={T.t3} strokeOpacity={0.3}/></ComposedChart></ResponsiveContainer></div>
 <Ins type="insight" text={`Liquidity divergence has turned positive and is now at +5.0% — right at the bullish threshold. Global M2 expanding at 5% while S&P is flat YTD means liquidity is building faster than asset prices. Historically, when this metric exceeds +5%, equities rally to close the gap. However, the Iran inflation shock could reverse the easing trend. Watch for central bank balance sheet changes.`}/>
-<SourceTag sources={["FRED M2SL","StreetStats Global M2","MacroMicro CB Balance Sheets"]}/></Glass>
+<SourceTag sources={["FRED M2SL","StreetStats Global M2","MacroMicro CB Balance Sheets"]}/>
+</Glass>
 </Grid>
 
 <Verdict label="LATE CYCLE — INFLATION SCARE (68% confidence)" imp={[
@@ -421,15 +484,34 @@ const P1=()=>(<div>
 // =========================================================================
 const P2=()=>(<div>
 <Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS"/>
-<Row><KPI label="IG OAS" value={`${M.igOAS}bp`} delta="Contained" dt="neutral"/><KPI label="HY OAS" value={`${M.hyOAS}bp`} delta="Watching 400bp" dt="neutral" ac={T.amber}/><KPI label="BBB OAS" value={`${M.bbbOAS}bp`} delta="Stable" dt="neutral"/><KPI label="MOVE Index" value={M.move.toString()} delta="Rate vol elevated" dt="down" ac={T.coral}/><KPI label="Money Mkt Hurdle" value={`${M.bestSave}%`} delta="1Y fix best rate" dt="neutral"/><KPI label="STLFSI" value={M.stlfsi.toFixed(1)} delta="Mild stress" dt="neutral"/></Row>
+
+<Row style={{marginBottom:0}}>
+  <MatStat label="HY OAS" value={`${M.hyOAS}bp`} sub="Watching 400bp threshold" mat="amber"/>
+  <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol elevated · Crisis level" mat="red"/>
+  <MatStat label="Best 1Y Fix" value={`${M.bestSave}%`} sub="Cash competitive vs equities" mat="teal"/>
+  <MatStat label="STLFSI" value={M.stlfsi.toFixed(1)} sub="Mild financial stress index" mat="dark"/>
+</Row>
+
+<Row>
+<KPI label="IG OAS" value={`${M.igOAS}bp`} delta="Contained" dt="neutral"/>
+<KPI label="HY OAS" value={`${M.hyOAS}bp`} delta="Watching 400bp" dt="neutral" ac={T.amber}/>
+<KPI label="BBB OAS" value={`${M.bbbOAS}bp`} delta="Stable" dt="neutral"/>
+<KPI label="MOVE Index" value={M.move.toString()} delta="Rate vol elevated" dt="down" ac={T.coral}/>
+<KPI label="Money Mkt Hurdle" value={`${M.bestSave}%`} delta="1Y fix best rate" dt="neutral"/>
+<KPI label="STLFSI" value={M.stlfsi.toFixed(1)} delta="Mild stress" dt="neutral"/>
+</Row>
 
 <Grid cols="1fr 1fr">
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>CREDIT SPREAD TRAJECTORY — IG vs HY OAS (bp)</div>
+<Glass>
+<PH title="CREDIT SPREAD TRAJECTORY — IG vs HY OAS (bp)" ac={P.s4}/>
 <div style={{height:200}}><ResponsiveContainer><LineChart data={CREDIT_TL}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="d" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="ig" stroke={T.blue} strokeWidth={2} name="IG OAS"/><Line type="monotone" dataKey="hy" stroke={T.coral} strokeWidth={2} name="HY OAS"/><ReferenceLine y={400} stroke={T.negative} strokeDasharray="8 4" strokeOpacity={0.4}/></LineChart></ResponsiveContainer></div>
 <Ins type="insight" text={`Credit is the calm in the storm. IG at 95bp and HY at 340bp are well below stress thresholds (400bp+ for HY would signal risk-off). This disconnect between rates stress (gilt 40bp weekly surge, MOVE at 118) and credit calm is unusual. Either credit is complacent or rates stress won't transmit to corporate funding. Watch HY closely — widening above 400bp would confirm contagion.`}/>
-<SourceTag sources={["FRED BAMLH0A0HYM2","FRED BAMLC0A0CM","MacroMicro MOVE","FRED STLFSI4"]}/></Glass>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>MONEY-MARKET HURDLE vs EQUITY EARNINGS YIELD</div>
-<MetricGrid items={[{l:"Best 1Y Fix",v:`${M.bestSave}%`,n:"MBNA/Lloyds",c:T.blue},{l:"Real Cash Yield",v:"~0.8%",n:"After 40% tax + 3% CPI",c:T.amber},{l:"S&P Earnings Yield",v:"~3.4%",n:"1/PE at 29x",c:T.coral},{l:"UK Equity Yield",v:"~5.5%",n:"1/PE at 18x FTSE",c:T.teal},{l:"HY Yield",v:"~7.5%",n:"But default risk rising",c:T.amber},{l:"Cash Hurdle",v:"MODERATE",n:"Cash competitive vs US equity ERP",c:T.amber}]}/></Glass>
+<SourceTag sources={["FRED BAMLH0A0HYM2","FRED BAMLC0A0CM","MacroMicro MOVE","FRED STLFSI4"]}/>
+</Glass>
+<Glass>
+<PH title="MONEY-MARKET HURDLE vs EQUITY EARNINGS YIELD" ac={P.amber}/>
+<MetricGrid items={[{l:"Best 1Y Fix",v:`${M.bestSave}%`,n:"MBNA/Lloyds",c:T.blue},{l:"Real Cash Yield",v:"~0.8%",n:"After 40% tax + 3% CPI",c:T.amber},{l:"S&P Earnings Yield",v:"~3.4%",n:"1/PE at 29x",c:T.coral},{l:"UK Equity Yield",v:"~5.5%",n:"1/PE at 18x FTSE",c:T.teal},{l:"HY Yield",v:"~7.5%",n:"But default risk rising",c:T.amber},{l:"Cash Hurdle",v:"MODERATE",n:"Cash competitive vs US equity ERP",c:T.amber}]}/>
+</Glass>
 </Grid>
 
 <Verdict label="RATES STRESS ELEVATED — CREDIT CALM BUT DISCONNECT IS FRAGILE" imp={[
@@ -443,17 +525,17 @@ const P2=()=>(<div>
 // =========================================================================
 const P3=()=>(<div>
 <Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR"/>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>TOP 5 MARKET-MOVING STORIES</div>
+<Glass><PH title="TOP 5 MARKET-MOVING STORIES"/>
 {[{s:"Iran escalation reprices global rate path",d:"Brent $93, gas +40%, gilt 40bp surge. BoE cut probability collapsed. Stagflation risk rising.",c:T.coral},
 {s:"Value rotation hits 99.8th percentile weekly spread",d:"Bloomberg Pure Value vs Pure Growth spread: +4.06pp in one week — second largest since 2000.",c:T.amber},
 {s:"BTC ETF inflows resume — $500M on 5 March",d:"Snaps 6-week outflow streak. Whale accumulation 270K BTC ($23B) in 30 days.",c:T.teal},
 {s:"SaaSpocalypse: $1-2T software market cap destroyed",d:"IGV -30% from Sep peak. Claude Cowork launch triggered existential SaaS fears. Forward PE 35x to 20x.",c:T.coral},
 {s:"Gold breaks $5,280 — HALO trade dominates 2026",d:"Hard Assets, Low Obsolescence. Defence stocks (Babcock +147%), miners, energy. FTSE 100 outperforming.",c:T.amber}
-].map((x,i)=>(<div key={i} style={{padding:"10px 12px",marginBottom:7,background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:11,color:T.t3,marginTop:3,lineHeight:1.5}}>{x.d}</div></div>))}</Glass>
+].map((x,i)=>(<div key={i} style={{padding:"10px 12px",marginBottom:7,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:11,color:T.t3,marginTop:3,lineHeight:1.5}}>{x.d}</div></div>))}</Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>MEDIA SENTIMENT vs FLOW DIVERGENCE</div>
+<Glass><PH title="MEDIA SENTIMENT vs FLOW DIVERGENCE"/>
 <div style={{fontSize:9,color:T.accent,fontWeight:600,marginBottom:8}}>UPGRADE: StockGeist NLP sentiment + ETF flow data = contrarian signal detection</div>
-{SENT_DIV.map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.col}`,display:"flex",flexDirection:"column",gap:3}}>
+{SENT_DIV.map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.col}`,display:"flex",flexDirection:"column",gap:3}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:11.5,fontWeight:700,color:T.t1}}>{x.theme}</span><span style={{fontSize:10,fontWeight:700,color:x.sentiment<-50?T.coral:x.sentiment>30?T.teal:T.amber,fontFamily:"'JetBrains Mono',monospace"}}>Sentiment: {x.sentiment>0?"+":""}{x.sentiment}</span></div>
 <div style={{fontSize:10,color:T.t3}}>Flows: {x.flowDir}</div>
 <div style={{fontSize:10.5,color:x.col,fontWeight:600}}>{x.signal}</div></div>))}
@@ -471,17 +553,23 @@ const P3=()=>(<div>
 // =========================================================================
 const P4=()=>(<div>
 <Hd t="GLOBAL EQUITIES, SECTORS & FACTORS" s="Regional returns, sector leadership, factor rotation, JPM REI suite" tag="EQUITY INTELLIGENCE"/>
+<Row style={{marginBottom:0}}>
+  <MatStat label="MSCI Europe 12M" value="+36.3%" sub="Value + defence rotation" mat="teal"/>
+  <MatStat label="MSCI EM 12M" value="+33.6%" sub="USD weakness tailwind" mat="indigo"/>
+  <MatStat label="S&P 500 YTD" value="-0.01%" sub="Mag 7 underperforming" mat="dark"/>
+  <MatStat label="Semis SMH 12M" value="+70%" sub="AI capex structural winner" mat="amber"/>
+</Row>
 <Ins type="insight" text={`The single most important equity story: non-US outperformance. Every major region beat the S&P 500 over 12 months. Mag 7 all underperforming YTD 2026. In February, S&P tech fell -3.9% while equal-weight rose +3.5%. SMH/IGV divergence (60pp) is 4 standard deviations from normal.`}/>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>REGIONAL RETURN LADDER — 12-MONTH</div>
+<Glass><PH title="REGIONAL RETURN LADDER — 12-MONTH"/>
 <div style={{height:230}}><ResponsiveContainer><BarChart data={REGION_RET} layout="vertical" margin={{left:85}}><CartesianGrid strokeDasharray="3 3" stroke={T.grid} horizontal={false}/><XAxis type="number" tick={{fill:T.t3,fontSize:10}} stroke={T.grid} tickFormatter={v=>`${v}%`}/><YAxis type="category" dataKey="r" tick={{fill:T.t2,fontSize:10}} stroke={T.grid} width={80}/><Tooltip content={<Tip/>}/><Bar dataKey="v" name="12M %" radius={[0,6,6,0]}>{REGION_RET.map((e,i)=><Cell key={i} fill={e.c}/>)}</Bar></BarChart></ResponsiveContainer></div></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>SECTOR PERFORMANCE — 12-MONTH</div>
+<Glass><PH title="SECTOR PERFORMANCE — 12-MONTH"/>
 <div style={{height:230}}><ResponsiveContainer><BarChart data={SECTOR} layout="vertical" margin={{left:95}}><CartesianGrid strokeDasharray="3 3" stroke={T.grid} horizontal={false}/><XAxis type="number" tick={{fill:T.t3,fontSize:10}} stroke={T.grid} tickFormatter={v=>`${v}%`}/><YAxis type="category" dataKey="s" tick={{fill:T.t2,fontSize:10}} stroke={T.grid} width={90}/><Tooltip content={<Tip/>}/><Bar dataKey="v" name="12M %" radius={[0,6,6,0]}>{SECTOR.map((e,i)=><Cell key={i} fill={e.c}/>)}</Bar></BarChart></ResponsiveContainer></div></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>FACTOR LEADERSHIP — THE VALUE ROTATION</div>
+<Glass><PH title="FACTOR LEADERSHIP — THE VALUE ROTATION"/>
 <Tbl h={["Factor","CY2025","YTD 2026","Status"]} r={FACTORS.map(f=>[f.f,`+${f.r}%`,f.y?`${f.y>0?"+":""}${f.y}%`:"N/A",f.st])} hl={1}/></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>JPM RESEARCH ENHANCED ETF SUITE</div>
+<Glass><PH title="JPM RESEARCH ENHANCED ETF SUITE"/>
 <Tbl h={["Ticker","Name","1Y Return","AUM (M)","TER","Benchmark"]} r={JPM.map(e=>[e.tk,e.nm,e.ret,`\u00A3${e.aum}`,e.ter,e.bm])} hl={2}/>
 <Ins type="opportunity" text={`JMRE (+33%) and JERE (+22%) riding the rotation. JURE (+13%) lagging from US growth-to-value shift. ISA deadline 29 days: deploy into JERE/JMRE to capture rotation at 0.23-0.35% TER vs traditional active at 1.32%.`}/>
 <SourceTag sources={["Yahoo Finance MCP","FMP MCP","Kenneth French","AQR Datasets","Damodaran"]}/></Glass>
@@ -499,11 +587,11 @@ const P5=()=>(<div>
 <Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX"/>
 <Row><KPI label="UST 10Y" value="4.30%" delta="Bear steepening" dt="down"/><KPI label="Gilt 10Y" value={`${M.gilt10y}%`} delta="40bp weekly surge" dt="down" ac={T.negative}/><KPI label="Gilt 2Y" value={`${M.gilt2y}%`} delta="Short end stable" dt="neutral"/><KPI label="Bund 10Y" value="~2.8%" delta="Lower than UK/US" dt="neutral"/><KPI label="5Y5Y Breakeven" value="~2.6%" delta="Rising on oil" dt="down" ac={T.coral}/></Row>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>SOVEREIGN YIELD CURVES — UST vs GILT</div>
+<Glass><PH title="SOVEREIGN YIELD CURVES — UST vs GILT"/>
 <div style={{height:220}}><ResponsiveContainer><LineChart data={YIELD_CURVE}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="t" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid} domain={[3.4,5.0]} tickFormatter={v=>`${v}%`}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="us" stroke={T.blue} strokeWidth={2.5} dot={{fill:T.blue,r:3}} name="UST"/><Line type="monotone" dataKey="uk" stroke={T.coral} strokeWidth={2.5} dot={{fill:T.coral,r:3}} name="Gilt"/></LineChart></ResponsiveContainer></div>
 <Ins type="risk" text={`UK gilt curve is the acute stress point. 10Y at 4.62% with a 40bp weekly move matching the Sep 2022 mini-budget. The curve is inverted short-end (3M 3.72% vs 2Y 3.80%) and steeply positive beyond 5Y. This signals: inflation fear dominating rate-cut optimism. Duration is dangerous. Term premium rising for bad reasons (supply + inflation, not growth optimism).`}/></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>CREDIT CARRY vs CASH HURDLE</div>
+<Glass><PH title="CREDIT CARRY vs CASH HURDLE"/>
 <MetricGrid items={[{l:"Best 1Y Fix",v:`${M.bestSave}%`,n:"Risk-free baseline",c:T.blue},{l:"HY Yield",v:"~7.5%",n:"Carry attractive but default risk rising",c:T.amber},{l:"IG Yield",v:"~5.2%",n:"Modest spread over cash",c:T.neutral},{l:"Infra Debt Proxy",v:"~5.8%",n:"Utility bond ETF yield (LQD)",c:T.cyan},{l:"EM Local Yield",v:"~8-10%",n:"ZAR carry positive. GBPZAR 21.87.",c:T.teal},{l:"Duration Return (TLT)",v:"-5% YTD",n:"Long bonds losing money",c:T.coral}]}/>
 <SourceTag sources={["FRED DGS series","BoE Stats","ECB SDW","FRED BAML yield indices"]}/></Glass>
 
@@ -520,7 +608,7 @@ const P6=()=>(<div>
 <Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM"/>
 <Row><KPI label="GBP/USD" value={M.gbpusd.toFixed(3)} delta="52wk: 1.27-1.39" dt="neutral"/><KPI label="GBP/ZAR" value={M.gbpzar.toFixed(2)} delta="-7% YoY" dt="down" ac={T.amber}/><KPI label="DXY" value={M.dxy.toString()} delta="-10% from 110" dt="up" ac={T.teal}/><KPI label="EM Carry" value="Attractive" delta="Real yields positive" dt="up" ac={T.teal}/></Row>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>GBP BASE-CURRENCY BOARD</div>
+<Glass><PH title="GBP BASE-CURRENCY BOARD"/>
 <MetricGrid items={[{l:"GBP/USD",v:M.gbpusd.toFixed(3),n:"Up 3.8% YoY. USD weakness.",c:T.teal},{l:"GBP/ZAR",v:M.gbpzar.toFixed(2),n:"Down 7% YoY. Rand strengthening.",c:T.coral},{l:"GBP/EUR",v:"~1.18",n:"Stable. ECB cutting faster.",c:T.neutral},{l:"GBP/JPY",v:"~188",n:"JPY weak despite BoJ hike.",c:T.amber},{l:"DXY Index",v:M.dxy.toString(),n:"Multi-year low. -10% from 110.",c:T.teal},{l:"Dollar Regime",v:"WEAK",n:"Supports EM, commodities, crypto",c:T.teal}]}/>
 <Ins type="insight" text={`Dollar weakness (-10% DXY from 110 highs to 95.5) is the single biggest FX story. It amplifies international returns in USD terms (MSCI Europe: +36% USD vs +19% EUR). For your portfolio, weak USD supports JMRE (EM), JERE (Europe), and commodity positions. GBP/ZAR at 21.87 means your Nedbank pension and EasyCrypto are worth more in GBP. Do NOT add ZAR exposure at these levels — the Rand has appreciated 13% from the April 2025 peak.`}/>
 <SourceTag sources={["FRED DXY proxy","ECB SDW","SARB","GMD v2026 (EM macro)","IMF WEO"]}/></Glass>
@@ -536,9 +624,15 @@ const P6=()=>(<div>
 // =========================================================================
 const P7=()=>(<div>
 <Hd t="COMMODITIES & REAL ASSETS" s="Commodity leadership, gold, copper, energy, uranium, carbon, listed real assets" tag="REAL ASSETS"/>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>COMMODITY LEADERSHIP TABLE</div>
+<Row style={{marginBottom:0}}>
+  <MatStat label="Gold" value="$5,280" sub="+80% 12M · ATH · HALO trade" mat="amber"/>
+  <MatStat label="Brent Crude" value="$93.04" sub="+22% 12M · Iran escalation" mat="red"/>
+  <MatStat label="Copper" value="$9,200" sub="+12% · Electrification demand" mat="teal"/>
+  <MatStat label="Uranium" value="$78.50" sub="+18% · AI power / nuclear" mat="indigo"/>
+</Row>
+<Glass><PH title="COMMODITY LEADERSHIP TABLE"/>
 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(190px, 1fr))",gap:8}}>
-{COMMODITY.map((x,i)=>(<div key={i} style={{padding:"10px 13px",background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}>
+{COMMODITY.map((x,i)=>(<div key={i} style={{padding:"10px 13px",background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}>
 <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,fontWeight:700,color:T.t1}}>{x.n}</span><span style={{fontSize:11,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace"}}>{x.p}</span></div>
 <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}><span style={{fontSize:10,color:x.c,fontWeight:600}}>{x.chg} 12M</span></div>
 <div style={{fontSize:10,color:T.t3,marginTop:3}}>{x.sig}</div></div>))}
@@ -572,14 +666,30 @@ const P8=()=>(<div>
 // =========================================================================
 const P9=()=>(<div>
 <Hd t="CRYPTO INTELLIGENCE ENGINE" s="On-chain cycle state, ETF flows, derivatives, HODL Waves, Reserve Risk" tag="EXTREME FEAR"/>
+
+{/* Crypto hero MAT tiles */}
+<Row style={{marginBottom:0}}>
+  <MatStat label="Bitcoin" value={`$${M.btcPrice.toLocaleString()}`} sub={`ATH $${M.btcATH.toLocaleString()} · DD ${M.btcDD}%`} mat="amber"/>
+  <MatStat label="Fear & Greed" value={M.fearGreed.toString()} sub="EXTREME FEAR · RSI 27.5" mat="red"/>
+  <MatStat label="MVRV Z-Score" value={M.mvrvZ.toFixed(2)} sub="Near undervalued zone" mat="teal"/>
+  <MatStat label="ETF Flows" value={M.etfFlow} sub="6-week outflow streak broken" mat="indigo"/>
+</Row>
+
 <Ins type="risk" text={`BTC -44% from ATH. ETH -60%. SOL -71%. Fear & Greed hit 10. Weekly RSI 27.5 — third time below 30 in history. Previous instances (Jan 2015, Dec 2018) preceded bull runs of 9,900% and 1,700%. Structural supply case extreme: exchange reserves ATL, illiquid supply 75%, whales accumulating $23B in 30 days.`}/>
 
-<Row><KPI label="BTC" value={`$${M.btcPrice.toLocaleString()}`} delta={`ATH $126K`} dt="down" ac={T.btc}/><KPI label="F&G" value={M.fearGreed.toString()} delta="Extreme Fear" dt="down" ac={T.coral}/><KPI label="MVRV Z" value={M.mvrvZ.toFixed(2)} delta="Near undervalued" dt="neutral" ac={T.amber}/><KPI label="RSI" value={M.rsi.toFixed(1)} delta="3rd time <30" dt="down" ac={T.coral}/><KPI label="BTC Dom" value={`${M.btcDom}%`} delta="8yr high" dt="up"/><KPI label="ETF" value={M.etfFlow} delta="Streak broken" dt="up" ac={T.teal}/></Row>
+<Row>
+<KPI label="BTC" value={`$${M.btcPrice.toLocaleString()}`} delta={`ATH $126K`} dt="down" ac={T.btc}/>
+<KPI label="F&G" value={M.fearGreed.toString()} delta="Extreme Fear" dt="down" ac={T.coral}/>
+<KPI label="MVRV Z" value={M.mvrvZ.toFixed(2)} delta="Near undervalued" dt="neutral" ac={T.amber}/>
+<KPI label="RSI" value={M.rsi.toFixed(1)} delta="3rd time <30" dt="down" ac={T.coral}/>
+<KPI label="BTC Dom" value={`${M.btcDom}%`} delta="8yr high" dt="up"/>
+<KPI label="ETF" value={M.etfFlow} delta="Streak broken" dt="up" ac={T.teal}/>
+</Row>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>BTC PRICE vs FEAR & GREED — 12 MONTHS</div>
+<Glass><PH title="BTC PRICE vs FEAR & GREED — 12 MONTHS"/>
 <div style={{height:230}}><ResponsiveContainer><ComposedChart data={CRYPTO_TL}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="d" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis yAxisId="l" tick={{fill:T.t3,fontSize:10}} stroke={T.grid} tickFormatter={v=>`$${v}K`}/><YAxis yAxisId="r" orientation="right" tick={{fill:T.t3,fontSize:10}} stroke={T.grid} domain={[0,100]}/><Tooltip content={<Tip/>}/><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.btc} stopOpacity={0.3}/><stop offset="100%" stopColor={T.btc} stopOpacity={0.02}/></linearGradient></defs><Area yAxisId="l" type="monotone" dataKey="btc" fill="url(#bg)" stroke={T.btc} strokeWidth={2.5} name="BTC ($K)"/><Line yAxisId="r" type="monotone" dataKey="fg" stroke={T.coral} strokeWidth={1.5} strokeDasharray="4 3" dot={false} name="Fear & Greed"/><ReferenceLine yAxisId="r" y={25} stroke={T.coral} strokeDasharray="8 4" strokeOpacity={0.4}/></ComposedChart></ResponsiveContainer></div></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>ON-CHAIN SIGNAL GRID</div>
+<Glass><PH title="ON-CHAIN SIGNAL GRID"/>
 <div style={{fontSize:9,color:T.accent,fontWeight:600,marginBottom:8}}>UPGRADES: HODL Waves, Reserve Risk, Dune Analytics custom queries</div>
 <MetricGrid items={[
 {l:"Exchange Reserves",v:M.reserves,n:"All-time low since 2018",c:T.teal},
@@ -640,11 +750,11 @@ const P12=()=>(<div>
 <Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT"/>
 <Row><KPI label="VIX" value={M.vix.toFixed(1)} delta="+19% on 5 Mar" dt="down" ac={T.coral}/><KPI label="MOVE" value={M.move.toString()} delta="Rate vol high" dt="down" ac={T.coral}/><KPI label="S&P Impl Vol" value="16.1%" delta="vs 13% realised" dt="down"/><KPI label="BTC Vol" value="~50%" delta="3.5x S&P" dt="down" ac={T.coral}/><KPI label="FTSE Vol" value="~9.4%" dt="up" ac={T.teal}/></Row>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>VOL REGIME — VIX vs MOVE vs CRYPTO (annualised)</div>
+<Glass><PH title="VOL REGIME — VIX vs MOVE vs CRYPTO (annualised)"/>
 <div style={{height:210}}><ResponsiveContainer><ComposedChart data={VOL_TL}><CartesianGrid strokeDasharray="3 3" stroke={T.grid}/><XAxis dataKey="d" tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><YAxis tick={{fill:T.t3,fontSize:10}} stroke={T.grid}/><Tooltip content={<Tip/>}/><Line type="monotone" dataKey="vix" stroke={T.blue} strokeWidth={2} name="VIX"/><Line type="monotone" dataKey="move" stroke={T.coral} strokeWidth={2} name="MOVE" strokeDasharray="6 3"/><Line type="monotone" dataKey="cv" stroke={T.btc} strokeWidth={2} name="Crypto Vol"/><ReferenceLine y={20} stroke={T.amber} strokeDasharray="6 4" strokeOpacity={0.4}/></ComposedChart></ResponsiveContainer></div>
 <Ins type="source" text={`Phase 2 upgrade: Riskfolio-Lib (24 convex risk measures including Ulcer Index, CVaR, EDaR) and skfolio (ML-driven asset clustering) deploy on Mac Mini. These replace basic Sharpe/Sortino with institutional-grade risk analytics — including drawdown severity scoring, tail-risk modelling, and dynamic correlation regime detection.`}/></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>CROSS-ASSET STRESS DASHBOARD</div>
+<Glass><PH title="CROSS-ASSET STRESS DASHBOARD"/>
 <MetricGrid items={[{l:"US Equities",v:"Moderate",n:"VIX 24.5, -3% from ATH",c:T.amber},{l:"UK Equities",v:"Elevated",n:"Gilt shock, -5.5% weekly",c:T.coral},{l:"Credit",v:"Low",n:"HY spreads contained",c:T.teal},{l:"Rates / Gilts",v:"HIGH",n:"40bp weekly — mini-budget",c:T.negative},{l:"Crypto",v:"EXTREME",n:"F&G 18, RSI 27.5",c:T.negative},{l:"FX / GBP",v:"Moderate",n:"USD safe-haven bid",c:T.amber},{l:"Commodities",v:"Elevated",n:"Brent $93, gold ATH",c:T.coral},{l:"Volatility",v:"Elevated",n:"Impl > realised",c:T.amber}]}/>
 <SourceTag sources={["FRED VIXCLS","MacroMicro MOVE","FRED STLFSI4/NFCI","Phase 2: Riskfolio-Lib, skfolio"]}/></Glass>
 
@@ -659,7 +769,7 @@ const P12=()=>(<div>
 // =========================================================================
 const P13=()=>(<div>
 <Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE"/>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>NASCENT THEME SCANNER — CONVICTION vs MATURITY</div>
+<Glass><PH title="NASCENT THEME SCANNER — CONVICTION vs MATURITY"/>
 <Tbl h={["Theme","Conviction","Timing","Vehicle","Status"]} r={[
 ["AI Power / Grid Infrastructure","9/10","8/10","GII, XLU, NEE, utilities","Research — high conviction"],
 ["Defence Tech","8/10","7/10","BA, LMT, Babcock, BAE","Priced in at index level"],
@@ -672,7 +782,7 @@ const P13=()=>(<div>
 ]} hl={1}/>
 <Ins type="insight" text={`AI power infrastructure remains highest-conviction: hyperscaler capex $660-690B in 2026, grid bottlenecks creating structural demand. Defence tech is accelerating (Babcock +147%) but priced in. Three new watchlist additions from Stanford SETR and McKinsey: space robotics (microgravity manufacturing), synthetic biology (AI + genetic engineering), and RWA tokenisation. None are investable yet via clean public proxies — they stay on watch with zero allocation.`}/></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>SATELLITE ALLOCATION RULES</div>
+<Glass><PH title="SATELLITE ALLOCATION RULES"/>
 <MetricGrid items={[{l:"Max Satellite Weight",v:"5% NAV",n:"Hard cap. No exceptions.",c:T.accent},{l:"Max Concurrent Bets",v:"3",n:"Focus > diversification",c:T.accent},{l:"Review Cycle",v:"90 days",n:"Trim or kill at each review",c:T.accent},{l:"Research Hurdle",v:"3+ confirmations",n:"Price, flows, earnings, policy",c:T.accent}]}/></Glass>
 
 <Verdict label="AI POWER INFRASTRUCTURE = HIGHEST CONVICTION NASCENT THEME" imp={[
@@ -686,13 +796,13 @@ const P13=()=>(<div>
 // =========================================================================
 const P14=()=>(<div>
 <Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING"/>
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>SCENARIO STACK</div>
-{SCENARIOS.map((x,i)=>(<div key={i} style={{padding:"10px 13px",marginBottom:7,background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.col}`}}>
+<Glass><PH title="SCENARIO STACK"/>
+{SCENARIOS.map((x,i)=>(<div key={i} style={{padding:"10px 13px",marginBottom:7,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.col}`}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:700,color:T.t1}}>{x.s}</span><span style={{fontSize:12,fontWeight:700,color:x.col,fontFamily:"'JetBrains Mono',monospace"}}>{x.pr}%</span></div>
 <div style={{display:"flex",gap:16,marginTop:4}}><span style={{fontSize:10,color:T.t3}}>S&P: {x.sp}</span><span style={{fontSize:10,color:T.t3}}>BTC: {x.btc}</span></div>
 <div style={{fontSize:10.5,color:T.t2,marginTop:3}}>{x.desc}</div></div>))}</Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>PORTFOLIO SENSITIVITY BY SCENARIO</div>
+<Glass><PH title="PORTFOLIO SENSITIVITY BY SCENARIO"/>
 <Tbl h={["Scenario","Impact","Most Exposed Sleeve","Probability"]} r={[
 ["Equities -20%","-9.8%","ETF sleeves (£109K)",M.sp500PE>25?"15%":"10%"],
 ["Crypto -40%","-5.6%","Crypto (£50K)","20%"],
@@ -703,7 +813,7 @@ const P14=()=>(<div>
 ]} hl={1}/>
 <Ins type="source" text={`Phase 2 upgrade: Riskfolio-Lib CVaR and EDaR will replace these static sensitivity estimates with Monte Carlo-driven probability distributions. The Entropic Drawdown at Risk measure will specifically stress-test the crypto winter extension scenario using exponential cone programming to capture tail risks that normal distributions miss.`}/></Glass>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>DEPLOYMENT PLAYBOOK</div>
+<Glass><PH title="DEPLOYMENT PLAYBOOK"/>
 <MetricGrid items={[{l:"At -10% from peak",v:"Deploy 25%",n:"of dry powder into highest-conviction ideas",c:T.teal},{l:"At -20% from peak",v:"Deploy 50%",n:"accelerate ISA + BTC DCA",c:T.teal},{l:"At -30% from peak",v:"Deploy remaining",n:"maximum aggression into quality",c:T.positive},{l:"Current Drawdown",v:"-8.9%",n:"From £397K peak (4 Oct 25)",c:T.amber}]}/></Glass>
 
 <Verdict label="LATE CYCLE — BASE 50%, INFLATION SCARE UPGRADED TO 20%" imp={[
@@ -721,7 +831,7 @@ const P15=()=>(<div>
 
 <Ins type="action" text={`Three highest-alpha actions ranked by certainty: (1) Pay Amex balance — guaranteed 22% return. (2) Deploy ISA \u00A320K — 80-120bps structural alpha per year, every year, forever. (3) Continue BTC DCA — accumulation at extreme fear with historic contrarian signals. These three actions alone are worth more than any amount of research. Execute them.`}/>
 
-<Glass><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:10}}>DEFENSIVE ASSET COMPARISON</div>
+<Glass><PH title="DEFENSIVE ASSET COMPARISON"/>
 <Tbl h={["Asset","Return","In Current Drawdown","Role"]} r={[
 ["Cash (4.3% fix)","4.3% nominal","Stable. Zero drawdown.","Baseline hurdle"],
 ["Short Gilts (SHY equiv)","~3.8%","Modest positive","Low-duration ballast"],
@@ -742,27 +852,36 @@ const P15=()=>(<div>
 // =========================================================================
 const P16=()=>(<div>
 <Hd t="WEEKLY INTELLIGENCE SYNTHESIS" s={`Week of ${M.date}`} tag="SUNDAY SCARIES"/>
-<Glass glow><div style={{fontSize:12,fontWeight:700,color:T.t1,marginBottom:12}}>FIVE KEY SHIFTS</div>
+
+{/* Action hero MAT tiles */}
+<Row style={{marginBottom:0}}>
+  <MatStat label="🎯 #1 Action" value="Deploy ISA £20K" sub="5 April deadline · 29 days" mat="teal"/>
+  <MatStat label="💳 #2 Action" value="Clear Amex" sub="£10,652 at 22% APR guaranteed" mat="red"/>
+  <MatStat label="₿ #3 Action" value="Continue DCA" sub="BTC extreme fear · MVRV 0.49" mat="amber"/>
+  <MatStat label="📊 Regime" value="LATE CYCLE" sub="Inflation scare · 68% conf" mat="indigo"/>
+</Row>
+
+<Glass glow><PH title="FIVE KEY SHIFTS"/>
 {[{s:"Iran reprices the entire rate path",d:"Brent $93, gilt 40bp surge. BoE cut <20%. Stagflation risk rising.",c:T.coral},
 {s:"Value rotation at 99.8th percentile intensity",d:"Value +7.8% YTD vs Growth -1.9%. Structural, not noise.",c:T.amber},
 {s:"BTC ETF inflows resume after 6-week drought",d:"$500M on 5 March. Whale accumulation $23B in 30 days.",c:T.teal},
 {s:"SaaSpocalypse: $1-2T destroyed",d:"IGV -30%. Software PE 35x to 20x. AI agents disrupting SaaS.",c:T.coral},
 {s:"Gold $5,280 — HALO trade dominates",d:"Hard Assets, Low Obsolescence. Defence + miners + energy.",c:T.amber}
-].map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(255,255,255,0.02)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:10.5,color:T.t3,marginTop:2,paddingLeft:20}}>{x.d}</div></div>))}</Glass>
+].map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:10.5,color:T.t3,marginTop:2,paddingLeft:20}}>{x.d}</div></div>))}</Glass>
 
 <Grid cols="1fr 1fr">
-<Glass><div style={{fontSize:11,fontWeight:700,color:T.coral,letterSpacing:1,marginBottom:8}}>THREE RISING RISKS</div>
+<Glass><PH title="THREE RISING RISKS" ac={P.s4}/>
 {["Iran forces BoE halt — gilt crisis, mortgage spike, FTSE 250 exposed",
 "AI capex $660-690B with 90% of firms seeing no productivity impact. Bubble risk real.",
 "Crypto-equity correlation rising. Zero diversification benefit from 13% crypto weight."
 ].map((r,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.coral,fontWeight:700}}>{i+1}.</span> {r}</div>))}</Glass>
-<Glass><div style={{fontSize:11,fontWeight:700,color:T.teal,letterSpacing:1,marginBottom:8}}>THREE OPPORTUNITIES</div>
+<Glass><PH title="THREE OPPORTUNITIES" ac={P.cyan}/>
 {["BTC accumulation at extreme fear — MVRV 0.49, RSI 27.5, whale buying confirms. Continue DCA.",
 "European equities + value rotation — JERE +22%, structural defence/bank/rotation tailwinds.",
 "ISA deployment: 29 days, \u00A30 deployed. 80-120bps structural alpha. Highest certainty action."
 ].map((o,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.teal,fontWeight:700}}>{i+1}.</span> {o}</div>))}</Glass></Grid>
 
-<Glass><div style={{fontSize:11,fontWeight:700,color:T.accent,letterSpacing:1,marginBottom:8}}>PORTFOLIO IMPLICATION BOARD</div>
+<Glass><PH title="PORTFOLIO IMPLICATION BOARD" ac={P.cyan}/>
 <Tbl h={["Sleeve","Signal","Action"]} r={[
 ["JURE (US)","Growth-to-value headwind. Mag 7 all underperforming.","Hold. Do not add."],
 ["JERE (Europe)","Defence + banks + rotation. +22% 12M.","ADD via ISA"],
@@ -774,12 +893,12 @@ const P16=()=>(<div>
 ["Amex Debt","\u00A310.6K at 22% APR.","CLEAR — guaranteed 22% return"]
 ]} hl={2}/></Glass>
 
-<Glass style={{borderTop:`2px solid ${T.teal}`}}><div style={{fontSize:11,fontWeight:700,color:T.teal,letterSpacing:1,marginBottom:8}}>ACTION SUMMARY</div>
+<Glass style={{borderTop:`2px solid ${T.teal}`}}><PH title="ACTION SUMMARY" ac={P.cyan}/>
 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(190px, 1fr))",gap:10}}>
 {[{l:"DO THIS WEEK",items:["Deploy ISA \u00A320K: JERE + JMRE","Continue BTC DCA","Review Amex paydown (\u00A310.6K)"],c:T.teal},
 {l:"WATCH CLOSELY",items:["BoE MPC 19 March","US CPI release","Gilt 10Y (5.0% = crisis)","BTC ETF daily flows"],c:T.amber},
 {l:"IGNORE",items:["Daily crypto price noise","Mag 7 earnings chatter","Housing headlines","Short-term FX"],c:T.neutral}
-].map((b,i)=>(<div key={i} style={{padding:"10px 12px",background:"rgba(255,255,255,0.02)",borderRadius:10,borderTop:`2px solid ${b.c}`}}>
+].map((b,i)=>(<div key={i} style={{padding:"10px 12px",background:"rgba(7,46,51,0.45)",borderRadius:10,borderTop:`2px solid ${b.c}`}}>
 <div style={{fontSize:10,fontWeight:700,color:b.c,letterSpacing:0.8,marginBottom:6}}>{b.l}</div>
 {b.items.map((x,j)=>(<div key={j} style={{fontSize:11,color:T.t2,padding:"2px 0"}}>{"\u2022"} {x}</div>))}</div>))}</div></Glass>
 </div>);
