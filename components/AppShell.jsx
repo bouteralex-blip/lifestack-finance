@@ -26,7 +26,7 @@ export default function AppShell() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: `url('/bg-waves.svg') center/cover fixed, linear-gradient(160deg, #05161A 0%, #072E33 18%, #05161A 100%)`,
+      background: `linear-gradient(160deg, #05161A 0%, #072E33 12%, #05161A 100%)`,
     }}>
       {/* Module switcher bar — liquid glass teal-navy */}
       <div style={{

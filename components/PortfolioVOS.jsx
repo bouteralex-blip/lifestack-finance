@@ -4462,9 +4462,11 @@ export default function PortfolioVOS(){
   const [showMenu,setShowMenu]=useState(false);
   return (
     <div style={{width:"100%",minHeight:"100vh",fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden",
-      background:`url('/bg-waves.svg') center/cover fixed, linear-gradient(160deg, #05161A 0%, #072E33 18%, #05161A 100%)`,
-      backgroundAttachment:'fixed',
+      background:`linear-gradient(160deg, #05161A 0%, #072E33 18%, #05161A 100%)`,
     }}>
+      {/* Fixed wallpaper — separate GPU layer, eliminates scroll jitter */}
+      <div style={{position:"fixed",inset:0,background:"url('/bg-waves.svg') center/cover no-repeat",zIndex:0,willChange:"transform",transform:"translateZ(0)",pointerEvents:"none"}}/>
+
       {/* Deep teal depth layers — Pinterest swatch spectrum */}
       <div style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',
         background:'radial-gradient(ellipse at 25% 15%, rgba(15,150,156,0.28) 0%, transparent 45%), radial-gradient(ellipse at 78% 65%, rgba(12,112,117,0.32) 0%, transparent 50%), radial-gradient(ellipse at 52% 88%, rgba(109,165,192,0.12) 0%, transparent 40%), radial-gradient(ellipse at 12% 78%, rgba(41,77,97,0.30) 0%, transparent 45%), radial-gradient(ellipse at 90% 22%, rgba(15,150,156,0.16) 0%, transparent 35%), radial-gradient(ellipse at 50% 45%, rgba(7,46,51,0.55) 0%, transparent 60%)',
