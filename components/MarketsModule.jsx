@@ -1,25 +1,94 @@
-import { useState } from "react";
+'use client';
+import React, { useState } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter } from "recharts";
 import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, Landmark, CircleDot, FileText, Briefcase, Factory, Flame, Map, Users, Gem, ChevronRight, ChevronDown } from "lucide-react";
 
 // =========================================================================
-// LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v2.0
-// 24 Tabs | 17 Upgrades Integrated | Electric Blue Accent
+// LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
+// Horizon Glass · Liquid Refraction · Luxury Teal-Navy System
+// 24 Tabs | 17 Upgrades Integrated | Teal-Navy Accent
 // Data: 7 March 2026 | Sources: FRED, GMD, MacroMicro, CoinGecko,
 // LookIntoBitcoin, WB PPI, StockGeist, Dune, CarbonCredits, CFTC
 // Phase 2 MCP: FRED, Yahoo Finance, FMP, Octagon AI, Financial Datasets
 // Phase 2 Quant: Riskfolio-Lib (24 risk measures), skfolio (ML clustering)
 // =========================================================================
-const T={bg:"#060A14",surface:"#0C1020",glass:"rgba(255,255,255,0.03)",glassBorder:"rgba(255,255,255,0.08)",glassRadius:16,glassPad:18,glassGap:14,glassBlur:"blur(24px) saturate(1.4)",
-shadow:"0 8px 32px rgba(0,0,0,0.35), 0 0 80px rgba(0,0,0,0.12)",shine:"linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%)",
-teal:"#00D4AA",violet:"#7C6FFF",amber:"#F5A623",coral:"#FF5C7A",blue:"#3B82F6",magenta:"#FF3BBD",cyan:"#06B6D4",
-positive:"#00D4AA",negative:"#FF5C7A",warning:"#F5A623",neutral:"#64748B",
-btc:"#f7931a",eth:"#627EEA",sol:"#9945FF",
-t1:"#F1F5F9",t2:"#94A3B8",t3:"#64748B",
-accent:"#3B82F6",accentSub:"rgba(59,130,246,0.06)",accentGlow:"rgba(59,130,246,0.12)",grid:"rgba(255,255,255,0.03)",
-cp:["#3B82F6","#00D4AA","#F5A623","#FF5C7A","#7C6FFF","#06B6D4","#FF3BBD","#22C55E"]};
+
+// --- PALETTE: Deep Navy-Teal Spectrum (Pinterest #05161A → #0F969C → #6DA5C0) ---
+const P={
+  bg:"#05161A",
+  cyan:"#0F969C",cyanD:"rgba(15,150,156,0.12)",cyanG:"rgba(15,150,156,0.05)",
+  indigo:"#6DA5C0",indigoD:"rgba(109,165,192,0.12)",
+  amber:"#f59e0b",amberD:"rgba(245,158,11,0.08)",
+  red:"#ef4444",redD:"rgba(239,68,68,0.08)",
+  green:"#22c55e",greenD:"rgba(34,197,94,0.08)",
+  purple:"#a855f7",orange:"#fb923c",btc:"#f7931a",pink:"#ec4899",
+  teal:"#0F969C",sky:"#6DA5C0",
+  positive:"#0F969C",negative:"#f43f5e",
+  t1:"#e8f4f5",t2:"#b0cdd4",t3:"#7a9da6",t4:"rgba(255,255,255,0.55)",t5:"rgba(255,255,255,0.35)",
+  b1:"rgba(15,150,156,0.18)",b2:"rgba(15,150,156,0.10)",b3:"rgba(15,150,156,0.05)",
+  mono:"'JetBrains Mono','SF Mono','Cascadia Code',monospace",
+  l0:"#05161A",l1:"#072E33",l2:"#0C7075",l3:"#0F969C",l4:"#6DA5C0",l5:"#294D61",
+  s1:"#0F969C",s2:"#7C6FFF",s3:"#f59e0b",s4:"#FF5C7A",s5:"#3B9EFF",s6:"#FF3BBD",
+};
+
+// --- MATERIAL TILE STYLES: Solid gradient accent cards — teal-navy spectrum ---
+const MAT={
+  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), 0 0 80px rgba(15,150,156,0.10), inset 0 1px 0 rgba(255,255,255,0.22)',borderRadius:16,border:'1px solid rgba(15,150,156,0.35)'},
+  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), 0 0 80px rgba(41,77,97,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',borderRadius:16,border:'1px solid rgba(109,165,192,0.25)'},
+  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), 0 0 80px rgba(217,119,6,0.08), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
+  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), 0 0 80px rgba(220,38,38,0.08), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
+  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), 0 0 80px rgba(12,112,117,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',borderRadius:16,border:'1px solid rgba(15,150,156,0.20)'},
+};
+
+// --- LIQUID GLASS SYSTEM: True refraction over teal/navy wallpaper ---
+const glassLight=(tier=2)=>{
+  const plate=tier===1?'rgba(7,46,51,0.72)':tier===3?'rgba(5,22,26,0.35)':'rgba(7,46,51,0.58)';
+  const blur=20;
+  const sat=tier===1?1.8:tier===3?1.3:1.6;
+  const specular=tier===1?0.22:tier===3?0.10:0.15;
+  const sheen=tier===3?0.08:tier===1?0.08:0.06;
+  const bdr=tier===1?'rgba(15,150,156,0.32)':tier===3?'rgba(15,150,156,0.10)':'rgba(15,150,156,0.22)';
+  return {
+    background:plate,
+    backdropFilter:`blur(${blur}px) saturate(${sat}) url(#glass-refract)`,
+    WebkitBackdropFilter:`blur(${blur}px) saturate(${sat})`,
+    border:`1px solid ${bdr}`,
+    borderRadius:16,
+    boxShadow:`0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,${specular}), inset 0 0 0 1px rgba(15,150,156,0.06)`,
+    backgroundImage:`linear-gradient(135deg, rgba(255,255,255,${sheen}) 0%, transparent 50%, rgba(255,255,255,0.02) 100%)`,
+  };
+};
+const G=glassLight(2);const G1=glassLight(1);const G3=glassLight(3);
+const GS={
+  background:"rgba(7,46,51,0.92)",
+  backdropFilter:"blur(20px) saturate(1.6)",WebkitBackdropFilter:"blur(20px) saturate(1.6)",
+  border:"1px solid rgba(15,150,156,0.28)",borderRadius:16,
+  boxShadow:"0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.16)",
+  backgroundImage:"linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)",
+};
+const HEADER_BANNER={
+  background:'linear-gradient(90deg, rgba(5,22,26,0.92), rgba(7,46,51,0.80) 70%)',
+  padding:'10px 16px',borderRadius:'16px 16px 0 0',
+  marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
+  backgroundImage:'linear-gradient(90deg, rgba(15,150,156,0.10), transparent 70%)',
+  borderBottom:'1px solid rgba(15,150,156,0.16)',
+};
+const HEADER_TITLE={fontSize:13,fontWeight:800,color:'#e8f4f5',letterSpacing:1.5,textTransform:'uppercase'};
+const HEADER_SUB={fontSize:10,fontWeight:500,color:'rgba(232,244,245,0.45)',marginTop:1};
+
+// Backward-compat shim: T maps to P so all existing tab code (T.accent, T.teal, etc.) auto-upgrades
+const T={
+  bg:P.bg,surface:P.l1,glass:P.cyanG,glassBorder:P.b2,glassRadius:16,glassPad:18,glassGap:14,
+  glassBlur:"blur(20px) saturate(1.6)",shadow:"0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15)",
+  teal:P.cyan,violet:P.s2,amber:P.amber,coral:P.s4,blue:P.s5,magenta:P.s6,cyan:P.cyan,
+  positive:P.positive,negative:P.negative,warning:P.amber,neutral:P.t3,
+  btc:P.btc,eth:"#627EEA",sol:"#9945FF",
+  t1:P.t1,t2:P.t2,t3:P.t3,
+  accent:P.cyan,accentSub:P.cyanD,accentGlow:"rgba(15,150,156,0.12)",grid:P.b3,
+  cp:[P.s1,P.s2,P.s3,P.s4,P.s5,P.s6,P.cyan,P.green],
+};
 const hx=h=>{h=h.replace("#","");return[parseInt(h.substring(0,2),16),parseInt(h.substring(2,4),16),parseInt(h.substring(4,6),16)].join(",");};
-const GW=(c=T.accent)=>`0 0 24px rgba(${hx(c)},0.12), 0 0 60px rgba(${hx(c)},0.04)`;
+const GW=(c=T.accent)=>`0 0 24px rgba(${hx(c)},0.15), 0 0 60px rgba(${hx(c)},0.06)`;
 
 // =========================================================================
 // MARKET DATA ENGINE — 7 MARCH 2026
@@ -90,95 +159,227 @@ const SCENARIOS=[{s:"Base Case",pr:50,sp:"7,200",btc:"$85K",desc:"Late-cycle gri
 {s:"Crisis",pr:10,sp:"5,500",btc:"$30K",desc:"Recession. Gilt crisis. Credit freeze. Forced selling across all risk assets.",col:T.negative}];
 
 // =========================================================================
-// UI COMPONENTS — LIQUID GLASS DARK SYSTEM
-// Playbook: shell + plate + content stack, 3 tiers, locked 135deg light,
-// edge discipline, tiered plate, graceful fallback
+// UI COMPONENTS — HORIZON GLASS · LIQUID TEAL-NAVY SYSTEM
+// Shell + plate + content stack, 3 tiers, 135deg locked light,
+// teal-tinted borders, dual-shadow depth, graceful fallback
 // =========================================================================
-const glassDark = (tier=2, accent=null) => {
-  const plate = tier===1?0.35:tier===3?0.10:0.20;
-  const blur = tier===1?20:tier===3?30:26;
-  const borderA = tier===1?0.12:tier===3?0.05:0.08;
-  const highlightA = tier===1?0.04:tier===3?0.12:0.07;
-  const insetA = tier===1?0.08:tier===3?0.04:0.06;
-  return {
-    plate:`rgba(8,12,28,${plate})`,
-    blur:`blur(${blur}px) saturate(1.4)`,
-    border:`1px solid rgba(255,255,255,${borderA})`,
-    highlight:`linear-gradient(135deg, rgba(255,255,255,${highlightA}), transparent 50%)${accent?`, ${accent}04`:''}`,
-    inset:`inset 0 1px 0 rgba(255,255,255,${insetA}), inset 0 0 0 1px rgba(255,255,255,${insetA*0.5})`,
-    shadow:`0 10px 40px rgba(0,0,0,0.40), 0 24px 80px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.15)`,
-  };
+
+// SVG glass refraction filter (injected once at root)
+const GlassDefs=()=>(
+  <svg style={{position:'absolute',width:0,height:0}} aria-hidden="true">
+    <defs>
+      <filter id="glass-refract" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+);
+
+// Glass panel — uses glassLight() teal-navy plates
+const Glass=({children,style={},glow=false,accent=P.cyan,tier=2})=>{
+  const gs=glassLight(tier);
+  const glowColor=accent||P.cyan;
+  return(
+    <div style={{position:'relative',borderRadius:16,overflow:'hidden',marginBottom:14,
+      ...(style.flex?{flex:style.flex}:{}),
+      ...(style.minWidth?{minWidth:style.minWidth}:{}),
+      ...(style.borderTop?{}:{}),
+    }}>
+      {/* Shell: blur + refraction */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:gs.backdropFilter,WebkitBackdropFilter:gs.WebkitBackdropFilter,
+        border:gs.border,backgroundImage:gs.backgroundImage,
+        boxShadow:glow?`${gs.boxShadow}, ${GW(glowColor)}`:gs.boxShadow,
+        pointerEvents:'none',transition:'box-shadow 0.3s ease',
+      }}/>
+      {/* Plate: dark teal readability surface */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:gs.background,pointerEvents:'none'}}/>
+      {/* Teal accent top line */}
+      <div style={{position:'absolute',top:0,left:'8%',right:'8%',height:1,
+        background:`linear-gradient(90deg,transparent,${glowColor}50,transparent)`,
+        pointerEvents:'none',borderRadius:1,
+      }}/>
+      {/* Content */}
+      <div style={{position:'relative',zIndex:1,
+        padding:style.padding||18,
+        ...(style.textAlign?{textAlign:style.textAlign}:{}),
+        ...(style.borderTop?{borderTop:style.borderTop}:{}),
+        ...(style.borderLeft?{borderLeft:style.borderLeft}:{}),
+      }}>{children}</div>
+    </div>
+  );
 };
-const Glass=({children,style={},glow=false,accent=T.accent,tier=2})=>{
-  const g=glassDark(tier,glow?accent:null);
-  return(<div style={{position:'relative',borderRadius:T.glassRadius,overflow:'hidden',marginBottom:T.glassGap,...(style.flex?{flex:style.flex}:{}),
-    ...(style.minWidth?{minWidth:style.minWidth}:{}),
-    ...(style.textAlign?{}:{}),
-  }}>
-    {/* Shell: edges, highlight, blur */}
+
+// KPI tile — rich accent-edge tile matching PortfolioVOS K component
+const KPI=({label,value,delta,dt="up",sub,ac})=>{
+  const dc=dt==="up"?P.positive:dt==="down"?P.negative:P.t3;
+  const di=dt==="up"?"▲":dt==="down"?"▼":"●";
+  const acColor=ac||P.cyan;
+  return(
+    <div style={{position:'relative',borderRadius:16,overflow:'hidden',flex:"1 1 145px",minWidth:130,marginBottom:14}}>
+      {/* Shell */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:'blur(24px) saturate(1.7) url(#glass-refract)',WebkitBackdropFilter:'blur(24px) saturate(1.7)',
+        border:'1px solid rgba(255,255,255,0.14)',
+        backgroundImage:'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%, rgba(255,255,255,0.04) 100%)',
+        boxShadow:'0 16px 48px rgba(0,0,0,0.30), 0 4px 14px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)',
+        pointerEvents:'none',
+      }}/>
+      {/* Plate */}
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(7,46,51,0.62)',pointerEvents:'none'}}/>
+      {/* Accent bottom edge */}
+      <div style={{position:'absolute',bottom:0,left:'8%',right:'8%',height:3,
+        background:`linear-gradient(90deg, transparent, ${acColor}80, transparent)`,
+        borderRadius:2,pointerEvents:'none',
+      }}/>
+      <div style={{position:'relative',zIndex:1,padding:"16px 15px",textAlign:"center"}}>
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:5}}>{label}</div>
+        <div style={{fontSize:24,fontWeight:800,color:acColor,fontFamily:P.mono,letterSpacing:-0.5,lineHeight:1.1}}>{value}</div>
+        {delta&&<div style={{display:'inline-flex',alignItems:'center',gap:3,marginTop:5,fontSize:10,fontWeight:700,
+          color:dc,background:dt==="up"?'rgba(15,150,156,0.18)':dt==="down"?'rgba(244,63,94,0.15)':'rgba(255,255,255,0.06)',
+          padding:'2px 7px',borderRadius:4,
+        }}>{di} {delta}</div>}
+        {sub&&<div style={{fontSize:9,color:P.t3,marginTop:3,lineHeight:1.3}}>{sub}</div>}
+      </div>
+    </div>
+  );
+};
+
+// Section header — 24px luxury title matching PortfolioVOS
+const Hd=({t,s,tag,ac=P.cyan})=>(
+  <div style={{marginBottom:18,marginTop:6}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+      <h2 style={{fontSize:24,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
+      {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
+    </div>
+    {s&&<p style={{fontSize:12,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
+  </div>
+);
+
+// Insight callout — 4px border, gradient bg, 13px text
+const Ins=({text,type="insight"})=>{
+  const c={insight:P.cyan,warning:P.amber,action:P.s2,risk:P.negative,opportunity:P.positive,regime:P.sky,source:P.t3}[type]||P.cyan;
+  return(
+    <div style={{position:'relative',overflow:'hidden',padding:"16px 20px",borderLeft:`4px solid ${c}`,borderRadius:"0 14px 14px 0",marginBottom:14}}>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:'blur(14px) saturate(1.3)',WebkitBackdropFilter:'blur(14px) saturate(1.3)',
+        background:`linear-gradient(135deg,${c}14,rgba(7,46,51,0.65) 70%)`,
+        border:'1px solid rgba(255,255,255,0.06)',borderLeft:'none',
+        boxShadow:'0 8px 24px rgba(0,0,0,0.28)',
+        pointerEvents:'none',
+      }}/>
+      <div style={{position:'relative',zIndex:1}}>
+        <div style={{fontSize:10,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:5}}>{type}</div>
+        <div style={{fontSize:13,color:P.t2,lineHeight:1.7,fontWeight:500}}>{text}</div>
+      </div>
+    </div>
+  );
+};
+
+const Row=({children,gap=14,style})=>(<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
+const Grid=({children,cols="1fr 1fr",gap=14,style={}})=>(<div style={{display:"grid",gridTemplateColumns:cols,gap,...style}}>{children}</div>);
+
+// Table — glass panel bg, hover rows, richer typography
+const Tbl=({h,r,hl})=>(
+  <div style={{overflowX:"auto",borderRadius:14,border:'1px solid rgba(15,150,156,0.15)',background:"rgba(7,46,51,0.52)",boxShadow:'0 8px 32px rgba(0,0,0,0.25)'}}>
+    <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+      <thead><tr>{h.map((x,i)=><th key={i} style={{textAlign:i===0?"left":"right",padding:"10px 14px",borderBottom:'1px solid rgba(15,150,156,0.15)',color:P.t3,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:0.8,background:"rgba(5,22,26,0.60)"}}>{x}</th>)}</tr></thead>
+      <tbody>{r.map((row,ri)=><tr key={ri} style={{transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(15,150,156,0.06)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{row.map((cell,ci)=>{const neg=typeof cell==="string"&&cell.startsWith("-");const pos=typeof cell==="string"&&cell.startsWith("+");return<td key={ci} style={{textAlign:ci===0?"left":"right",padding:"9px 14px",borderBottom:'1px solid rgba(15,150,156,0.07)',color:hl===ci?(neg?P.negative:pos?P.positive:P.t1):(ci===0?P.t1:P.t2),fontWeight:ci===0||hl===ci?600:500,fontSize:12,fontFamily:ci>0?P.mono:"inherit"}}>{cell}</td>;})}</tr>)}</tbody>
+    </table>
+  </div>
+);
+
+// Tooltip — liquid glass, teal spec
+const Tip=({active,payload,label})=>{
+  if(!active||!payload?.length)return null;
+  return(
+    <div style={{position:'relative',borderRadius:14,overflow:'hidden',minWidth:145,boxShadow:'0 12px 40px rgba(0,0,0,0.50)'}}>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        backdropFilter:'blur(24px) saturate(1.6)',WebkitBackdropFilter:'blur(24px) saturate(1.6)',
+        background:'rgba(5,22,26,0.88)',border:'1px solid rgba(15,150,156,0.28)',pointerEvents:'none',
+      }}/>
+      <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+        background:'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 50%)',opacity:0.7,pointerEvents:'none',
+      }}/>
+      <div style={{position:'relative',zIndex:1,padding:"10px 14px"}}>
+        <div style={{color:P.t3,marginBottom:5,fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',borderBottom:'1px solid rgba(15,150,156,0.12)',paddingBottom:4}}>{label}</div>
+        {payload.filter(p=>p.value!=null).map((p,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:7,marginBottom:3}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:p.color||P.cyan,boxShadow:`0 0 8px ${p.color||P.cyan}`,flexShrink:0}}/>
+            <span style={{fontSize:11,color:P.t2,flex:1}}>{p.name}</span>
+            <span style={{fontSize:12,color:p.color||P.cyan,fontWeight:700,fontFamily:P.mono}}>{typeof p.value==="number"?p.value.toLocaleString():p.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Regime card — MAT tile-style with teal glow
+const RegimeCard=({label,conf,color})=>(
+  <div style={{position:'relative',overflow:'hidden',borderRadius:16,marginBottom:14}}>
     <div style={{position:'absolute',inset:0,borderRadius:'inherit',
-      backdropFilter:g.blur,WebkitBackdropFilter:g.blur,
-      border:g.border,backgroundImage:g.highlight,
-      boxShadow:glow?`${g.shadow}, ${GW(accent)}, ${g.inset}`:`${g.shadow}, ${g.inset}`,
-      pointerEvents:'none',transition:'box-shadow 0.3s ease',
+      background:`linear-gradient(135deg, ${color}22 0%, rgba(7,46,51,0.80) 60%, rgba(5,22,26,0.92) 100%)`,
+      backdropFilter:'blur(20px) saturate(1.6)',WebkitBackdropFilter:'blur(20px) saturate(1.6)',
+      border:`1px solid ${color}35`,
+      boxShadow:`0 8px 32px rgba(0,0,0,0.30), 0 0 60px ${color}18, inset 0 1px 0 rgba(255,255,255,0.14)`,
+      pointerEvents:'none',
     }}/>
-    {/* Plate: readability */}
-    <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:g.plate,pointerEvents:'none'}}/>
-    {/* Content */}
-    <div style={{position:'relative',zIndex:1,padding:style.padding||T.glassPad,
-      ...(style.textAlign?{textAlign:style.textAlign}:{}),
-      ...(style.borderTop?{borderTop:style.borderTop}:{}),
-      ...(style.borderLeft?{borderLeft:style.borderLeft}:{}),
-    }}>{children}</div>
-  </div>);
-};
-
-const KPI=({label,value,delta,dt="up",sub,ac})=>{const dc=dt==="up"?T.positive:dt==="down"?T.negative:T.neutral;const di=dt==="up"?"\u2191":dt==="down"?"\u2193":"\u2022";
-return(<div style={{position:'relative',borderRadius:T.glassRadius,overflow:'hidden',flex:"1 1 145px",minWidth:130,marginBottom:T.glassGap}}>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(20px) saturate(1.2)',WebkitBackdropFilter:'blur(20px) saturate(1.2)',border:'1px solid rgba(255,255,255,0.06)',backgroundImage:'linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%)',boxShadow:'0 6px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.18)',pointerEvents:'none'}}/>
-  {ac&&<div style={{position:'absolute',bottom:0,left:'10%',right:'10%',height:2,background:`linear-gradient(90deg, transparent, ${ac}35, transparent)`,borderRadius:2,pointerEvents:'none'}}/>}
-  <div style={{position:'relative',zIndex:1,padding:"13px 15px"}}>
-    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.06em",color:ac||T.t3,opacity:ac?0.9:0.45,marginBottom:4,fontWeight:700}}>{label}</div>
-    <div style={{fontSize:22,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.1}}>{value}</div>
-    {delta&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,background:dc+"1A",color:dc,fontSize:10,fontWeight:600}}>{di} {delta}</div>}
-    {sub&&<div style={{fontSize:9,color:T.t3,opacity:0.35,marginTop:2}}>{sub}</div>}
+    <div style={{position:'relative',zIndex:1,padding:"20px 24px",textAlign:"center"}}>
+      <div style={{fontSize:9,color:P.t3,letterSpacing:1.8,fontWeight:700,textTransform:"uppercase",marginBottom:8}}>MACRO REGIME CLASSIFIER</div>
+      <div style={{fontSize:20,fontWeight:800,color,letterSpacing:0.5,textShadow:`0 0 20px ${color}60`}}>{label}</div>
+      <div style={{marginTop:12,display:"flex",justifyContent:"center",alignItems:"center",gap:10}}>
+        <div style={{height:6,flex:1,maxWidth:180,background:"rgba(255,255,255,0.08)",borderRadius:4,overflow:"hidden"}}>
+          <div style={{width:`${conf}%`,height:"100%",background:`linear-gradient(90deg,${color},${color}99)`,borderRadius:4,boxShadow:`0 0 12px ${color}50`}}/>
+        </div>
+        <span style={{fontSize:13,fontWeight:800,color,fontFamily:P.mono}}>{conf}%</span>
+      </div>
+    </div>
   </div>
-</div>);};
+);
 
-const Hd=({t,s,tag,ac=T.accent})=>(<div style={{marginBottom:16,marginTop:4}}><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><h2 style={{fontSize:19,fontWeight:700,color:T.t1,margin:0,letterSpacing:-0.3}}>{t}</h2>{tag&&<span style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,background:`${ac}18`,color:ac,textTransform:"uppercase",letterSpacing:0.8,border:`1px solid ${ac}25`}}>{tag}</span>}</div>{s&&<p style={{fontSize:11,color:T.t3,margin:"3px 0 0",lineHeight:1.5}}>{s}</p>}</div>);
+// Verdict panel — teal top-border accent
+const Verdict=({label,imp,mon})=>(
+  <Glass style={{borderTop:`2px solid ${P.cyan}`}}>
+    <div style={{fontSize:9,color:P.cyan,fontWeight:700,letterSpacing:1.5,marginBottom:6,textTransform:'uppercase'}}>TAB VERDICT</div>
+    <div style={{fontSize:16,fontWeight:800,color:P.t1,marginBottom:12,lineHeight:1.3}}>{label}</div>
+    <div style={{fontSize:9,color:P.t3,fontWeight:700,letterSpacing:1,marginBottom:6,textTransform:'uppercase'}}>TOP 3 IMPLICATIONS</div>
+    {imp.map((x,i)=><div key={i} style={{fontSize:12,color:P.t2,padding:"5px 0",borderBottom:`1px solid ${P.b3}`,display:"flex",gap:8,lineHeight:1.5}}>
+      <span style={{color:P.cyan,fontWeight:800,fontFamily:P.mono,minWidth:16}}>{i+1}.</span>{x}
+    </div>)}
+    <div style={{fontSize:9,color:P.t3,fontWeight:700,letterSpacing:1,marginTop:12,marginBottom:6,textTransform:'uppercase'}}>MONITOR NEXT 7-30 DAYS</div>
+    {mon.map((x,i)=><div key={i} style={{fontSize:12,color:P.t2,padding:"3px 0"}}>{"•"} {x}</div>)}
+  </Glass>
+);
 
-const Ins=({text,type="insight"})=>{const c={insight:T.blue,warning:T.amber,action:T.violet,risk:T.coral,opportunity:T.teal,regime:T.cyan,source:T.neutral}[type]||T.blue;return(
-<div style={{position:'relative',overflow:'hidden',borderRadius:`0 ${T.glassRadius}px ${T.glassRadius}px 0`,marginBottom:T.glassGap}}>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',backdropFilter:'blur(12px) saturate(1.15)',WebkitBackdropFilter:'blur(12px) saturate(1.15)',background:`linear-gradient(90deg,${c}06,rgba(8,12,28,0.25) 60%)`,border:'1px solid rgba(255,255,255,0.03)',borderLeft:'none',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.15)',pointerEvents:'none'}}/>
-  <div style={{position:'relative',zIndex:1,padding:"11px 15px",borderLeft:`3px solid ${c}`}}>
-    <div style={{fontSize:9,color:c,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:3}}>{type}</div>
-    <div style={{fontSize:11.5,color:T.t2,lineHeight:1.6}}>{text}</div>
+// Metric grid — teal left-border tiles
+const MetricGrid=({items})=>(
+  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(175px, 1fr))",gap:9}}>
+    {items.map((s,i)=>(
+      <div key={i} style={{position:'relative',overflow:'hidden',borderRadius:12}}>
+        <div style={{position:'absolute',inset:0,borderRadius:'inherit',
+          background:'rgba(7,46,51,0.55)',
+          border:'1px solid rgba(15,150,156,0.14)',
+          boxShadow:'0 4px 16px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.06)',
+          pointerEvents:'none',
+        }}/>
+        <div style={{position:'relative',zIndex:1,padding:"10px 14px",borderLeft:`3px solid ${s.c||P.cyan}`}}>
+          <div style={{fontSize:9.5,color:P.t3,letterSpacing:0.5,fontWeight:600,textTransform:'uppercase'}}>{s.l}</div>
+          <div style={{fontSize:16,fontWeight:700,color:P.t1,fontFamily:P.mono,margin:"3px 0",lineHeight:1.1}}>{s.v}</div>
+          {s.n&&<div style={{fontSize:10,color:s.c||P.t3,lineHeight:1.3}}>{s.n}</div>}
+        </div>
+      </div>
+    ))}
   </div>
-</div>);};
+);
 
-const Row=({children,gap=T.glassGap,style})=>(<div style={{display:"flex",flexWrap:"wrap",gap,...style}}>{children}</div>);
-const Grid=({children,cols="1fr 1fr",gap=T.glassGap,style={}})=>(<div style={{display:"grid",gridTemplateColumns:cols,gap,...style}}>{children}</div>);
-
-const Tbl=({h,r,hl})=>(<div style={{overflowX:"auto",borderRadius:T.glassRadius-2}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11.5}}><thead><tr>{h.map((x,i)=><th key={i} style={{textAlign:i===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:T.t3,fontWeight:600,fontSize:9.5,textTransform:"uppercase",letterSpacing:"0.05em",opacity:0.4}}>{x}</th>)}</tr></thead><tbody>{r.map((row,ri)=><tr key={ri}>{row.map((cell,ci)=>{const neg=typeof cell==="string"&&cell.startsWith("-");const pos=typeof cell==="string"&&cell.startsWith("+");return <td key={ci} style={{textAlign:ci===0?"left":"right",padding:"7px 9px",borderBottom:`1px solid ${T.grid}`,color:hl===ci?(neg?T.negative:pos?T.positive:T.t1):(ci===0?T.t1:T.t2),fontWeight:ci===0||hl===ci?600:400,fontSize:11.5,fontFamily:ci>0?"'JetBrains Mono',monospace":"inherit"}}>{cell}</td>;})}</tr>)}</tbody></table></div>);
-
-const Tip=({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:"rgba(8,12,28,0.94)",backdropFilter:"blur(16px) saturate(1.2)",border:`1px solid rgba(255,255,255,0.06)`,borderRadius:10,padding:"7px 11px",boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)'}}><div style={{fontSize:9,color:T.t3,marginBottom:2}}>{label}</div>{payload.filter(p=>p.value!=null).map((p,i)=><div key={i} style={{fontSize:10.5,fontWeight:600,color:p.color||T.t1,fontFamily:"'JetBrains Mono',monospace"}}>{p.name}: {typeof p.value==="number"?p.value.toLocaleString():p.value}</div>)}</div>);};
-
-const RegimeCard=({label,conf,color})=>(<Glass glow accent={color} style={{textAlign:"center",padding:"18px 22px"}}><div style={{fontSize:9,color:T.t3,letterSpacing:1.5,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>MACRO REGIME CLASSIFIER</div><div style={{fontSize:17,fontWeight:800,color,letterSpacing:0.5}}>{label}</div><div style={{marginTop:8,display:"flex",justifyContent:"center",alignItems:"center",gap:8}}><div style={{height:5,flex:1,maxWidth:160,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}><div style={{width:`${conf}%`,height:"100%",background:`linear-gradient(90deg,${color},${color}99)`,borderRadius:4}}/></div><span style={{fontSize:11,fontWeight:700,color,fontFamily:"'JetBrains Mono',monospace"}}>{conf}%</span></div></Glass>);
-
-const Verdict=({label,imp,mon})=>(<Glass style={{borderTop:`2px solid ${T.accent}`}}><div style={{fontSize:9,color:T.accent,fontWeight:700,letterSpacing:1.5,marginBottom:6}}>TAB VERDICT</div><div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:10}}>{label}</div><div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginBottom:5}}>TOP 3 IMPLICATIONS</div>{imp.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"3px 0",borderBottom:`1px solid ${T.grid}`,display:"flex",gap:6,lineHeight:1.5}}><span style={{color:T.accent,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span>{x}</div>)}<div style={{fontSize:9,color:T.t3,fontWeight:700,letterSpacing:1,marginTop:10,marginBottom:5}}>MONITOR NEXT 7-30 DAYS</div>{mon.map((x,i)=><div key={i} style={{fontSize:11.5,color:T.t2,padding:"2px 0"}}>{"\u2022"} {x}</div>)}</Glass>);
-
-const MetricGrid=({items})=>(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(175px, 1fr))",gap:9}}>{items.map((s,i)=>(<div key={i} style={{position:'relative',overflow:'hidden',borderRadius:10}}>
-  <div style={{position:'absolute',inset:0,borderRadius:'inherit',background:'rgba(8,12,28,0.15)',border:'1px solid rgba(255,255,255,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)',pointerEvents:'none'}}/>
-  <div style={{position:'relative',zIndex:1,padding:"9px 13px",borderLeft:`3px solid ${s.c||T.accent}`}}>
-    <div style={{fontSize:9.5,color:T.t3,letterSpacing:0.5,fontWeight:600}}>{s.l}</div>
-    <div style={{fontSize:15,fontWeight:700,color:T.t1,fontFamily:"'JetBrains Mono',monospace",margin:"3px 0"}}>{s.v}</div>
-    {s.n&&<div style={{fontSize:9.5,color:s.c||T.t3}}>{s.n}</div>}
+// Source tag — teal-accent pills
+const SourceTag=({sources})=>(
+  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
+    {sources.map((s,i)=><span key={i} style={{fontSize:8.5,padding:"2px 7px",borderRadius:4,background:P.cyanD,color:P.cyan,fontWeight:600,border:`1px solid ${P.b1}`}}>{s}</span>)}
   </div>
-</div>))}</div>);
-
-const SourceTag=({sources})=>(<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>{sources.map((s,i)=><span key={i} style={{fontSize:8.5,padding:"2px 6px",borderRadius:4,background:"rgba(59,130,246,0.08)",color:T.accent,fontWeight:600,border:`1px solid rgba(59,130,246,0.15)`}}>{s}</span>)}</div>);
+);
 
 // =========================================================================
 // P1 — GLOBAL MACRO REGIME DASHBOARD (Upgrades: #1 GMD, #6 MacroMicro MOVE, #14 Liquidity Divergence)
@@ -664,38 +865,94 @@ const[open,setOpen]=useState({A:true,B:true});
 const Act=TABS.find(t=>t.id===tab)?.C||P1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 
-return(<div style={{minHeight:"100vh",background:"url('/bg-markets.png') center/cover fixed",color:T.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
-<div style={{position:"fixed",top:"-20%",right:"-10%",width:"60vw",height:"60vw",background:`radial-gradient(circle,${T.accent}06 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
-<div style={{position:"fixed",bottom:"-20%",left:"-10%",width:"50vw",height:"50vw",background:`radial-gradient(circle,${T.cyan}04 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
+return(
+<div style={{minHeight:"100vh",background:"url('/bg-waves.svg') center/cover fixed, #05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
+  {/* SVG glass refraction defs */}
+  <GlassDefs/>
+  {/* Ambient teal glow orbs */}
+  <div style={{position:"fixed",top:"-15%",right:"-8%",width:"55vw",height:"55vw",background:`radial-gradient(circle,${P.cyan}08 0%,transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
+  <div style={{position:"fixed",bottom:"-15%",left:"-8%",width:"45vw",height:"45vw",background:`radial-gradient(circle,${P.indigo}06 0%,transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
+  <div style={{position:"fixed",top:"40%",left:"30%",width:"30vw",height:"30vw",background:`radial-gradient(circle,${P.cyan}04 0%,transparent 60%)`,pointerEvents:"none",zIndex:0}}/>
 
-{side&&<div style={{width:250,minWidth:250,position:"sticky",top:0,height:"100vh",zIndex:10,overflow:'hidden'}}>
-{/* Sidebar shell */}
-<div style={{position:'absolute',inset:0,backdropFilter:'blur(24px) saturate(1.2)',WebkitBackdropFilter:'blur(24px) saturate(1.2)',borderRight:'1px solid rgba(255,255,255,0.05)',backgroundImage:'linear-gradient(180deg, rgba(255,255,255,0.03), transparent 30%)',boxShadow:'inset -1px 0 0 rgba(255,255,255,0.03)',pointerEvents:'none'}}/>
-{/* Sidebar plate */}
-<div style={{position:'absolute',inset:0,background:'rgba(6,8,18,0.30)',pointerEvents:'none'}}/>
-<div style={{position:'relative',zIndex:1,padding:"14px 0",overflowY:"auto",height:'100%'}}>
-<div style={{padding:"6px 16px 16px",borderBottom:`1px solid ${T.grid}`}}>
-<div style={{fontSize:10,color:T.accent,fontWeight:700,letterSpacing:2}}>LIFESTACK OS</div>
-<div style={{fontSize:15,fontWeight:700,color:T.t1,marginTop:1}}>Market & Research v2.0</div>
-<div style={{fontSize:9,color:T.t3,marginTop:1}}>{M.date} {"\u2022"} 24 tabs {"\u2022"} 17 upgrades</div>
-</div>
-{Object.entries(SECS).map(([k,l])=>(<div key={k} style={{marginTop:6}}>
-<div onClick={()=>tog(k)} style={{padding:"6px 16px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:9,fontWeight:700,color:T.t3,letterSpacing:1.2,textTransform:"uppercase"}}>
-{open[k]?<ChevronDown size={11}/>:<ChevronRight size={11}/>}{l}</div>
-{open[k]&&TABS.filter(t=>t.s===k).map(t=>{const Ic=t.ic;const a=tab===t.id;return(
-<div key={t.id} onClick={()=>setTab(t.id)} style={{padding:"6px 16px 6px 22px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",background:a?T.accentSub:"transparent",borderLeft:a?`2px solid ${T.accent}`:"2px solid transparent",transition:"all 0.15s"}}>
-<Ic size={13} color={a?T.accent:T.t3} strokeWidth={a?2.5:1.5}/>
-<div><div style={{fontSize:11.5,fontWeight:a?700:500,color:a?T.t1:T.t2}}>{t.n}</div><div style={{fontSize:8.5,color:T.t3,opacity:0.5}}>{t.id}</div></div>
-</div>);})}</div>))}
-</div></div>}
+  {/* SIDEBAR */}
+  {side&&<div style={{width:256,minWidth:256,position:"sticky",top:0,height:"100vh",zIndex:10,overflow:'hidden'}}>
+    {/* Sidebar shell: blur + teal refraction */}
+    <div style={{position:'absolute',inset:0,
+      backdropFilter:'blur(24px) saturate(1.5)',WebkitBackdropFilter:'blur(24px) saturate(1.5)',
+      borderRight:'1px solid rgba(15,150,156,0.18)',
+      backgroundImage:'linear-gradient(180deg, rgba(15,150,156,0.06), transparent 40%)',
+      boxShadow:'inset -1px 0 0 rgba(15,150,156,0.10), 4px 0 24px rgba(0,0,0,0.30)',
+      pointerEvents:'none',
+    }}/>
+    {/* Sidebar plate: deep teal-navy */}
+    <div style={{position:'absolute',inset:0,background:'rgba(5,22,26,0.82)',pointerEvents:'none'}}/>
+    <div style={{position:'relative',zIndex:1,padding:"14px 0",overflowY:"auto",height:'100%'}}>
+      {/* Header */}
+      <div style={{padding:"8px 18px 18px",borderBottom:`1px solid ${P.b2}`}}>
+        <div style={{fontSize:9,color:P.cyan,fontWeight:800,letterSpacing:2.5,textTransform:'uppercase',marginBottom:2}}>LIFESTACK OS</div>
+        <div style={{fontSize:15,fontWeight:800,color:P.t1,letterSpacing:-0.3}}>Market & Research</div>
+        <div style={{fontSize:10,fontWeight:600,color:P.cyan,letterSpacing:0.5,marginTop:1}}>v3.0 · Horizon Glass</div>
+        <div style={{fontSize:8.5,color:P.t3,marginTop:3}}>{M.date} · 24 tabs · 17 upgrades</div>
+      </div>
+      {/* Nav sections */}
+      {Object.entries(SECS).map(([k,l])=>(
+        <div key={k} style={{marginTop:8}}>
+          <div onClick={()=>tog(k)} style={{padding:"6px 18px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:9,fontWeight:800,color:P.t3,letterSpacing:1.5,textTransform:"uppercase",userSelect:'none'}}>
+            {open[k]?<ChevronDown size={11} color={P.cyan}/>:<ChevronRight size={11} color={P.t3}/>}
+            <span>{l}</span>
+          </div>
+          {open[k]&&TABS.filter(t=>t.s===k).map(t=>{
+            const Ic=t.ic;const a=tab===t.id;
+            return(
+              <div key={t.id} onClick={()=>setTab(t.id)}
+                style={{padding:"7px 18px 7px 24px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",
+                  background:a?`linear-gradient(90deg,${P.cyanD},transparent)`:"transparent",
+                  borderLeft:a?`2px solid ${P.cyan}`:`2px solid transparent`,
+                  transition:"all 0.15s",
+                }}>
+                <Ic size={13} color={a?P.cyan:P.t3} strokeWidth={a?2.5:1.5}/>
+                <div>
+                  <div style={{fontSize:11.5,fontWeight:a?700:500,color:a?P.t1:P.t2,lineHeight:1.2}}>{t.n}</div>
+                  <div style={{fontSize:8,color:a?P.cyan:P.t3,opacity:0.7,letterSpacing:0.5}}>{t.id}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  </div>}
 
-<div style={{flex:1,padding:"18px 24px 36px",maxWidth:1400,margin:"0 auto",position:"relative",zIndex:1}}>
-<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-<button onClick={()=>setSide(!side)} style={{background:T.glass,border:`1px solid ${T.glassBorder}`,borderRadius:8,padding:"5px 9px",color:T.t2,cursor:"pointer",fontSize:10}}>{side?"\u2190 Hide":"Menu \u2192"}</button>
-<div style={{fontSize:9,color:T.t3}}>SECTION {TABS.find(t=>t.id===tab)?.s} {"\u2022"} TAB {tab}</div>
-<div style={{marginLeft:"auto",display:"flex",gap:4}}>{["P1","P4","P9","P16"].map(q=>(<button key={q} onClick={()=>setTab(q)} style={{background:tab===q?T.accentSub:T.glass,border:`1px solid ${tab===q?T.accent+"40":T.glassBorder}`,borderRadius:6,padding:"3px 8px",color:tab===q?T.accent:T.t3,cursor:"pointer",fontSize:9,fontWeight:600}}>{q}</button>))}</div>
+  {/* MAIN CONTENT */}
+  <div style={{flex:1,padding:"18px 26px 40px",maxWidth:1400,margin:"0 auto",position:"relative",zIndex:1}}>
+    {/* Topbar */}
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+      <button onClick={()=>setSide(!side)} style={{
+        background:'rgba(7,46,51,0.55)',border:`1px solid ${P.b1}`,borderRadius:8,
+        padding:"5px 10px",color:P.t2,cursor:"pointer",fontSize:10,fontWeight:600,
+        backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',
+        transition:'all 0.15s',
+      }}>{side?"← Hide":"Menu →"}</button>
+      <div style={{fontSize:9,color:P.t3,fontWeight:600,letterSpacing:0.8}}>
+        SECTION {TABS.find(t=>t.id===tab)?.s} · TAB {tab}
+      </div>
+      {/* Quick-jump pills */}
+      <div style={{marginLeft:"auto",display:"flex",gap:5}}>
+        {["P1","P4","P9","P16"].map(q=>(
+          <button key={q} onClick={()=>setTab(q)} style={{
+            background:tab===q?P.cyanD:'rgba(7,46,51,0.45)',
+            border:`1px solid ${tab===q?P.b1:'rgba(255,255,255,0.06)'}`,
+            borderRadius:7,padding:"4px 10px",
+            color:tab===q?P.cyan:P.t3,
+            cursor:"pointer",fontSize:9,fontWeight:700,letterSpacing:0.5,
+            backdropFilter:'blur(10px)',
+            transition:'all 0.15s',
+          }}>{q}</button>
+        ))}
+      </div>
+    </div>
+    <Act/>
+  </div>
 </div>
-<Act/>
-</div>
-</div>);
+);
 }
