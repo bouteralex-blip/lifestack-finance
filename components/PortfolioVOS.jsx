@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useSupabaseData } from '../lib/useData';
+import { useSupabaseData, computeFreshness } from '../lib/useData';
+import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD } from '../lib/defaults';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -320,6 +321,8 @@ let MONTHLY_DATA = [
 ];
 let SCORECARD = {overall:5.2,returns:3.8,riskMgmt:5.4,process:4.2,taxEff:6.0,diversify:7.6,capitalEff:4.4,commentary:"Overall 5.2/10 reflects strong diversification (7.6) offset by poor returns (3.8) driven by the crypto correction. Tax efficiency (6.0) is improving but 47% GIA exposure remains a drag. Process (4.2) is weak from missing rebalancing discipline and no IPS."};
 let REF_DATA = {};
+// Phase 1 Truth Layer — module-scope freshness state, updated from useSupabaseData()
+let FRESHNESS = {};
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -445,11 +448,12 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
   </div>
 );
 
-const Hd = ({t,s,tag,ac=P.cyan}) => (
+const Hd = ({t,s,tag,ac=P.cyan,freshness,tableKey}) => (
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
       <h2 style={{fontSize:24,fontWeight:800,color:'#fff',margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
       {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
+      {freshness&&<FreshnessChip freshness={freshness} tableKey={tableKey}/>}
     </div>
     {s&&<p style={{fontSize:13,color:'rgba(255,255,255,0.55)',margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -505,6 +509,27 @@ const Chip = ({label,value,color,icon,onClick}) => {
   );
 };
 
+// ── FreshnessChip — Phase 1 Truth Layer: shows live/stale/fallback per data source ──
+const FreshnessChip = ({freshness, tableKey, label}) => {
+  if (!freshness) return null;
+  const f = tableKey ? freshness[tableKey] : freshness;
+  if (!f) return null;
+  const config = {
+    live:     { dot: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
+    stale:    { dot: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#fbbf24' },
+    fallback: { dot: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#f87171' },
+  };
+  const s = config[f.level] || config.fallback;
+  return (
+    <div style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:6,
+      background:s.bg,border:`1px solid ${s.border}`,fontSize:9,fontWeight:600,letterSpacing:0.3,
+      color:s.text,userSelect:'none',flexShrink:0}}>
+      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,boxShadow:`0 0 6px ${s.dot}60`}}/>
+      {label || f.label}
+    </div>
+  );
+};
+
 // ── GlassAction ─ Small interactive glass button for tile action bars ────────
 const GlassAction = ({icon,label,onClick,color}) => {
   color = color||P.t3;
@@ -524,7 +549,7 @@ const GlassAction = ({icon,label,onClick,color}) => {
 };
 
 // ── PanelShell ─ Core tile wrapper: SM/MD/LG sizes, shimmer, chips, takeaway ─
-const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,size='md',chips,badge,...cardProps}) => {
+const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,size='md',chips,badge,freshness,tableKey,...cardProps}) => {
   const [expanded,setExpanded]=useState(true);
   const cfg = size==='sm'
     ? {pad:12,titleSz:11,hpad:'7px 13px',accentH:1.5}
@@ -542,6 +567,7 @@ const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,
           {subtitle && <div style={{...HEADER_SUB}}>{subtitle}</div>}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {freshness && <FreshnessChip freshness={freshness} tableKey={tableKey}/>}
           {(metric||badge) && <div style={{fontSize:size==='sm'?15:18,fontWeight:800,color:ac,fontFamily:P.mono,letterSpacing:-0.5}}>{metric||badge}</div>}
           <button onClick={()=>setExpanded(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',
             color:'rgba(255,255,255,0.28)',fontSize:11,padding:'2px 4px',lineHeight:1,fontFamily:'inherit',
@@ -1200,7 +1226,7 @@ const T1 = ()=>{
               <div style={{width:36,height:36,borderRadius:10,background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,fontWeight:900,boxShadow:'0 4px 16px rgba(0,0,0,0.25)'}}>LS</div>
               <div>
                 <div style={{fontSize:18,fontWeight:900,color:'#fff',letterSpacing:-0.5}}>EXECUTIVE SUMMARY</div>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{PORT.date} · CIO Briefing · Institutional Review</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',display:'flex',alignItems:'center',gap:8}}>{PORT.date} · CIO Briefing · Institutional Review <FreshnessChip freshness={FRESHNESS} tableKey="portfolio_config"/></div>
               </div>
             </div>
             <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',lineHeight:1.7,maxWidth:800}}>
@@ -2639,7 +2665,7 @@ const T7 = ()=>{
   const debtPct = Math.round(PORT.amexDebt/totalDeployed*100);
   const isaPct = Math.round(20000/totalDeployed*100);
   return(<div>
-    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) · Tax+NI: ${fK(BONUS.tax+BONUS.ni)} · Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION"/>
+    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) · Tax+NI: ${fK(BONUS.tax+BONUS.ni)} · Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION" freshness={FRESHNESS} tableKey="bonus_config"/>
     <FlexRow gap={10}>
       <K l="Gross Bonus" v={fK(BONUS.gross)} s="Mid-range est." sm/><K l="Tax + NI" v={fK(BONUS.tax+BONUS.ni)} s="45% + 2%" c={P.red} sm/>
       <K l="Post-Tax" v={fK(BONUS.postTax)} s="Deployable" c={P.cyan} sm/><K l="ISA Max" v="£20k" s="Non-negotiable" c={P.t1} sm/>
@@ -2736,7 +2762,7 @@ const T8 = ()=>{
   };
   const valRanked = [...OPPS].sort((a,b)=>b.val-a.val);
   return(<div>
-    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive}/>
+    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive} freshness={FRESHNESS} tableKey="opportunities"/>
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -2819,7 +2845,7 @@ const T9 = ()=>{
   ];
   const compoundWith=[{y:"Y1",w:tot,wo:postFixDrag},{y:"Y3",w:Math.round(tot*((Math.pow(1.15,3)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,3)-1)/0.15))},{y:"Y5",w:Math.round(tot*((Math.pow(1.15,5)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,5)-1)/0.15))},{y:"Y10",w:Math.round(tot*((Math.pow(1.15,10)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,10)-1)/0.15))},{y:"Y20",w:Math.round(tot*((Math.pow(1.15,20)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,20)-1)/0.15))}];
   return(<div>
-    <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber}/>
+    <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber} freshness={FRESHNESS} tableKey="holdings"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Annual Drag" v={fmt(tot)} s="Total friction" c={P.negative} sm/><K l="5Y Cost" v={`~${fK(tot*5*1.08)}`} s="Compounded" c={P.negative} sm/>
       <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v="4.4/10" s="Score" c={P.negative} sm/>
@@ -2915,7 +2941,7 @@ const T10 = ()=>{
   const latestHC = HC_DATA[0];
   const base2035 = wFiltered[9]?.base||0;
   return(<div>
-    <Hd t="LONG-TERM WEALTH PROJECTION" s="Human capital, FIRE path, 5 forecast scenarios, Monte Carlo simulation" tag="WEALTH ENGINE" ac={P.indigo}/>
+    <Hd t="LONG-TERM WEALTH PROJECTION" s="Human capital, FIRE path, 5 forecast scenarios, Monte Carlo simulation" tag="WEALTH ENGINE" ac={P.indigo} freshness={FRESHNESS} tableKey="portfolio_config"/>
     <FlexRow gap={10}>
       <K l="Financial NW" v={fK(PORT.netWorth)} s="Current" sm/><K l="Human Capital" v={`£${(latestHC.hc/1000).toFixed(1)}m`} s="NPV future earnings" c={P.indigo} sm/>
       <K l="Total Wealth" v={`£${(latestHC.total/1000).toFixed(1)}m`} s="HC + Financial" c={P.t1} sm/><K l="HC %" v={`${(latestHC.hc/latestHC.total*100).toFixed(0)}%`} s="Career dominant" c={P.amber} sm/>
@@ -3140,7 +3166,7 @@ const T11 = ()=>{
   const composite = Math.round(mvrvScore*0.30 + nuplScore*0.25 + fearScore*0.20 + rrScore*0.15 + soprScore*0.10);
   const zone = composite >= 70 ? {l:"DEEP ACCUMULATION",c:P.green} : composite >= 50 ? {l:"ACCUMULATE",c:P.green} : composite >= 30 ? {l:"HOLD",c:P.amber} : {l:"TRIM / TAKE PROFIT",c:P.red};
   return(<div>
-    <Hd t="CRYPTO ENGINE" s="On-chain analytics, cycle positioning, disciplined framework" tag="ON-CHAIN" ac={P.btc}/>
+    <Hd t="CRYPTO ENGINE" s="On-chain analytics, cycle positioning, disciplined framework" tag="ON-CHAIN" ac={P.btc} freshness={FRESHNESS} tableKey="crypto_metrics"/>
     <FlexRow gap={10}>
       <K l="BTC" v={`$${(cm.btcPrice/1000).toFixed(1)}k`} s={`DD: ${cm.btcDD}%`} c={P.btc} sm/><K l="Crypto Wt" v={`${cryptoWt.toFixed(1)}%`} s="of assets" c={P.btc} sm/>
       <K l="Risk Contrib" v="32%" s="of total risk" c={P.red} sm/><K l="Signals" v={`${bullish}/${signals.length}`} s="Bullish" c={P.positive} sm/>
@@ -3241,7 +3267,7 @@ const T12 = ()=>{
     ]},
   ];
   return(<div>
-    <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan}/>
+    <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan} freshness={FRESHNESS} tableKey="portfolio_scorecard"/>
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -3374,7 +3400,7 @@ const T14 = ()=>{
     {y:2030,gia:12,isa:38,sipp:38,other:12},{y:2035,gia:5,isa:45,sipp:42,other:8},
   ];
   return(<div>
-    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.positive}/>
+    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.positive} freshness={FRESHNESS} tableKey="holdings"/>
     <FlexRow gap={10}>
       <K l="Annual Tax Saving" v={fmt(totalSaving)} s="All strategies combined" c={P.positive}/>
       <K l="Pre-Tax Equiv." v={fmt(Math.round(totalSaving/0.55))} s="At 45% marginal" c={P.cyan}/>
@@ -4419,8 +4445,9 @@ const TABS=[
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   const [,refresh]=useState(0);
-  const {data,loading,source}=useSupabaseData();
+  const {data,loading,source,freshness}=useSupabaseData();
   useEffect(()=>{
+    if(freshness) FRESHNESS=freshness;
     if(data){
       if(data.PORT) PORT=data.PORT;
       if(data.HOLDINGS) HOLDINGS=data.HOLDINGS;
@@ -4438,7 +4465,7 @@ export default function PortfolioVOS(){
       recalcDerived();
       refresh(n=>n+1);
     }
-  },[data]);
+  },[data,freshness]);
   const render=()=>{switch(tab){
     case "exec":return <T1/>;
     case "struct":return <T2/>;
@@ -4504,7 +4531,7 @@ export default function PortfolioVOS(){
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0F969C,#072E33)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 16px rgba(15,150,156,0.50), inset 0 1px 0 rgba(255,255,255,0.20)'}}>LS</div>
             <div>
               <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#0F969C',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
-              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}</div>
+              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)',display:'flex',alignItems:'center',gap:8}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}{Object.keys(FRESHNESS).length>0&&<span style={{display:'inline-flex',gap:4,alignItems:'center'}}>{Object.values(FRESHNESS).filter(f=>f.isLive).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#4ade80'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#22c55e',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isLive).length} live</span>}{Object.values(FRESHNESS).filter(f=>f.isStale).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#fbbf24'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isStale).length} stale</span>}{Object.values(FRESHNESS).filter(f=>f.isFallback).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#f87171'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#ef4444',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isFallback).length} fallback</span>}</span>}</div>
             </div>
           </div>
           {/* Search + Notifications + Account */}

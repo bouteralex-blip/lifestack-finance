@@ -271,11 +271,31 @@ const KPI=({label,value,delta,dt="up",sub,ac})=>{
 };
 
 // Section header — 24px luxury title matching PortfolioVOS
-const Hd=({t,s,tag,ac=P.cyan})=>(
+// ── FreshnessChip — Phase 1 Truth Layer: shows data source state ──
+const FreshnessChip = ({level='static', label}) => {
+  const config = {
+    live:     { dot: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
+    stale:    { dot: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#fbbf24' },
+    fallback: { dot: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#f87171' },
+    static:   { dot: '#6DA5C0', bg: 'rgba(109,165,192,0.12)', border: 'rgba(109,165,192,0.25)', text: '#6DA5C0' },
+  };
+  const s = config[level] || config.static;
+  return (
+    <div style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:6,
+      background:s.bg,border:`1px solid ${s.border}`,fontSize:9,fontWeight:600,letterSpacing:0.3,
+      color:s.text,userSelect:'none',flexShrink:0}}>
+      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,boxShadow:`0 0 6px ${s.dot}60`}}/>
+      {label || (level === 'static' ? `Static (${M.date})` : level)}
+    </div>
+  );
+};
+
+const Hd=({t,s,tag,ac=P.cyan,showFreshness=false})=>(
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
       <h2 style={{fontSize:24,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
       {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
+      {showFreshness&&<FreshnessChip level="static"/>}
     </div>
     {s&&<p style={{fontSize:12,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -456,7 +476,7 @@ const MatStat=({label,value,sub,mat="teal",icon})=>(
 // P1 — GLOBAL MACRO REGIME DASHBOARD (Upgrades: #1 GMD, #6 MacroMicro MOVE, #14 Liquidity Divergence)
 // =========================================================================
 const P1=()=>(<div>
-<Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE"/>
+<Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE" showFreshness/>
 
 {/* Regime hero — MAT tile */}
 <Row style={{marginBottom:0}}>
@@ -509,7 +529,7 @@ const P1=()=>(<div>
 // P2 — LIQUIDITY, RATES & CREDIT (Upgrade #6: MOVE from MacroMicro)
 // =========================================================================
 const P2=()=>(<div>
-<Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS"/>
+<Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS" showFreshness/>
 
 <Row style={{marginBottom:0}}>
   <MatStat label="HY OAS" value={`${M.hyOAS}bp`} sub="Watching 400bp threshold" mat="amber"/>
@@ -555,7 +575,7 @@ const P2=()=>(<div>
 // P3 — NEWS, NARRATIVE & POLICY (Upgrades: #4 StockGeist, #5 Octagon AI, #16 Media-vs-Flow)
 // =========================================================================
 const P3=()=>(<div>
-<Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR"/>
+<Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Top Risk" value="Iran Shock" sub="Gilt +40bp · BoE cut <20% prob" mat="red"/>
   <MatStat label="Value Rotation" value="99.8th pct" sub="+7.8% YTD vs Growth -1.9%" mat="amber"/>
@@ -589,7 +609,7 @@ const P3=()=>(<div>
 // P4 — EQUITIES, SECTORS & FACTORS (minor upgrades, already built in v1)
 // =========================================================================
 const P4=()=>(<div>
-<Hd t="GLOBAL EQUITIES, SECTORS & FACTORS" s="Regional returns, sector leadership, factor rotation, JPM REI suite" tag="EQUITY INTELLIGENCE"/>
+<Hd t="GLOBAL EQUITIES, SECTORS & FACTORS" s="Regional returns, sector leadership, factor rotation, JPM REI suite" tag="EQUITY INTELLIGENCE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="MSCI Europe 12M" value="+36.3%" sub="Value + defence rotation" mat="teal"/>
   <MatStat label="MSCI EM 12M" value="+33.6%" sub="USD weakness tailwind" mat="indigo"/>
@@ -629,7 +649,7 @@ const P4=()=>(<div>
 // P5 — BONDS, DURATION & FIXED INCOME
 // =========================================================================
 const P5=()=>(<div>
-<Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX"/>
+<Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Gilt 10Y" value="4.62%" sub="+40bp weekly · mini-budget level" mat="red"/>
   <MatStat label="Duration Status" value="DANGEROUS" sub="Avoid adding long gilts/TLT" mat="amber"/>
@@ -656,7 +676,7 @@ const P5=()=>(<div>
 // P6 — FX, EM & FRONTIER (Upgrade #1: GMD for EM macro)
 // =========================================================================
 const P6=()=>(<div>
-<Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM"/>
+<Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="DXY Index" value={M.dxy.toString()} sub="-10% from 110 · multi-year low" mat="teal"/>
   <MatStat label="GBP/USD" value={M.gbpusd.toFixed(3)} sub="+3.8% YoY · USD weakness" mat="indigo"/>
@@ -680,7 +700,7 @@ const P6=()=>(<div>
 // P7 — COMMODITIES & REAL ASSETS (Upgrade #13: CarbonCredits.com uranium)
 // =========================================================================
 const P7=()=>(<div>
-<Hd t="COMMODITIES & REAL ASSETS" s="Commodity leadership, gold, copper, energy, uranium, carbon, listed real assets" tag="REAL ASSETS"/>
+<Hd t="COMMODITIES & REAL ASSETS" s="Commodity leadership, gold, copper, energy, uranium, carbon, listed real assets" tag="REAL ASSETS" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Gold" value="$5,280" sub="+80% 12M · ATH · HALO trade" mat="amber"/>
   <MatStat label="Brent Crude" value="$93.04" sub="+22% 12M · Iran escalation" mat="red"/>
@@ -708,7 +728,7 @@ const P7=()=>(<div>
 // P8 — HOUSING & PROPERTY
 // =========================================================================
 const P8=()=>(<div>
-<Hd t="HOUSING, PROPERTY & REAL ESTATE" s="Affordability, mortgage rates, segment split, REITs" tag="PROPERTY"/>
+<Hd t="HOUSING, PROPERTY & REAL ESTATE" s="Affordability, mortgage rates, segment split, REITs" tag="PROPERTY" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Mortgage Rate 5Y" value="~4.5%+" sub="Rising on gilt surge · caution" mat="red"/>
   <MatStat label="UK HPI Forecast" value="+1.5–3.5%" sub="Gilt shock threatens recovery" mat="amber"/>
@@ -728,7 +748,7 @@ const P8=()=>(<div>
 // P9 — CRYPTO INTELLIGENCE (Upgrades: #12 Dune, #15 HODL Waves + Reserve Risk)
 // =========================================================================
 const P9=()=>(<div>
-<Hd t="CRYPTO INTELLIGENCE ENGINE" s="On-chain cycle state, ETF flows, derivatives, HODL Waves, Reserve Risk" tag="EXTREME FEAR"/>
+<Hd t="CRYPTO INTELLIGENCE ENGINE" s="On-chain cycle state, ETF flows, derivatives, HODL Waves, Reserve Risk" tag="EXTREME FEAR" showFreshness/>
 
 {/* Crypto hero MAT tiles */}
 <Row style={{marginBottom:0}}>
@@ -782,7 +802,7 @@ const P9=()=>(<div>
 // P10 — FLOWS & POSITIONING
 // =========================================================================
 const P10=()=>(<div>
-<Hd t="CAPITAL FLOWS, POSITIONING & MARKET STRUCTURE" s="ETF flows, CFTC positioning, retail vs institutional, cross-asset alignment" tag="FLOW INTELLIGENCE"/>
+<Hd t="CAPITAL FLOWS, POSITIONING & MARKET STRUCTURE" s="ETF flows, CFTC positioning, retail vs institutional, cross-asset alignment" tag="FLOW INTELLIGENCE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="EM Inflows Jan" value="$4B+" sub="Strongest since 2015 · rotation real" mat="teal"/>
   <MatStat label="BTC ETF 5 Mar" value="+$500M" sub="6-week outflow streak snapped" mat="amber"/>
@@ -802,7 +822,7 @@ const P10=()=>(<div>
 // P11 — VALUATION & FACTORS
 // =========================================================================
 const P11=()=>(<div>
-<Hd t="VALUATION, FACTORS & MARKET QUALITY" s="Regional valuations, ERP, factor scorecard, crypto valuation, infra multiples" tag="VALUATION DISCIPLINE"/>
+<Hd t="VALUATION, FACTORS & MARKET QUALITY" s="Regional valuations, ERP, factor scorecard, crypto valuation, infra multiples" tag="VALUATION DISCIPLINE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="S&P 500 CAPE" value="40x" sub="Dot-com levels · avoid adding" mat="red"/>
   <MatStat label="FTSE 250 PE" value="~13x" sub="25-year discount to large cap" mat="teal"/>
@@ -822,7 +842,7 @@ const P11=()=>(<div>
 // P12 — VOLATILITY & STRESS (Upgrades: #10 Riskfolio-Lib, #11 skfolio)
 // =========================================================================
 const P12=()=>(<div>
-<Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT"/>
+<Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="VIX" value={M.vix.toFixed(1)} sub="+19% on 5 Mar · elevated vol" mat="red"/>
   <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol · 118 = crisis territory" mat="amber"/>
@@ -874,7 +894,7 @@ const P12=()=>(<div>
 // P13 — ALPHA FRONTIER (Upgrade #17: space, synbio, tokenisation watchlist)
 // =========================================================================
 const P13=()=>(<div>
-<Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE"/>
+<Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Top Theme" value="AI Power Grid" sub="9/10 conviction · utilities/infra" mat="teal"/>
   <MatStat label="Defence Tech" value="8/10" sub="Babcock +147% · priced in at index" mat="indigo"/>
@@ -907,7 +927,7 @@ const P13=()=>(<div>
 // P14 — SCENARIO LAB
 // =========================================================================
 const P14=()=>(<div>
-<Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING"/>
+<Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Base Case" value="50%" sub="Late-cycle grind · 2 rate cuts" mat="indigo"/>
   <MatStat label="Bull Case" value="20%" sub="Iran de-escalation · 4 cuts · S&P 7,600" mat="teal"/>
@@ -960,7 +980,7 @@ const P14=()=>(<div>
 // P15 — CASH & DEFENCE
 // =========================================================================
 const P15=()=>(<div>
-<Hd t="CASH, DEFENCE & DEPLOYMENT STRATEGY" s="Cash ladder, real yield, buffer, drag, defensive assets, dry powder rules" tag="CAPITAL PRESERVATION"/>
+<Hd t="CASH, DEFENCE & DEPLOYMENT STRATEGY" s="Cash ladder, real yield, buffer, drag, defensive assets, dry powder rules" tag="CAPITAL PRESERVATION" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Liquid Cash" value="£16.3K" sub="Monzo + other · 2.7 months buffer" mat="amber"/>
   <MatStat label="Fixed Deposit" value="£45.8K" sub="At 5% locked · competitive return" mat="teal"/>
@@ -991,7 +1011,7 @@ const P15=()=>(<div>
 // P16 — WEEKLY SYNTHESIS (enhanced from v1)
 // =========================================================================
 const P16=()=>(<div>
-<Hd t="WEEKLY INTELLIGENCE SYNTHESIS" s={`Week of ${M.date}`} tag="SUNDAY SCARIES"/>
+<Hd t="WEEKLY INTELLIGENCE SYNTHESIS" s={`Week of ${M.date}`} tag="SUNDAY SCARIES" showFreshness/>
 
 {/* Action hero MAT tiles */}
 <Row style={{marginBottom:0}}>
