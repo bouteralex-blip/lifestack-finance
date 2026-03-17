@@ -128,7 +128,7 @@ const YIELD_CURVE=[{t:"3M",us:4.35,uk:3.72},{t:"6M",us:4.28,uk:3.68},{t:"1Y",us:
 
 const REGION_RET=[{r:"MSCI Europe",v:36.25,y:11,c:T.violet},{r:"MSCI EM",v:33.57,y:9.2,c:T.teal},{r:"Nikkei",v:25.05,y:5.8,c:T.cyan},{r:"FTSE 100",v:19,y:3.2,c:T.blue},{r:"MSCI World",v:19.7,y:3.0,c:T.neutral},{r:"S&P 500",v:18,y:-0.01,c:T.amber},{r:"FTSE 250",v:12,y:1.5,c:T.coral}];
 
-const SECTOR=[{s:"Semis (SMH)",v:70,c:T.teal},{s:"Comm Svcs",v:33.6,c:T.violet},{s:"Info Tech",v:24,c:T.blue},{s:"Industrials",v:19.4,c:T.cyan},{s:"Financials",v:15,c:T.amber},{s:"Healthcare",v:14.6,c:T.positive},{s:"Energy",v:8.7,c:T.coral},{s:"Software (IGV)",v:-30,c:T.negative}];
+const SECTOR=[{s:"Semis (SMH)",v:70,y:12,c:T.teal},{s:"Comm Svcs",v:33.6,y:5.2,c:T.violet},{s:"Info Tech",v:24,y:-2.1,c:T.blue},{s:"Industrials",v:19.4,y:3.8,c:T.cyan},{s:"Financials",v:15,y:4.1,c:T.amber},{s:"Healthcare",v:14.6,y:2.9,c:T.positive},{s:"Energy",v:8.7,y:1.5,c:T.coral},{s:"Software (IGV)",v:-30,y:-14,c:T.negative}];
 
 const FACTORS=[{f:"Enhanced Value",r:39.4,y:7.8,st:"Leading"},{f:"Value",r:23.5,y:7.8,st:"Leading"},{f:"Momentum",r:20.1,y:3.4,st:"Neutral"},{f:"Small Cap",r:20.4,y:5.6,st:"Improving"},{f:"Quality",r:16.9,y:0,st:"Lagging"},{f:"Growth",r:19.3,y:-1.9,st:"Lagging"}];
 
