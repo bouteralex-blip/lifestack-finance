@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useSupabaseData, computeFreshness } from '../lib/useData';
-import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD } from '../lib/defaults';
+import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
+import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeCryptoOnChainState } from '../lib/engines/market/index.js';
 import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand } from '../lib/engines/agents/index.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
@@ -327,6 +328,7 @@ let REF_DATA = {};
 let FRESHNESS = {};
 // Phase 2 Finance OS — engine-computed state objects, recalculated on data change
 let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null };
+let MKTENG = { regime: null, stress: null, btcCycle: null, yieldCurve: null, creditStress: null, sectorLeadership: null, cryptoOnChain: null };
 let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
@@ -3854,14 +3856,28 @@ function recalcDerived() {
     console.error('LifeStack: Engine computation error', e);
   }
 
+  // Phase 3 Market Intelligence — compute market engines for agent context
+  try {
+    const MKT = DEFAULT_MARKET;
+    MKTENG.regime = computeRegimeState(MKT);
+    MKTENG.stress = computeCrossAssetStressState(MKT);
+    MKTENG.btcCycle = computeBTCCycleState(MKT);
+    MKTENG.yieldCurve = computeYieldCurveState(DEFAULT_YIELD_CURVE);
+    MKTENG.creditStress = computeCreditStressState(MKT, DEFAULT_CREDIT_TL);
+    MKTENG.sectorLeadership = computeSectorLeadershipState(DEFAULT_SECTOR);
+    MKTENG.cryptoOnChain = computeCryptoOnChainState(MKT);
+  } catch (e) {
+    console.error('LifeStack: Market engine computation error', e);
+  }
+
   // Phase 4 Agent Layer — research & decisioning engines
   try {
-    AGENT.rankedOpps = rankOpportunities(OPPS, ENGINE, null);
-    AGENT.actionQueue = buildActionQueue(ENGINE, null, OPPS);
-    AGENT.triggerAlerts = generateTriggerAlerts(ENGINE, null);
+    AGENT.rankedOpps = rankOpportunities(OPPS, ENGINE, MKTENG);
+    AGENT.actionQueue = buildActionQueue(ENGINE, MKTENG, OPPS);
+    AGENT.triggerAlerts = generateTriggerAlerts(ENGINE, MKTENG);
     AGENT.whatChanged = computeWhatChanged(ENGINE, null);
-    AGENT.synthesis = generateWeeklySynthesis(ENGINE, null, PORT, SCORECARD, OPPS);
-    AGENT.morningCommand = generateMorningCommand(ENGINE, null, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
+    AGENT.synthesis = generateWeeklySynthesis(ENGINE, MKTENG, PORT, SCORECARD, OPPS);
+    AGENT.morningCommand = generateMorningCommand(ENGINE, MKTENG, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
   } catch (e) {
     console.error('LifeStack: Agent computation error', e);
   }
@@ -4125,7 +4141,7 @@ const T16 = () => {
   const typeIcons = {kubera:'📊',monzo:'💳',emma:'💰',market:'📈'};
 
   return(<div>
-    <SectionHeader t="STORAGE & DATA SOURCES" s="Upload source files, manage data pipelines, refresh analysis modules" tag="DATA OPS" ac={P.cyan}/>
+    <SectionHeader t="STORAGE & DATA SOURCES" s="Upload source files, manage data pipelines, refresh analysis modules" tag="DATA OPS" ac={P.cyan} freshness={FRESHNESS} tableKey="reference_data"/>
 
     {/* Upload Zone — Hero Area */}
     <div
