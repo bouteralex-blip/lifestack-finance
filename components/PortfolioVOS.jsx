@@ -105,6 +105,59 @@ const HEADER_BANNER = {
 const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#e8f4f5',letterSpacing:1.5,textTransform:'uppercase'};
 const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(232,244,245,0.45)',marginTop:1};
 const HEADER_DOTS = {fontSize:16,color:'rgba(255,255,255,0.30)',cursor:'pointer',letterSpacing:2};
+const EMPTY_TRUTH_LAYER = {
+  portfolio_state: null,
+  market_regime_state: null,
+  rates_credit_state: null,
+  flows_positioning_state: null,
+  crypto_state: null,
+  scenario_state: null,
+  capital_efficiency_state: null,
+  action_queue_state: null,
+  watchlist_state: null,
+  decision_log: null,
+  weekly_synthesis_state: null,
+  dashboard_freshness_state: {
+    source: 'hardcoded',
+    status: 'unknown',
+    ageMinutes: null,
+    staticFallbackActive: true,
+  },
+};
+
+const fmtFreshnessAge = (ageMinutes) => {
+  if (ageMinutes == null) return 'Not timestamped';
+  if (ageMinutes < 60) return `${ageMinutes}m ago`;
+  if (ageMinutes < 1440) return `${Math.round(ageMinutes / 60)}h ago`;
+  return `${Math.round(ageMinutes / 1440)}d ago`;
+};
+
+const TruthLayerBanner = ({ scope, truthLayer }) => {
+  const freshness = truthLayer?.dashboard_freshness_state || {};
+  const status = freshness.status || 'unknown';
+  const color = status === 'fresh' ? P.positive : status === 'stale' ? P.amber : P.red;
+  const sourceLabel = freshness.source === 'supabase' ? 'Live (Supabase)' : 'Fallback (Static defaults)';
+  const stateCount = [
+    truthLayer?.portfolio_state,
+    truthLayer?.crypto_state,
+    truthLayer?.scenario_state,
+    truthLayer?.capital_efficiency_state,
+  ].filter(Boolean).length;
+
+  return (
+    <div style={{...G3,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+        <span style={{fontSize:10,fontWeight:800,color:P.t2,textTransform:'uppercase',letterSpacing:0.8}}>Truth Layer · {scope}</span>
+        <span style={{fontSize:11,color}}>{'●'} {status.toUpperCase()}</span>
+        <span style={{fontSize:11,color:P.t3}}>{sourceLabel}</span>
+      </div>
+      <div style={{fontSize:11,color:P.t3,textAlign:'right'}}>
+        Updated {fmtFreshnessAge(freshness.ageMinutes)} · states ready {stateCount}/12
+      </div>
+    </div>
+  );
+};
+
 let PORT = {
   date:"7 March 2026",age:32,
   netWorth:362072, assets:375670, debts:13598,
@@ -1101,7 +1154,7 @@ const SankeyChart = () => {
     </svg>
   );
 };
-const T1 = ()=>{
+const T1 = ({ truthLayer })=>{
   const fire=(PORT.netWorth/PORT.fireTarget*100);
   const contribData = HOLDINGS.filter(h=>h.prev).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),pnl:((h.val-h.prev)/1000)})).sort((a,b)=>b.pnl-a.pnl);
   const monthlyReturns = MONTHLY_DATA.map(m=>({m:m.m,r:m.r}));
@@ -1191,6 +1244,7 @@ const T1 = ()=>{
   const geoData=Object.entries(geoAgg).map(([n,v])=>({n,v:+(v/totalAssetsLocal*100).toFixed(1)})).sort((a,b)=>b.v-a.v).slice(0,6);
 
   return(<div>
+    <TruthLayerBanner scope="T1 Executive Summary" truthLayer={truthLayer}/>
     {/* CIO INSIGHT BANNER — Material gradient tile */}
     <div style={{...MAT.teal,overflow:'hidden',marginBottom:16,padding:'22px 28px'}}>
       <div style={{position:'relative',zIndex:1}}>
@@ -1526,8 +1580,11 @@ const T1 = ()=>{
       <PanelShell style={{borderTop:`3px solid ${P.negative}`}} hover title="WEAKNESSES" subtitle="Areas requiring attention" metricColor={P.negative} takeaway="Crypto concentration is the dominant risk. Cash depletion and high-cost debt compound the issue. Tax drag from GIA wrapper is a structural problem.">
         {[`Crypto lost ${fK(38400)} — 32% risk from 13% capital`,`Cash halved: ${fK(33978)} → ${fK(15752)}. Now ${runway.toFixed(1)}mo`,`Amex ${fmt(PORT.amexDebt)} at 22% APR — most expensive capital`,`47% GIA wrapper — est. 1.5-2.0% annual tax drag`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.negative,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
-      <PanelShell style={{borderTop:`3px solid ${P.cyan}`}} hover title="PRIORITY ACTIONS" subtitle="Next 30 days" metricColor={P.cyan} takeaway="ISA deadline is the hardest constraint. Amex clearance has guaranteed 22% return. Salary sacrifice captures 60% effective rate band.">
-        {[`Max ISA (£20k) before 5 April — 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus — 22% return.`,`Salary sacrifice £1,250/mo — 60% effective rate band.`,`Consolidate 18 micro-positions to ≤15.`].map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
+      <PanelShell style={{borderTop:`3px solid ${P.cyan}`}} hover title="PRIORITY ACTIONS" subtitle="Next 30 days" metricColor={P.cyan} takeaway="Action queue now reads from truth-layer state when available. ISA deadline and debt drag remain highest certainty actions.">
+        {(truthLayer?.action_queue_state?.top_actions?.length
+          ? truthLayer.action_queue_state.top_actions.map((a,i)=>`${a.title} — ${a.why}.`)
+          : [`Max ISA (£20k) before 5 April — 29 days.`,`Clear Amex (${fmt(PORT.amexDebt)}) from bonus — 22% return.`,`Salary sacrifice £1,250/mo — 60% effective rate band.`,`Consolidate 18 micro-positions to ≤15.`]
+        ).map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
     </div>
   </div>);
@@ -1635,7 +1692,7 @@ const NavSankey = ()=>{
 // =========================================================================
 // TAB 2 — STRUCTURE & CONCENTRATION
 // =========================================================================
-const T2 = ()=>{
+const T2 = ({ truthLayer })=>{
   const sorted=[...HOLDINGS].sort((a,b)=>b.val-a.val);
   const top5=sorted.slice(0,5).reduce((a,h)=>a+h.val,0);
   const top3=sorted.slice(0,3).reduce((a,h)=>a+h.val,0);
@@ -1707,6 +1764,7 @@ const T2 = ()=>{
 
   return(<div>
     <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, exposure analysis, wrapper efficiency, concentration risk" tag="HOLDINGS"/>
+    <TruthLayerBanner scope="T2 Structure & Concentration" truthLayer={truthLayer}/>
 
     {/* KPI ROW — 8 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:8,marginBottom:14}}>
@@ -1953,7 +2011,7 @@ const T2 = ()=>{
 
 // TAB 3 — PERFORMANCE & ATTRIBUTION
 // =========================================================================
-const T3 = ()=>{
+const T3 = ({ truthLayer })=>{
   const wfData = BRIDGE_ITEMS.slice(1).map(b => b);
   const waterfall = [];
   waterfall.push({name:"Start (Sep 25)", val:PORT.nw6moAgo/1000, base:0, step:PORT.nw6moAgo/1000, isAnchor:true, cum:PORT.nw6moAgo/1000});
@@ -2047,6 +2105,7 @@ const T3 = ()=>{
 
   return(<div>
     <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, return decomposition, contribution analysis, risk-adjusted metrics" tag="PM REVIEW"/>
+    <TruthLayerBanner scope="T3 Performance & Attribution" truthLayer={truthLayer}/>
 
     {/* KPI ROW — 10 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(10, 1fr)",gap:8,marginBottom:14}}>
@@ -4419,7 +4478,8 @@ const TABS=[
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   const [,refresh]=useState(0);
-  const {data,loading,source}=useSupabaseData();
+  const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
+  const {data,loading,source,truth}=useSupabaseData();
   useEffect(()=>{
     if(data){
       if(data.PORT) PORT=data.PORT;
@@ -4439,10 +4499,17 @@ export default function PortfolioVOS(){
       refresh(n=>n+1);
     }
   },[data]);
+
+  useEffect(() => {
+    if (truth) {
+      setTruthLayer(truth);
+      refresh(n => n + 1);
+    }
+  }, [truth]);
   const render=()=>{switch(tab){
-    case "exec":return <T1/>;
-    case "struct":return <T2/>;
-    case "perf":return <T3/>;
+    case "exec":return <T1 truthLayer={truthLayer}/>;
+    case "struct":return <T2 truthLayer={truthLayer}/>;
+    case "perf":return <T3 truthLayer={truthLayer}/>;
     case "risk":return <T4/>;
     case "stress":return <T5/>;
     case "cash":return <T6/>;
@@ -4504,7 +4571,9 @@ export default function PortfolioVOS(){
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0F969C,#072E33)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 16px rgba(15,150,156,0.50), inset 0 1px 0 rgba(255,255,255,0.20)'}}>LS</div>
             <div>
               <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#0F969C',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
-              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}</div>
+              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>
+                Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span style={{color:P.amber}}>{"●"} Static Fallback</span>} · {truthLayer.dashboard_freshness_state?.status || 'unknown'}
+              </div>
             </div>
           </div>
           {/* Search + Notifications + Account */}
