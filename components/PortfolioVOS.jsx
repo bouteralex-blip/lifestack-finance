@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSupabaseData, computeFreshness } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD } from '../lib/defaults';
+import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -323,6 +324,8 @@ let SCORECARD = {overall:5.2,returns:3.8,riskMgmt:5.4,process:4.2,taxEff:6.0,div
 let REF_DATA = {};
 // Phase 1 Truth Layer — module-scope freshness state, updated from useSupabaseData()
 let FRESHNESS = {};
+// Phase 2 Finance OS — engine-computed state objects, recalculated on data change
+let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -1737,8 +1740,8 @@ const T2 = ()=>{
     {/* KPI ROW — 8 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:8,marginBottom:14}}>
       <KpiTile l="Positions" v={HOLDINGS.length+18} c={P.t2} sm bench="Target: ≤15"/>
-      <KpiTile l="Eff. Pos" v={RISK.effPos.toFixed(1)} c={P.positive} sm delta="1/HHI" bench="Good: >12"/>
-      <KpiTile l="HHI" v={RISK.hhi.toFixed(3)} c={P.positive} sm delta="<0.10" bench="MSCI: 0.032"/>
+      <KpiTile l="Eff. Pos" v={(ENGINE.concentration?.effectivePositions||RISK.effPos).toFixed(1)} c={P.positive} sm delta="1/HHI" bench="Good: >12"/>
+      <KpiTile l="HHI" v={(ENGINE.concentration?.hhi?+(ENGINE.concentration.hhi/10000).toFixed(3):RISK.hhi).toFixed(3)} c={P.positive} sm delta="<0.10" bench="MSCI: 0.032"/>
       <KpiTile l="Entropy" v={RISK.entropy.toFixed(2)} c={P.t2} sm delta="Evenness" bench="Max: 3.0"/>
       <KpiTile l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} c={P.amber} sm bench="Limit: <40%"/>
       <KpiTile l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} c={P.t2} sm bench="Limit: <60%"/>
@@ -2830,14 +2833,18 @@ const T8 = ()=>{
 };
 
 const T9 = ()=>{
-  const drags=[{n:"Amex Interest (22%)",a:2343,c:P.red},{n:"GIA Tax Drag",a:2400,c:P.red},{n:"Rainy Day Opp Cost",a:1180,c:P.amber},{n:"FD Opportunity Cost",a:460,c:P.amber},{n:"TER Drag",a:920,c:P.amber},{n:"Fragment Drag",a:160,c:P.t3}];
+  // Phase 2: Use engine-computed data when available
+  const debtState = ENGINE.debtPriority;
+  const wrapperState = ENGINE.wrapperExposure;
+  const concState = ENGINE.concentration;
+  const amexInterest = debtState?.actions?.find(a=>a.name==='Amex Credit Card')?.annualInterest || 2343;
+  const giaDrag = wrapperState?.cgtDrag?.annualDrag || 2400;
+  const drags=[{n:"Amex Interest (22%)",a:Math.round(amexInterest),c:P.red},{n:"GIA Tax Drag",a:Math.round(giaDrag),c:P.red},{n:"Rainy Day Opp Cost",a:1180,c:P.amber},{n:"FD Opportunity Cost",a:460,c:P.amber},{n:"TER Drag",a:920,c:P.amber},{n:"Fragment Drag",a:concState?.clutter?.count>0?Math.round(concState.clutter.totalValue*0.01):160,c:P.t3}];
   const tot=drags.reduce((a,d)=>a+d.a,0);
   const cumDrag=[{y:"Y1",v:tot},{y:"Y3",v:tot*3*1.04},{y:"Y5",v:tot*5*1.08},{y:"Y10",v:tot*10*1.18}];
-  // Sprint 2 computed metrics
-  const growthAll = HOLDINGS.filter(h=>["ETF","Crypto","Stock","Investment"].includes(h.cls)).reduce((a,h)=>a+h.val,0);
-  const sheltered = 82133 + 18085; // Pension + ISA est.
-  const wrapperEff = +(sheltered / growthAll * 100).toFixed(1);
-  const postFixDrag = tot - 2343 - 1440 - 1180; // remove Amex + 60% GIA tax + excess cash
+  // Sprint 2 computed metrics — now engine-powered
+  const wrapperEff = wrapperState?.efficiency?.taxEfficientPct || 26.7;
+  const postFixDrag = tot - Math.round(amexInterest) - Math.round(giaDrag*0.6) - 1180; // remove Amex + 60% GIA tax + excess cash
   const upliftData = [
     {n:"Current Drag",v:tot,c:P.red},{n:"Clear Amex",v:-2343,c:P.green},
     {n:"ISA Migration",v:-1440,c:P.green},{n:"Redeploy Cash",v:-1180,c:P.green},
@@ -2848,7 +2855,7 @@ const T9 = ()=>{
     <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber} freshness={FRESHNESS} tableKey="holdings"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Annual Drag" v={fmt(tot)} s="Total friction" c={P.negative} sm/><K l="5Y Cost" v={`~${fK(tot*5*1.08)}`} s="Compounded" c={P.negative} sm/>
-      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v="4.4/10" s="Score" c={P.negative} sm/>
+      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v={`${SCORECARD.capitalEff}/10`} s="Score" c={SCORECARD.capitalEff>6?P.positive:P.negative} sm/>
       <K l="Post-Fix Drag" v={fmt(Math.max(postFixDrag,0))} c={P.amber} sm delta="After 3 fixes"/><K l="Savings" v={fmt(tot-Math.max(postFixDrag,0))} c={P.positive} sm delta="Annual uplift"/>
     </FlexRow>
     {/* SPRINT 2: Wrapper Efficiency Score */}
@@ -3246,12 +3253,20 @@ const T11 = ()=>{
   </div>);
 };
 const T12 = ()=>{
+  // Phase 2: Engine-driven action plan
+  const debtState = ENGINE.debtPriority;
+  const isaState = ENGINE.isaPensionRouting;
+  const concState = ENGINE.concentration;
+  const driftState = ENGINE.driftMonitor;
+  const topDebt = debtState?.actions?.[0];
+  const daysLeft = isaState?.daysUntilTaxYearEnd || 19;
+  const clutterCount = concState?.clutter?.count || 18;
   const blocks=[
     {tf:"IMMEDIATE — Next 30 Days",c:P.red,acts:[
-      {a:`Clear Amex in full (${fmt(PORT.amexDebt)})`,to:"From bonus",why:"22% APR = guaranteed 22% return — no investment beats this risk-adjusted",imp:"£2,343/yr saved"},
-      {a:"Max S&S ISA with £20k",to:"S&S ISA: JGEP + quality",why:"ISA deadline 5 April. 29 days. Tax-free compounding is irreplaceable.",imp:"80-120bps/yr"},
-      {a:"Salary sacrifice £1,250/mo to pension",to:"Workplace pension",why:"45% relief in £100-125k band (60% effective marginal rate)",imp:"£6,750/yr tax saved"},
-      {a:"Exit NEXO + consolidate SOL to BTC",to:"Simplify crypto",why:"£57 NEXO and £1.6k SOL are noise — zero portfolio impact",imp:"Reduce from 5 to 2 positions"},
+      {a:`Clear Amex in full (${fmt(PORT.amexDebt)})`,to:"From bonus",why:topDebt ? `${topDebt.apr}% APR = guaranteed ${topDebt.guaranteedAlpha}% alpha vs investing` : "22% APR = guaranteed 22% return",imp:topDebt ? `£${Math.round(topDebt.annualInterest).toLocaleString()}/yr saved` : "£2,343/yr saved"},
+      {a:`Max S&S ISA with £${(isaState?.isaHeadroom?.remaining||20000).toLocaleString()}`,to:"S&S ISA: JGEP + quality",why:`ISA deadline 5 April. ${daysLeft} days. Tax-free compounding is irreplaceable.`,imp:"80-120bps/yr"},
+      {a:"Salary sacrifice £1,250/mo to pension",to:"Workplace pension",why:isaState?.salarySacrificeValue?.inTaperZone ? `${isaState.salarySacrificeValue.effectiveRate}% effective benefit in £100-125k taper zone` : "45% relief in higher rate band",imp:isaState?.salarySacrificeValue?.totalSaving ? `£${Math.round(isaState.salarySacrificeValue.totalSaving).toLocaleString()}/yr tax saved` : "£6,750/yr tax saved"},
+      {a:"Exit NEXO + consolidate SOL to BTC",to:"Simplify crypto",why:`${clutterCount}+ micro-positions = zero portfolio impact`,imp:`Reduce to ${concState?.effectivePositions ? Math.round(concState.effectivePositions) : 15} effective positions`},
     ]},
     {tf:"Q2 2026 — This Quarter",c:P.amber,acts:[
       {a:"Consolidate all sub-£500 positions into core",to:"Sell fragments, reinvest JURE/JGEP",why:"18+ micro-positions = zero return impact, maximum complexity",imp:"40+ → 15 positions"},
@@ -3271,9 +3286,9 @@ const T12 = ()=>{
 
     {/* KPI STRIP */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta="30 days"/>
-      <K l="Combined Value" v="£17.8k/yr" c={P.positive} sm delta="All actions"/><K l="Guaranteed" v="£12.7k/yr" c={P.positive} sm delta="No market risk"/>
-      <K l="Positions Target" v="≤15" c={P.t2} sm delta="From 40+"/>
+      <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
+      <K l="Debt Alpha" v={topDebt?`${topDebt.guaranteedAlpha}%`:'0%'} c={P.positive} sm delta="Guaranteed"/><K l="ISA Left" v={`£${((isaState?.isaHeadroom?.remaining||20000)/1000).toFixed(0)}k`} c={daysLeft<=30?P.negative:P.amber} sm delta={`${daysLeft}d to deadline`}/>
+      <K l="Drift" v={driftState?`${driftState.maxDrift.toFixed(1)}%`:'—'} c={driftState?.maxDrift>5?P.negative:P.positive} sm delta={driftState?.urgency||'—'}/>
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
@@ -3817,6 +3832,20 @@ function recalcDerived() {
     return pts;
   })();
   OPPS_TOP5 = [...OPPS].sort((a,b)=>b.val-a.val).slice(0,5);
+
+  // Phase 2 Finance OS — run all engines on current data
+  try {
+    ENGINE.concentration = computeConcentrationState(HOLDINGS);
+    ENGINE.debtPriority = computeDebtPriorityState(PORT);
+    ENGINE.sleeveExposure = computeSleeveExposureState(HOLDINGS);
+    ENGINE.wrapperExposure = computeWrapperExposureState(HOLDINGS);
+    ENGINE.currencyExposure = computeCurrencyExposureState(HOLDINGS);
+    ENGINE.driftMonitor = computeDriftMonitorState(HOLDINGS);
+    ENGINE.isaPensionRouting = computeISAPensionRoutingState(PORT);
+    ENGINE.rebalanceProposal = computeRebalanceProposalState(HOLDINGS, undefined, ENGINE.wrapperExposure);
+  } catch (e) {
+    console.error('LifeStack: Engine computation error', e);
+  }
 }
 
 // =========================================================================
