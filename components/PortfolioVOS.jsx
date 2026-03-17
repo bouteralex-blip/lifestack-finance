@@ -1587,6 +1587,16 @@ const T1 = ({ truthLayer })=>{
         ).map((s,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:"5px 0",borderBottom:`1px solid ${P.b2}`,fontWeight:500}}><span style={{color:P.cyan,fontWeight:800,marginRight:5}}>{i+1}.</span>{s}</div>)}
       </PanelShell>
     </div>
+
+    <PanelShell style={{marginTop:12}} hover title="WHAT TO WATCH — TRUTH LAYER" subtitle="Top monitored movers from watchlist_state" takeaway="Watchlist now sourced from canonical truth-layer state with fallback behavior.">
+      {(truthLayer?.watchlist_state?.items?.length
+        ? truthLayer.watchlist_state.items
+        : [{asset:'BTC (Bitcoin)',changePct:-39.5,catalyst:'Crypto volatility regime'},{asset:'Daiwa Pension',changePct:28.6,catalyst:'Valuation and contribution drift'}]
+      ).map((w,i)=><div key={i} style={{fontSize:11,color:P.t2,lineHeight:1.5,padding:'6px 0',borderBottom:`1px solid ${P.b2}`,display:'flex',justifyContent:'space-between',gap:8}}>
+        <span><span style={{color:P.t1,fontWeight:700}}>{w.asset}</span> · {w.catalyst}</span>
+        <span style={{color:w.changePct>=0?P.positive:P.negative,fontWeight:700}}>{w.changePct>=0?'+':''}{w.changePct}%</span>
+      </div>)}
+    </PanelShell>
   </div>);
 };
 
