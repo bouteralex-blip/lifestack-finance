@@ -12,6 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const FRED_KEY = process.env.FRED_API_KEY || '';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+const YAHOO_PROXY = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
 // Metric definitions: source → fetch function
 const METRICS = {
@@ -34,6 +35,17 @@ const METRICS = {
   'breakeven_5y': { source: 'fred', ttl: 12, fetch: () => fetchFRED('T5YIE') },
   'fed_funds': { source: 'fred', ttl: 24, fetch: () => fetchFRED('DFF') },
   'sp500': { source: 'fred', ttl: 6, fetch: () => fetchFRED('SP500') },
+  'm2_supply': { source: 'fred', ttl: 24, fetch: () => fetchFRED('M2SL') },
+
+  // Commodity prices (Yahoo Finance proxy, 6h TTL)
+  'gold_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('GC=F') },
+  'oil_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('CL=F') },
+  'copper_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('HG=F') },
+
+  // FX rates (Yahoo Finance proxy, 6h TTL)
+  'gbpusd': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('GBPUSD=X') },
+  'eurusd': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('EURUSD=X') },
+  'usdjpy': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('JPY=X') },
 };
 
 async function fetchJSON(url) {
@@ -48,6 +60,18 @@ async function fetchFRED(series) {
   const data = await fetchJSON(url);
   const obs = data?.observations?.[0];
   return { value: obs?.value === '.' ? null : Number(obs?.value), date: obs?.date };
+}
+
+async function fetchYahoo(symbol) {
+  const url = `${YAHOO_PROXY}/${symbol}?interval=1d&range=2d`;
+  const data = await fetchJSON(url);
+  const result = data?.chart?.result?.[0];
+  const meta = result?.meta;
+  const closes = result?.indicators?.quote?.[0]?.close;
+  const lastClose = closes?.filter(Boolean)?.pop() ?? null;
+  const prevClose = meta?.chartPreviousClose ?? meta?.previousClose ?? null;
+  const change24h = prevClose && lastClose ? ((lastClose - prevClose) / prevClose) * 100 : null;
+  return { value: lastClose ? +lastClose.toFixed(4) : null, change24h: change24h ? +change24h.toFixed(2) : null };
 }
 
 export async function GET(request) {
