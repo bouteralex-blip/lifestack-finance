@@ -4,8 +4,32 @@ import React, { useState, useEffect } from "react";
 import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
+import { computeRiskBudgetState } from '../lib/engines/risk-budget.js';
+import { computeContributionState } from '../lib/engines/contribution-attribution.js';
+import { computeDrawdownState } from '../lib/engines/drawdown-monitor.js';
+import { computeScenarioSensitivity } from '../lib/engines/scenario-sensitivity.js';
+import { computeMonteCarloState } from '../lib/engines/monte-carlo.js';
+import { computeLiquidityLadderState } from '../lib/engines/liquidity-ladder.js';
+import { computeBonusAllocationState } from '../lib/engines/bonus-allocation.js';
+import { computeCapitalEfficiencyState } from '../lib/engines/capital-efficiency.js';
+import { computeCryptoRebalanceState } from '../lib/engines/crypto-rebalance.js';
+import { computeCryptoScenarioLab } from '../lib/engines/crypto-scenario.js';
 import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeCryptoOnChainState } from '../lib/engines/market/index.js';
 import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand, processDecisionLog, createDecisionEntry } from '../lib/engines/agents/index.js';
+import { generateDailyBrief } from '../lib/engines/agents/daily-brief.js';
+import { computeOpportunityRadar } from '../lib/engines/agents/opportunity-radar.js';
+import { computeWatchlistState } from '../lib/engines/agents/watchlist-updater.js';
+import { computeDeadlines } from '../lib/engines/agents/deadline-agent.js';
+import { generateRebalanceApproval } from '../lib/engines/agents/rebalance-approval.js';
+import { generateMonthlyReview } from '../lib/engines/agents/monthly-review.js';
+import { computeFreshnessAudit } from '../lib/engines/agents/freshness-audit.js';
+import { computeTilePriority } from '../lib/engines/agents/tile-priority.js';
+import { generateInsightCallouts } from '../lib/engines/agents/insight-callout.js';
+import { computeWhatMattersNow } from '../lib/engines/agents/what-matters-now.js';
+import { generateMarkdownReport } from '../lib/engines/agents/report-exporter.js';
+import { computeAltcoinRiskCap } from '../lib/engines/agents/altcoin-risk-cap.js';
+import { generatePerformanceBridge } from '../lib/engines/agents/performance-bridge.js';
+import { computeThesisMonitorState } from '../lib/engines/agents/thesis-monitor.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -380,9 +404,9 @@ let REF_DATA = {};
 // Phase 1 Truth Layer — module-scope freshness state, updated from useSupabaseData()
 let FRESHNESS = {};
 // Phase 2 Finance OS — engine-computed state objects, recalculated on data change
-let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null };
+let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null, riskBudget: null, contributionAttribution: null, drawdown: null, scenarioSensitivity: null, monteCarlo: null, liquidityLadder: null, bonusAllocation: null, capitalEfficiency: null, cryptoRebalance: null, cryptoScenario: null };
 let MKTENG = { regime: null, stress: null, btcCycle: null, yieldCurve: null, creditStress: null, sectorLeadership: null, cryptoOnChain: null };
-let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null };
+let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null, dailyBrief: null, opportunityRadar: null, watchlist: null, deadlines: null, rebalanceApproval: null, monthlyReview: null, freshnessAudit: null, tilePriority: null, insightCallouts: null, whatMattersNow: null, reportExport: null, altcoinRiskCap: null, performanceBridge: null, thesisMonitor: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -4065,6 +4089,16 @@ function recalcDerived(priorSnapshot, saveSnapshot) {
     ENGINE.driftMonitor = computeDriftMonitorState(HOLDINGS);
     ENGINE.isaPensionRouting = computeISAPensionRoutingState(PORT);
     ENGINE.rebalanceProposal = computeRebalanceProposalState(HOLDINGS, undefined, ENGINE.wrapperExposure);
+    ENGINE.riskBudget = computeRiskBudgetState(HOLDINGS, RISK, PORT);
+    ENGINE.contributionAttribution = computeContributionState(HOLDINGS, MONTHLY_DATA);
+    ENGINE.drawdown = computeDrawdownState(NW_WEEKLY, PORT);
+    ENGINE.scenarioSensitivity = computeScenarioSensitivity(HOLDINGS, STRESS);
+    ENGINE.monteCarlo = computeMonteCarloState(PORT, RISK);
+    ENGINE.liquidityLadder = computeLiquidityLadderState(HOLDINGS, PORT);
+    ENGINE.bonusAllocation = computeBonusAllocationState(null, BONUS, null);
+    ENGINE.capitalEfficiency = computeCapitalEfficiencyState(HOLDINGS, PORT, RISK);
+    ENGINE.cryptoRebalance = computeCryptoRebalanceState(HOLDINGS);
+    ENGINE.cryptoScenario = computeCryptoScenarioLab(HOLDINGS, DEFAULT_MARKET);
   } catch (e) {
     console.error('LifeStack: Engine computation error', e);
   }
@@ -4091,6 +4125,20 @@ function recalcDerived(priorSnapshot, saveSnapshot) {
     AGENT.whatChanged = computeWhatChanged(ENGINE, priorSnapshot);
     AGENT.synthesis = generateWeeklySynthesis(ENGINE, MKTENG, PORT, SCORECARD, OPPS);
     AGENT.morningCommand = generateMorningCommand(ENGINE, MKTENG, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
+    AGENT.dailyBrief = generateDailyBrief(MKTENG, ENGINE, PORT);
+    AGENT.opportunityRadar = computeOpportunityRadar(ENGINE, MKTENG, HOLDINGS);
+    AGENT.watchlist = computeWatchlistState(null, DEFAULT_MARKET);
+    AGENT.deadlines = computeDeadlines(PORT, ENGINE);
+    AGENT.rebalanceApproval = generateRebalanceApproval(ENGINE, HOLDINGS);
+    AGENT.monthlyReview = generateMonthlyReview(ENGINE, MKTENG, PORT, MONTHLY_DATA);
+    AGENT.freshnessAudit = computeFreshnessAudit(FRESHNESS, {});
+    AGENT.tilePriority = computeTilePriority(ENGINE, MKTENG, null);
+    AGENT.insightCallouts = generateInsightCallouts(ENGINE, MKTENG, null);
+    AGENT.whatMattersNow = computeWhatMattersNow(ENGINE, MKTENG, null);
+    AGENT.reportExport = generateMarkdownReport(ENGINE, MKTENG, null, PORT);
+    AGENT.altcoinRiskCap = computeAltcoinRiskCap(HOLDINGS, PORT);
+    AGENT.performanceBridge = generatePerformanceBridge(BRIDGE, PORT, MONTHLY_DATA);
+    AGENT.thesisMonitor = computeThesisMonitorState([], ENGINE, MKTENG);
   } catch (e) {
     console.error('LifeStack: Agent computation error', e);
   }

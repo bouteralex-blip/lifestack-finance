@@ -3,6 +3,25 @@ import React, { useState, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter, PieChart, Pie, Legend } from "recharts";
 import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, Landmark, CircleDot, FileText, Briefcase, Factory, Flame, Map, Users, Gem, ChevronRight, ChevronDown } from "lucide-react";
 import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState, computeBTCDominanceState } from '../lib/engines/market/index.js';
+import {
+  computeCentralBankState,
+  computeInflationShockState,
+  computeLiquidityDivergenceState,
+  computeNarrativePulseState,
+  computePolicySurpriseState,
+  computeFactorRotationState,
+  computeEarningsRevisionState,
+  computeCFTCPositioningState,
+  computeCorrelationDriftState,
+  computeGapRiskState,
+  computeCommodityShockState,
+  computeFXRegimeState,
+  computeCryptoETFFlowState,
+  computeCryptoFundingState,
+  computeStablecoinLiquidityState,
+  computeCryptoSentimentState,
+  computeOnChainStressBoard,
+} from '../lib/engines/market/index.js';
 
 // =========================================================================
 // LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
@@ -1245,6 +1264,23 @@ const MKTENG = {
   etfFlows: computeETFFlowState(SENT_DIV, M),
   cryptoOnChain: computeCryptoOnChainState(M),
   btcDominance: computeBTCDominanceState(M),
+  centralBank: computeCentralBankState(M),
+  inflationShock: computeInflationShockState(M),
+  liquidityDivergence: computeLiquidityDivergenceState(M),
+  narrativePulse: computeNarrativePulseState(M),
+  policySurprise: computePolicySurpriseState(M),
+  factorRotation: computeFactorRotationState(M),
+  earningsRevision: computeEarningsRevisionState(M),
+  cftcPositioning: computeCFTCPositioningState(M),
+  correlationDrift: computeCorrelationDriftState(M),
+  gapRisk: computeGapRiskState(M),
+  commodityShock: computeCommodityShockState(M),
+  fxRegime: computeFXRegimeState(M),
+  cryptoETFFlows: computeCryptoETFFlowState(M),
+  cryptoFunding: computeCryptoFundingState(M),
+  stablecoinLiquidity: computeStablecoinLiquidityState(M),
+  cryptoSentiment: computeCryptoSentimentState(M),
+  onchainStress: computeOnChainStressBoard(M),
 };
 
 // =========================================================================
