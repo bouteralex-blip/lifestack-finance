@@ -1,0 +1,302 @@
+# LifeStack Finance — Roadmap to 100% Scope Completion
+
+Date: 17 March 2026
+Basis: `Claude_Code_LifeStack_Implementation_Brief.md` + `LifeStack_repo_module_analysis_and_agent_workflows.md`
+
+---
+
+## Current State: ~30-35% Complete
+
+### What's merged to main (live on Vercel)
+- UI shell with 17 Finance tabs + 24 Market tabs
+- Supabase data hook with freshness tracking
+- Premium teal-navy glass design system
+- No computation engines, no live data, no agent layer
+
+### What's built but unmerged (`claude/review-finance-agent-plan-andJc`)
+- Phase 1: Truth Layer (freshness, defaults)
+- Phase 2: 8 Finance engines
+- Phase 3: 8 Market intelligence engines
+- Phase 4: 7 Agent engines
+- Phase 5 Tiers 1-3: UI wiring, persistence, live market API, test suite (328 tests, 5 failing)
+- 2 Supabase migrations
+- Blocker: 5 test failures (mapRange overflow + Jest compatibility)
+
+---
+
+## Step 0 — Merge Existing Work ⬅ IMMEDIATE
+
+1. Fix 5 failing tests:
+   - `mapRange()` overflow in `macro-regime.js` and `btc-cycle.js` → replace `clamp(mapRange(...), 0, 100)` with `scoreInBand()` that tapers to 0 past range
+   - `fail()` in `weekly-synthesis.test.js` → `throw new Error()`
+2. Verify all 328 tests pass
+3. Merge branch to main
+4. Apply Supabase migrations (001 + 002)
+5. Verify Vercel deployment with engines active
+
+**Result: Jumps from ~10% live to ~35% live**
+
+---
+
+## Step 1 — Complete Crypto-Specific Workflows
+
+Blueprint specifies 10 crypto workflows. Currently built: 2 (btc-cycle, crypto-onchain + btc-dominance).
+
+### Build (8 remaining):
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | ETF flow monitor (spot BTC/ETH ETF flows) | `lib/engines/market/crypto-etf-flows.js` | High |
+| 2 | Funding / basis engine (perp funding, futures basis) | `lib/engines/market/crypto-funding.js` | High |
+| 3 | Stablecoin liquidity tracker (USDT/USDC supply) | `lib/engines/market/stablecoin-liquidity.js` | Medium |
+| 4 | Fear / greed divergence (sentiment vs flows) | `lib/engines/market/crypto-sentiment.js` | Medium |
+| 5 | On-chain stress board (reserves, whales, dormancy) | `lib/engines/market/onchain-stress.js` | Medium |
+| 6 | Altcoin risk cap agent (hard sleeve cap) | `lib/engines/agents/altcoin-risk-cap.js` | High |
+| 7 | Crypto rebalance engine (target vs actual) | `lib/engines/crypto-rebalance.js` | Medium |
+| 8 | Crypto scenario lab (BTC/ETH/SOL stress) | `lib/engines/crypto-scenario.js` | Low |
+
+### Wire to UI:
+- P9 (Crypto Intelligence) tab in MarketsModule — surface all crypto engine outputs
+- T11 (Crypto Engine) tab in PortfolioVOS — wire altcoin risk cap + rebalance
+
+### Tests:
+- 8 new test files, ~120 tests
+
+---
+
+## Step 2 — Complete Market Intelligence Workflows
+
+Blueprint specifies 20 market workflows. Currently built: 8. Remaining: 12.
+
+### Build:
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | Central-bank path tracker (rate cut/hike odds) | `lib/engines/market/central-bank.js` | High |
+| 2 | Inflation shock monitor (oil, gas, breakevens) | `lib/engines/market/inflation-shock.js` | High |
+| 3 | Liquidity divergence engine (M2, balance sheets) | `lib/engines/market/liquidity-divergence.js` | Medium |
+| 4 | Narrative pulse engine (top stories, NLP) | `lib/engines/market/narrative-pulse.js` | Medium |
+| 5 | Policy surprise detector (govt, CB shocks) | `lib/engines/market/policy-surprise.js` | Medium |
+| 6 | Factor rotation engine (value, growth, quality) | `lib/engines/market/factor-rotation.js` | High |
+| 7 | Earnings revision monitor (consensus changes) | `lib/engines/market/earnings-revision.js` | Medium |
+| 8 | CFTC positioning engine (futures crowdedness) | `lib/engines/market/cftc-positioning.js` | Low |
+| 9 | Correlation drift monitor (rolling correlations) | `lib/engines/market/correlation-drift.js` | Medium |
+| 10 | Gap-risk detector (event calendar + vol term) | `lib/engines/market/gap-risk.js` | Low |
+| 11 | Commodity shock monitor (gold, oil, copper) | `lib/engines/market/commodity-shock.js` | Medium |
+| 12 | FX regime engine (DXY, GBPUSD, EMFX) | `lib/engines/market/fx-regime.js` | Medium |
+
+### Wire to UI:
+- Update MarketsModule tabs P1-P12 to consume new engine outputs
+- Add MKTENG entries for each new engine
+
+### Tests:
+- 12 new test files, ~180 tests
+
+---
+
+## Step 3 — Complete Portfolio Intelligence Workflows
+
+Blueprint specifies 20 portfolio workflows. Currently built: 8. Remaining: 12.
+
+### Build:
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | Holdings ingestion (broker/CSV/DB → ledger) | `lib/engines/holdings-ingestion.js` | High |
+| 2 | Position normalizer (names, tickers, wrappers) | `lib/engines/position-normalizer.js` | High |
+| 3 | Risk-budget engine (vol, beta, factor load) | `lib/engines/risk-budget.js` | High |
+| 4 | Contribution attribution (PnL by holding) | `lib/engines/contribution-attribution.js` | Medium |
+| 5 | Performance bridge writer (NAV memo) | `lib/engines/agents/performance-bridge.js` | Medium |
+| 6 | Drawdown monitor (portfolio history → state) | `lib/engines/drawdown-monitor.js` | High |
+| 7 | Scenario sensitivity engine (stress shocks) | `lib/engines/scenario-sensitivity.js` | Medium |
+| 8 | Monte Carlo updater (returns + save rate) | `lib/engines/monte-carlo.js` | Low |
+| 9 | Liquidity ladder engine (cash, FD, bills) | `lib/engines/liquidity-ladder.js` | Medium |
+| 10 | Bonus allocation engine (scenario deploy) | `lib/engines/bonus-allocation.js` | Medium |
+| 11 | Capital efficiency scorer (scorecard) | `lib/engines/capital-efficiency.js` | Medium |
+| 12 | Thesis monitor (thesis tags vs market state) | `lib/engines/agents/thesis-monitor.js` | High |
+
+### Wire to UI:
+- PortfolioVOS tabs T1-T12 to consume new engine outputs
+- ENGINE state object expanded with new entries
+
+### Tests:
+- 12 new test files, ~180 tests
+
+---
+
+## Step 4 — Complete Research Production Workflows
+
+Blueprint specifies 10 research workflows. Currently built: 2 (weekly-synthesis, decision-log). Remaining: 8.
+
+### Build:
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | Daily market brief (1-page brief) | `lib/engines/agents/daily-brief.js` | High |
+| 2 | Theme memo generator (deep-dive memo) | `lib/engines/agents/theme-memo.js` | Medium |
+| 3 | Opportunity radar ranker (ranked candidates) | `lib/engines/agents/opportunity-radar.js` | High |
+| 4 | Watchlist updater (prices, catalysts, news) | `lib/engines/agents/watchlist-updater.js` | Medium |
+| 5 | Trigger-based note writer (threshold breach) | `lib/engines/agents/trigger-note.js` | Medium |
+| 6 | Earnings note generator (results + guidance) | `lib/engines/agents/earnings-note.js` | Low |
+| 7 | Policy note generator (CB/govt release) | `lib/engines/agents/policy-note.js` | Low |
+| 8 | Monthly portfolio letter (investor-style) | `lib/engines/agents/monthly-letter.js` | Medium |
+
+### Wire to UI:
+- New P16 Weekly Synthesis tab content from daily-brief + weekly-synthesis
+- Decision after-action reviews in T12 Action Plan
+
+### Tests:
+- 8 new test files, ~100 tests
+
+---
+
+## Step 5 — Complete Execution & Operating System Workflows
+
+Blueprint specifies 10 execution workflows. Currently built: 2 (morning-command, action-queue). Remaining: 8.
+
+### Build:
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | Calendar-aware deployment agent | `lib/engines/agents/calendar-deploy.js` | Medium |
+| 2 | Reminder / deadline agent (ISA, tax, reviews) | `lib/engines/agents/deadline-agent.js` | High |
+| 3 | Rebalance approval pack (drift + costs + taxes) | `lib/engines/agents/rebalance-approval.js` | Medium |
+| 4 | Monthly operating review (full scorecard) | `lib/engines/agents/monthly-review.js` | High |
+| 5 | Quarterly allocation review (re-underwrite) | `lib/engines/agents/quarterly-review.js` | Medium |
+| 6 | Theme retirement agent (archive stale ideas) | `lib/engines/agents/theme-retirement.js` | Low |
+| 7 | Research backlog manager (ranked backlog) | `lib/engines/agents/research-backlog.js` | Low |
+| 8 | Model / agent evaluation loop (scorecard) | `lib/engines/agents/agent-evaluation.js` | Low |
+
+### Wire to UI:
+- T12 Action Plan: deadline alerts, rebalance approval pack
+- T1 Executive Summary: monthly/quarterly review summaries
+
+### Tests:
+- 8 new test files, ~100 tests
+
+---
+
+## Step 6 — Complete Dashboard & Product Workflows
+
+Blueprint specifies 10 dashboard workflows. Currently built: 1 (what-changed). Remaining: 9.
+
+### Build:
+| # | Workflow | File | Priority |
+|---|---------|------|----------|
+| 1 | Data freshness audit (all state objects) | `lib/engines/agents/freshness-audit.js` | High |
+| 2 | Tile priority engine (ranked tile order) | `lib/engines/agents/tile-priority.js` | High |
+| 3 | Insight callout writer (plain-English) | `lib/engines/agents/insight-callout.js` | Medium |
+| 4 | What matters now engine (priority bar) | `lib/engines/agents/what-matters-now.js` | High |
+| 5 | Ignore list generator (low-EV noise) | `lib/engines/agents/ignore-list.js` | Low |
+| 6 | UI QA agent (screenshot + diff) | `lib/engines/agents/ui-qa.js` | Low |
+| 7 | Regression checker (tab render + data) | `lib/engines/agents/regression-check.js` | Medium |
+| 8 | Content drift checker (copy vs data) | `lib/engines/agents/content-drift.js` | Low |
+| 9 | Report exporter (markdown/doc/email) | `lib/engines/agents/report-exporter.js` | Medium |
+
+### Wire to UI:
+- T1 Executive Summary: "What matters now" priority bar, insight callouts
+- All tabs: freshness audit badges, tile reordering
+- Export button on key tabs
+
+### Tests:
+- 9 new test files, ~120 tests
+
+---
+
+## Step 7 — Live Data Pipeline & Scheduling
+
+Currently: API route exists but only fetches on user request. No cron/scheduling.
+
+### Build:
+1. **Expand `/api/market/route.js`** to cover all metrics from Steps 1-2
+   - Add: FRED series (CPI, GDP, M2, fed funds, breakevens)
+   - Add: CoinGecko (BTC dominance, ETH, SOL, stablecoin supply)
+   - Add: Proxy for ETF flow data, CFTC positioning
+   - Add: Commodity prices (gold, oil, copper, uranium)
+2. **Add `/api/portfolio/route.js`** — Holdings ingestion endpoint (CSV upload + Supabase write)
+3. **Add `/api/cron/daily.js`** — Vercel cron to run daily engine computations
+   - Compute all ENGINE, MKTENG, AGENT states
+   - Save snapshots via persistence layer
+   - Generate daily brief + trigger alerts
+4. **Add `/api/cron/weekly.js`** — Vercel cron for weekly synthesis, reviews
+5. **`useMarketData()` hook** — Auto-refresh from `/api/market` with configurable interval
+6. **`useSnapshotPersistence()` hook** — Load prior snapshot for what-changed comparisons
+
+### Config:
+- `vercel.json` cron schedule entries
+- Environment variables for API keys (FRED, CoinGecko)
+
+---
+
+## Step 8 — UI Refinement (Phase 5 of Implementation Brief)
+
+Only after Steps 0-7. This is the "make it luxurious" pass.
+
+### Build:
+1. **Tile density optimization** — Tighter grid layouts where data supports it
+2. **Cross-linking between tabs** — Click regime badge → jump to P1, click debt alert → jump to T12
+3. **Surface top-ranked actions aggressively** — Persistent action bar across all tabs
+4. **Adaptive layouts** — Responsive grid for mobile/tablet
+5. **Executive command center roll-up** — Single-screen CIO view pulling from all engines
+6. **Glass polish** — Micro-animations, transitions, loading states
+7. **Stale-data labels** — Visible freshness chips on every data tile
+8. **Export / share** — PDF/markdown export for weekly synthesis, monthly letter
+
+---
+
+## Step 9 — QA & Hardening
+
+### Implementation Brief QA requirements:
+1. No broken existing tabs — full tab render regression test
+2. All state objects nullable-safe — fuzz test with null/undefined inputs
+3. All derived metrics recompute from live states — verify no stale hardcoded leaks
+4. Render checks for every updated tab — visual regression snapshots
+5. Explicit stale-data labels where needed — freshness audit pass
+6. All 80+ workflows have defined: inputs, transformation, output, UI location, freshness rule, fallback
+
+### Testing targets:
+- ~1,000 total unit tests across all engines
+- Integration tests for state flow (ENGINE → AGENT → UI)
+- E2E test for critical paths (load app, check engines compute, verify tiles render)
+
+---
+
+## Effort Estimate by Step
+
+| Step | Scope | Engine Files | Tests | Effort |
+|------|-------|-------------|-------|--------|
+| 0 | Merge existing work | 0 | Fix 5 | Small |
+| 1 | Crypto workflows | 8 | ~120 | Medium |
+| 2 | Market intelligence | 12 | ~180 | Large |
+| 3 | Portfolio intelligence | 12 | ~180 | Large |
+| 4 | Research production | 8 | ~100 | Medium |
+| 5 | Execution / OS | 8 | ~100 | Medium |
+| 6 | Dashboard / product | 9 | ~120 | Medium |
+| 7 | Live data + scheduling | 4-6 | ~50 | Large |
+| 8 | UI refinement | 0 | 0 | Medium |
+| 9 | QA & hardening | 0 | ~150 | Medium |
+| **Total** | **80 workflows** | **~57 new files** | **~1,000 new tests** | |
+
+---
+
+## Completion Milestones
+
+| Milestone | Steps | Cumulative % |
+|-----------|-------|-------------|
+| Merge existing work | 0 | 35% |
+| Crypto + market intelligence complete | 0-2 | 55% |
+| All engines built | 0-6 | 80% |
+| Live data + scheduling | 0-7 | 90% |
+| UI polish + QA | 0-9 | 100% |
+
+---
+
+## Priority Order (if time-constrained)
+
+If you can only do some of these, this is the order of maximum impact:
+
+1. **Step 0** — Merge what's built (free value)
+2. **Step 7** — Live data pipeline (biggest gap: static → live)
+3. **Step 1** — Crypto workflows (high user value)
+4. **Step 3** — Portfolio intelligence (holdings ingestion = foundation)
+5. **Step 6** — Dashboard workflows (tile priority + what-matters-now = UX leap)
+6. **Step 2** — Market intelligence (breadth)
+7. **Step 4** — Research production (memos)
+8. **Step 5** — Execution / OS (governance)
+9. **Step 8** — UI refinement (polish)
+10. **Step 9** — QA (hardening)
