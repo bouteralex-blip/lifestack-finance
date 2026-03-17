@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useSupabaseData } from '../lib/useData';
+import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence } from '../lib/useData';
+import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
+import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
+import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeCryptoOnChainState } from '../lib/engines/market/index.js';
+import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand, processDecisionLog, createDecisionEntry } from '../lib/engines/agents/index.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -373,6 +377,12 @@ let MONTHLY_DATA = [
 ];
 let SCORECARD = {overall:5.2,returns:3.8,riskMgmt:5.4,process:4.2,taxEff:6.0,diversify:7.6,capitalEff:4.4,commentary:"Overall 5.2/10 reflects strong diversification (7.6) offset by poor returns (3.8) driven by the crypto correction. Tax efficiency (6.0) is improving but 47% GIA exposure remains a drag. Process (4.2) is weak from missing rebalancing discipline and no IPS."};
 let REF_DATA = {};
+// Phase 1 Truth Layer — module-scope freshness state, updated from useSupabaseData()
+let FRESHNESS = {};
+// Phase 2 Finance OS — engine-computed state objects, recalculated on data change
+let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null };
+let MKTENG = { regime: null, stress: null, btcCycle: null, yieldCurve: null, creditStress: null, sectorLeadership: null, cryptoOnChain: null };
+let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -498,11 +508,12 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
   </div>
 );
 
-const Hd = ({t,s,tag,ac=P.cyan}) => (
+const Hd = ({t,s,tag,ac=P.cyan,freshness,tableKey}) => (
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
       <h2 style={{fontSize:24,fontWeight:800,color:'#fff',margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
       {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
+      {freshness&&<FreshnessChip freshness={freshness} tableKey={tableKey}/>}
     </div>
     {s&&<p style={{fontSize:13,color:'rgba(255,255,255,0.55)',margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -558,6 +569,27 @@ const Chip = ({label,value,color,icon,onClick}) => {
   );
 };
 
+// ── FreshnessChip — Phase 1 Truth Layer: shows live/stale/fallback per data source ──
+const FreshnessChip = ({freshness, tableKey, label}) => {
+  if (!freshness) return null;
+  const f = tableKey ? freshness[tableKey] : freshness;
+  if (!f) return null;
+  const config = {
+    live:     { dot: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
+    stale:    { dot: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#fbbf24' },
+    fallback: { dot: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#f87171' },
+  };
+  const s = config[f.level] || config.fallback;
+  return (
+    <div style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:6,
+      background:s.bg,border:`1px solid ${s.border}`,fontSize:9,fontWeight:600,letterSpacing:0.3,
+      color:s.text,userSelect:'none',flexShrink:0}}>
+      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,boxShadow:`0 0 6px ${s.dot}60`}}/>
+      {label || f.label}
+    </div>
+  );
+};
+
 // ── GlassAction ─ Small interactive glass button for tile action bars ────────
 const GlassAction = ({icon,label,onClick,color}) => {
   color = color||P.t3;
@@ -577,7 +609,7 @@ const GlassAction = ({icon,label,onClick,color}) => {
 };
 
 // ── PanelShell ─ Core tile wrapper: SM/MD/LG sizes, shimmer, chips, takeaway ─
-const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,size='md',chips,badge,...cardProps}) => {
+const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,size='md',chips,badge,freshness,tableKey,...cardProps}) => {
   const [expanded,setExpanded]=useState(true);
   const cfg = size==='sm'
     ? {pad:12,titleSz:11,hpad:'7px 13px',accentH:1.5}
@@ -595,6 +627,7 @@ const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,
           {subtitle && <div style={{...HEADER_SUB}}>{subtitle}</div>}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {freshness && <FreshnessChip freshness={freshness} tableKey={tableKey}/>}
           {(metric||badge) && <div style={{fontSize:size==='sm'?15:18,fontWeight:800,color:ac,fontFamily:P.mono,letterSpacing:-0.5}}>{metric||badge}</div>}
           <button onClick={()=>setExpanded(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',
             color:'rgba(255,255,255,0.28)',fontSize:11,padding:'2px 4px',lineHeight:1,fontFamily:'inherit',
@@ -1182,13 +1215,17 @@ const T1 = ({ truthLayer })=>{
   const debtToAsset = (PORT.debts / PORT.assets * 100);
   const leverage = PORT.debts / PORT.netWorth;
 
-  const alerts = [
-    {msg:"ISA deadline: 29 days. £0 of £20k deployed.", sev:"high"},
-    {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
-    {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
-    {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
-    {msg:"18 positions below £1k. Fragment drag ~£160/yr.", sev:"low"},
-  ];
+  // Phase 4: Engine-driven alerts with fallback to hardcoded
+  const engineAlerts = AGENT.triggerAlerts?.alerts || [];
+  const alerts = engineAlerts.length > 0
+    ? engineAlerts.map(a => ({ msg: a.message, sev: a.severity === 'critical' ? 'high' : a.severity === 'warning' ? 'med' : 'low' }))
+    : [
+      {msg:"ISA deadline: 29 days. £0 of £20k deployed.", sev:"high"},
+      {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
+      {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
+      {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
+      {msg:"18 positions below £1k. Fragment drag ~£160/yr.", sev:"low"},
+    ];
 
   const decomp = [
     {name:"Crypto Allocation", val: -5.4, c: P.red},
@@ -1254,11 +1291,11 @@ const T1 = ({ truthLayer })=>{
               <div style={{width:36,height:36,borderRadius:10,background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,fontWeight:900,boxShadow:'0 4px 16px rgba(0,0,0,0.25)'}}>LS</div>
               <div>
                 <div style={{fontSize:18,fontWeight:900,color:'#fff',letterSpacing:-0.5}}>EXECUTIVE SUMMARY</div>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{PORT.date} · CIO Briefing · Institutional Review</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',display:'flex',alignItems:'center',gap:8}}>{PORT.date} · CIO Briefing · Institutional Review <FreshnessChip freshness={FRESHNESS} tableKey="portfolio_config"/></div>
               </div>
             </div>
             <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',lineHeight:1.7,maxWidth:800}}>
-              Portfolio at <span style={{color:P.cyan,fontWeight:700}}>{fmt(PORT.netWorth)}</span> after a <span style={{color:P.negative,fontWeight:700}}>{pc(nwReturn)}</span> 6-month return. Crypto correction destroyed {fK(38400)} while equity selection and pension revaluation added {fK(30400)}. New compensation ({fK(PORT.grossSalary+PORT.grossBonus)} gross) transforms the savings engine. Immediate priorities: ISA deployment ({fK(20000)}), Amex clearance ({fmt(PORT.amexDebt)}), salary sacrifice optimisation.
+              {AGENT.synthesis?.executiveSummary || `Portfolio at ${fmt(PORT.netWorth)} after a ${pc(nwReturn)} 6-month return. Crypto correction destroyed ${fK(38400)} while equity selection and pension revaluation added ${fK(30400)}. New compensation (${fK(PORT.grossSalary+PORT.grossBonus)} gross) transforms the savings engine. Immediate priorities: ISA deployment (${fK(20000)}), Amex clearance (${fmt(PORT.amexDebt)}), salary sacrifice optimisation.`}
             </div>
           </div>
           <div style={{display:'flex',gap:10,flexShrink:0,marginLeft:20}}>
@@ -1268,6 +1305,85 @@ const T1 = ({ truthLayer })=>{
         </div>
       </div>
     </div>
+
+    {/* MORNING COMMAND CENTER — full daily brief from AGENT.morningCommand */}
+    {AGENT.morningCommand && (()=>{
+      const mc = AGENT.morningCommand;
+      const mp = mc.sections?.marketPulse;
+      const tp = mc.sections?.todaysPriorities;
+      const pv = mc.sections?.portfolioVitals;
+      const cal = mc.sections?.calendarItems;
+      const verdictColor = mc.verdict?.level === 'RED' ? P.red : mc.verdict?.level === 'AMBER' ? P.amber : P.positive;
+      return (
+        <div style={{...G,padding:'16px 20px',marginBottom:14,borderLeft:`3px solid ${verdictColor}`,background:'rgba(7,46,51,0.45)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+            <div>
+              <div style={{fontSize:11,color:P.t4,letterSpacing:1,fontWeight:700,marginBottom:4}}>{mc.title?.toUpperCase()}</div>
+              <div style={{fontSize:14,color:P.t1,fontWeight:600,lineHeight:1.6}}>{mc.headline}</div>
+            </div>
+            <div style={{padding:'4px 12px',borderRadius:8,background:`${verdictColor}20`,border:`1px solid ${verdictColor}40`,textAlign:'center'}}>
+              <div style={{fontSize:10,color:P.t4,fontWeight:700}}>STATUS</div>
+              <div style={{fontSize:14,fontWeight:900,color:verdictColor}}>{mc.verdict?.level}</div>
+            </div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+            {/* Today's Priorities */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>TODAY&apos;S PRIORITIES</div>
+              {tp?.actions?.map((a,i)=>(
+                <div key={i} style={{display:'flex',gap:6,padding:'4px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <div style={{width:18,height:18,borderRadius:'50%',background:a.urgency==='immediate'?P.red:P.amber,color:'#000',fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{a.rank}</div>
+                  <div><div style={{fontSize:11,color:P.t1,fontWeight:600}}>{a.action}</div>
+                    {a.ev > 0 && <div style={{fontSize:10,color:P.positive}}>\u00A3{Math.round(a.ev).toLocaleString()}/yr</div>}
+                  </div>
+                </div>
+              )) || <div style={{fontSize:11,color:P.t4}}>No actions queued</div>}
+              {tp?.totalQueued > 3 && <div style={{fontSize:10,color:P.t4,marginTop:4}}>+{tp.totalQueued-3} more in queue</div>}
+            </div>
+            {/* Market Pulse */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>MARKET PULSE</div>
+              {mp?.available ? [
+                {l:'Regime',v:mp.regime,c:mp.riskPosture==='Defensive'?P.amber:P.t2},
+                {l:'Stress',v:`${mp.stress?.score}/100 (${mp.stress?.level})`,c:mp.stress?.score>60?P.red:P.t2},
+                {l:'BTC',v:`${mp.btc?.phase}`,c:P.btc},
+                {l:'Credit',v:mp.credit,c:mp.credit==='Elevated'?P.amber:P.t2},
+                {l:'Curve',v:mp.yieldCurve,c:mp.yieldCurve==='INVERTED'?P.red:P.t2},
+              ].map((m,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <span style={{fontSize:11,color:P.t3}}>{m.l}</span>
+                  <span style={{fontSize:11,color:m.c,fontWeight:600}}>{m.v}</span>
+                </div>
+              )) : <div style={{fontSize:11,color:P.t4}}>Market data pending</div>}
+            </div>
+            {/* Portfolio Vitals + Calendar */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>PORTFOLIO VITALS</div>
+              {pv?.available ? [
+                {l:'Max Drift',v:`${pv.drift?.max?.toFixed(1)}%`,c:pv.drift?.max>5?P.red:P.t2},
+                {l:'HHI',v:pv.concentration?.hhi,c:pv.concentration?.hhi>2000?P.amber:P.t2},
+                {l:'Wrapper Eff.',v:`${pv.wrapper?.efficiency?.toFixed(1)}/10`,c:pv.wrapper?.efficiency<4?P.red:P.t2},
+                {l:'ISA Left',v:`\u00A3${(pv.isa?.remaining||0).toLocaleString()}`,c:pv.isa?.daysLeft<=30?P.red:P.t2},
+                {l:'Total Debt',v:`\u00A3${(pv.debt?.total||0).toLocaleString()}`,c:pv.debt?.highestAPR>10?P.red:P.t2},
+              ].map((m,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <span style={{fontSize:11,color:P.t3}}>{m.l}</span>
+                  <span style={{fontSize:11,color:m.c,fontWeight:600}}>{m.v}</span>
+                </div>
+              )) : <div style={{fontSize:11,color:P.t4}}>Engine data pending</div>}
+              {cal?.length > 0 && (<>
+                <div style={{fontSize:10,fontWeight:700,color:P.amber,letterSpacing:0.8,marginTop:8,marginBottom:4}}>DEADLINES</div>
+                {cal.map((c,i)=>(
+                  <div key={i} style={{fontSize:11,color:c.urgency==='critical'?P.red:P.t2,padding:'2px 0'}}>
+                    {c.daysUntil != null ? `${c.daysUntil}d` : ''} {c.event}
+                  </div>
+                ))}
+              </>)}
+            </div>
+          </div>
+        </div>
+      );
+    })()}
 
     {/* ROW 1: 12-col KPI grid — variable sizing: hero(3), standard(2), compact(1.5) */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
@@ -1288,9 +1404,9 @@ const T1 = ({ truthLayer })=>{
 
     {/* AGENT INSIGHT BANNER — synthesis + regime context */}
     <CIOInsightBanner
-      regime="Late Cycle"
-      confidence={72}
-      text={`Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
+      regime={AGENT.synthesis?.sections?.marketContext?.regime || "Late Cycle"}
+      confidence={AGENT.synthesis?.sections?.marketContext?.regimeConfidence || 72}
+      text={AGENT.synthesis?.executiveSummary || `Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
     />
 
     {/* CONTROL BAR — time filter between Zone 1 and Zone 2 */}
@@ -1305,7 +1421,7 @@ const T1 = ({ truthLayer })=>{
     {/* ROW 2: Alerts + Scorecard Radar + Return Decomp (3 col) */}
     <div style={{display:"grid",gridTemplateColumns:"3fr 4fr 5fr",gap:14,marginBottom:14}}>
       {/* Alerts */}
-      <PanelShell tier={1} title="GOVERNANCE ALERTS" subtitle={`${alerts.filter(a=>a.sev==="high").length} high priority`} metricColor={P.red} takeaway="Address high-severity items within 30 days. ISA deadline is time-critical. Amex clearance is highest financial return action.">
+      <PanelShell tier={1} title="GOVERNANCE ALERTS" subtitle={`${alerts.filter(a=>a.sev==="high").length} high priority${AGENT.morningCommand?.verdict ? ` · ${AGENT.morningCommand.verdict.level}` : ''}`} metricColor={P.red} takeaway={AGENT.morningCommand?.verdict?.message || "Address high-severity items within 30 days. ISA deadline is time-critical. Amex clearance is highest financial return action."}>
         {alerts.map((a,i) => {
           const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
           return (
@@ -1760,14 +1876,13 @@ const T2 = ({ truthLayer })=>{
   const microValue = sorted.filter(h=>h.val<1000).reduce((a,h)=>a+h.val,0);
 
   return(<div>
-    <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, exposure analysis, wrapper efficiency, concentration risk" tag="HOLDINGS"/>
-    <TruthLayerBanner scope="T2 Structure & Concentration" truthLayer={truthLayer}/>
+    <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, exposure analysis, wrapper efficiency, concentration risk" tag="HOLDINGS" freshness={FRESHNESS} tableKey="holdings"/>
 
     {/* KPI ROW — 8 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:8,marginBottom:14}}>
       <KpiTile l="Positions" v={HOLDINGS.length+18} c={P.t2} sm bench="Target: ≤15"/>
-      <KpiTile l="Eff. Pos" v={RISK.effPos.toFixed(1)} c={P.positive} sm delta="1/HHI" bench="Good: >12"/>
-      <KpiTile l="HHI" v={RISK.hhi.toFixed(3)} c={P.positive} sm delta="<0.10" bench="MSCI: 0.032"/>
+      <KpiTile l="Eff. Pos" v={(ENGINE.concentration?.effectivePositions||RISK.effPos).toFixed(1)} c={P.positive} sm delta="1/HHI" bench="Good: >12"/>
+      <KpiTile l="HHI" v={(ENGINE.concentration?.hhi?+(ENGINE.concentration.hhi/10000).toFixed(3):RISK.hhi).toFixed(3)} c={P.positive} sm delta="<0.10" bench="MSCI: 0.032"/>
       <KpiTile l="Entropy" v={RISK.entropy.toFixed(2)} c={P.t2} sm delta="Evenness" bench="Max: 3.0"/>
       <KpiTile l="Top 3" v={`${(top3/totalAssets*100).toFixed(0)}%`} c={P.amber} sm bench="Limit: <40%"/>
       <KpiTile l="Top 5" v={`${(top5/totalAssets*100).toFixed(0)}%`} c={P.t2} sm bench="Limit: <60%"/>
@@ -2101,8 +2216,7 @@ const T3 = ({ truthLayer })=>{
   ];
 
   return(<div>
-    <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, return decomposition, contribution analysis, risk-adjusted metrics" tag="PM REVIEW"/>
-    <TruthLayerBanner scope="T3 Performance & Attribution" truthLayer={truthLayer}/>
+    <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, return decomposition, contribution analysis, risk-adjusted metrics" tag="PM REVIEW" freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     {/* KPI ROW — 10 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(10, 1fr)",gap:8,marginBottom:14}}>
@@ -2373,7 +2487,7 @@ const T4 = ()=>{
   ];
   const volTrend=MONTHLY_DATA.filter(m=>m.vol!=null).map(m=>({d:m.m,vol:m.vol,dd:m.r}));
   return(<div>
-    <SectionHeader t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red}/>
+    <SectionHeader t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red} freshness={FRESHNESS} tableKey="risk_metrics"/>
 
     {/* KPI ROW */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -2509,7 +2623,7 @@ const T4 = ()=>{
 const T5 = ()=>{
   const probWeighted = STRESS.map(s=>({...s,wImpact:+(s.impact*parseFloat(s.pr)/100).toFixed(2)}));
   return(<div>
-    <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
+    <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red} freshness={FRESHNESS} tableKey="stress_scenarios"/>
 
     {/* KPI STRIP — Zone 1 Signal */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -2609,7 +2723,7 @@ const T6 = ()=>{
     {m:"Investable",v:+((netSalary/12)-PORT.monthlyExpenses).toFixed(0)},
   ];
   return(<div>
-    <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
+    <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL" freshness={FRESHNESS} tableKey="portfolio_config"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
       <KpiTile l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March" bench="£120k med"/><KpiTile l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber} bench="0-50%"/>
       <KpiTile l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><KpiTile l="Expenses" v="£6k/mo" s="£72k/yr" bench="£5k avg"/>
@@ -2695,7 +2809,7 @@ const T7 = ()=>{
   const debtPct = Math.round(PORT.amexDebt/totalDeployed*100);
   const isaPct = Math.round(20000/totalDeployed*100);
   return(<div>
-    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) · Tax+NI: ${fK(BONUS.tax+BONUS.ni)} · Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION"/>
+    <Hd t="BONUS DEPLOYMENT STRATEGY" s={`Gross: ${fK(BONUS.gross)} (mid) · Tax+NI: ${fK(BONUS.tax+BONUS.ni)} · Post-tax: ${fK(BONUS.postTax)}`} tag="ALLOCATION" freshness={FRESHNESS} tableKey="bonus_config"/>
     <FlexRow gap={10}>
       <K l="Gross Bonus" v={fK(BONUS.gross)} s="Mid-range est." sm/><K l="Tax + NI" v={fK(BONUS.tax+BONUS.ni)} s="45% + 2%" c={P.red} sm/>
       <K l="Post-Tax" v={fK(BONUS.postTax)} s="Deployable" c={P.cyan} sm/><K l="ISA Max" v="£20k" s="Non-negotiable" c={P.t1} sm/>
@@ -2790,15 +2904,19 @@ const T8 = ()=>{
       </svg>
     );
   };
-  const valRanked = [...OPPS].sort((a,b)=>b.val-a.val);
+  const ranked = AGENT.rankedOpps?.ranked;
+  const useRanked = ranked?.length > 0;
+  const displayOpps = useRanked ? ranked : OPPS;
+  const valRanked = [...displayOpps].sort((a,b)=>b.val-a.val);
+  const rSummary = AGENT.rankedOpps?.summary;
   return(<div>
-    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive}/>
+    <Hd t="OPPORTUNITY RADAR" s={`${displayOpps.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive} freshness={FRESHNESS} tableKey="opportunities"/>
 
-    {/* KPI STRIP */}
+    {/* KPI STRIP — engine-enriched when AGENT.rankedOpps available */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Opportunities" v={OPPS.length} c={P.t2} sm/><K l="Total Ann. Value" v={`£${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
-      <K l="Top Score" v={`${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta="Conv\u00D7Time"/><K l="Execute Now" v={OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
-      <K l="Avg Conviction" v={(OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={P.t2} sm/><K l="Avg Timing" v={(OPPS.reduce((a,o)=>a+o.tm,0)/OPPS.length).toFixed(1)} c={P.t2} sm/>
+      <K l="Opportunities" v={displayOpps.length} c={P.t2} sm/><K l="Total Ann. Value" v={`\u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
+      <K l="Top Score" v={useRanked ? rSummary?.topScore?.toFixed(0) : `${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta={useRanked ? "Composite" : "Conv\u00D7Time"}/><K l="Execute Now" v={useRanked ? (rSummary?.executeNow || 0) : OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
+      <K l={useRanked ? "High Priority" : "Avg Conviction"} v={useRanked ? (rSummary?.highPriority || 0) : (OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={useRanked ? "#06b6d4" : P.t2} sm/><K l="Avg Timing" v={(displayOpps.reduce((a,o)=>a+(o.tm||0),0)/displayOpps.length).toFixed(1)} c={P.t2} sm/>
     </FlexRow>
 
     <PanelShell hover title="CONVICTION vs TIMING MATRIX" subtitle="Bubble size = est. annual value. Top-right = execute now. 1-10 scale" takeaway="3 opportunities in the Execute Now quadrant. Pension sacrifice and ISA max have highest composite scores.">
@@ -2828,46 +2946,67 @@ const T8 = ()=>{
         </ResponsiveContainer>
       </PanelShell>
     </div>
-    <PanelShell hover title="FULL OPPORTUNITY RANKING — ALL 10" subtitle="Complete scoring matrix with wrapper, alpha source, and priority" takeaway="Combined annual value of all 10 opportunities: £45k+. The top 3 guaranteed actions alone deliver £12.7k/yr.">
-      <Tbl h={["#","Opportunity","Conv","Time","Score","Alpha","Wrapper","Est. Value","Priority"]}
-        r={valRanked.map((o,i)=>[`${i+1}`,o.t,`${o.c}/10`,`${o.tm}/10`,`${o.c*o.tm}`,o.alpha,o.w,`£${(o.val/1000).toFixed(1)}k/yr`,i<3?"Immediate":i<6?"This Quarter":"This Year"])} hl={7}/>
+    <PanelShell hover title="FULL OPPORTUNITY RANKING — ALL 10" subtitle={useRanked ? "Engine-ranked by composite score (conviction + timing + market alignment)" : "Complete scoring matrix with wrapper, alpha source, and priority"} takeaway={`Combined annual value of all ${displayOpps.length} opportunities: \u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k+/yr.`}>
+      <Tbl h={["#","Opportunity",useRanked?"Composite":"Conv","Time",useRanked?"Tier":"Score","Alpha","Wrapper","Est. Value"]}
+        r={valRanked.map((o,i)=>[`${i+1}`,o.t,useRanked?`${o.compositeScore?.toFixed(0)}`:`${o.c}/10`,`${o.tm}/10`,useRanked?(o.tier||'—'):`${o.c*o.tm}`,o.alpha,o.w,`\u00A3${(o.val/1000).toFixed(1)}k/yr`])} hl={7}/>
     </PanelShell>
-    {OPPS_TOP5.map((o,i)=><Card key={i} style={{borderLeft:`3px solid ${o.col}`}} hover>
+    {valRanked.slice(0,5).map((o,i)=><Card key={i} style={{borderLeft:`3px solid ${useRanked ? (o.tierColor || o.col) : o.col}`}} hover>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div><div style={{fontSize:18,fontWeight:800,color:P.t1}}>{o.t}</div>
-          <div style={{fontSize:13,color:P.t3,marginTop:3}}>Wrapper: {o.w} · Size: {o.sz} · Alpha: {o.alpha} · Value: £{(o.val/1000).toFixed(1)}k/yr</div></div>
+        <div><div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{fontSize:18,fontWeight:800,color:P.t1}}>{o.t}</div>
+          {useRanked && o.tier && <span style={{fontSize:9,fontWeight:800,padding:'3px 8px',borderRadius:6,background:`${o.tierColor}20`,color:o.tierColor,border:`1px solid ${o.tierColor}40`,letterSpacing:0.5}}>{o.tier}</span>}
+        </div>
+          <div style={{fontSize:13,color:P.t3,marginTop:3}}>Wrapper: {o.w} · Size: {o.sz} · Alpha: {o.alpha} · Value: \u00A3{(o.val/1000).toFixed(1)}k/yr</div></div>
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
-            <div style={{fontSize:9,color:P.t4}}>CONV</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.c}</div>
-          </div>
-          <div style={{fontSize:14,color:P.t4}}>×</div>
-          <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
-            <div style={{fontSize:9,color:P.t4}}>TIME</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.tm}</div>
-          </div>
-          <div style={{fontSize:14,color:P.t4}}>=</div>
-          <div style={{background:o.col,color:"#000",padding:"6px 10px",borderRadius:14,fontSize:16,fontWeight:800}}>{o.c*o.tm}</div>
+          {useRanked ? (<>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.tierColor||o.col}15`,border:`1px solid ${o.tierColor||o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>SCORE</div><div style={{fontSize:16,fontWeight:800,color:o.tierColor||o.col}}>{o.compositeScore?.toFixed(0)}</div>
+            </div>
+          </>) : (<>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>CONV</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.c}</div>
+            </div>
+            <div style={{fontSize:14,color:P.t4}}>\u00D7</div>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>TIME</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.tm}</div>
+            </div>
+            <div style={{fontSize:14,color:P.t4}}>=</div>
+            <div style={{background:o.col,color:"#000",padding:"6px 10px",borderRadius:14,fontSize:16,fontWeight:800}}>{o.c*o.tm}</div>
+          </>)}
         </div>
       </div>
+      {/* Engine rationale when available */}
+      {useRanked && o.rationale?.length > 0 && (
+        <div style={{marginBottom:8,padding:'6px 10px',background:'rgba(15,150,156,0.06)',borderRadius:8,borderLeft:`2px solid ${P.cyan}`}}>
+          {o.rationale.map((r,ri)=><div key={ri} style={{fontSize:11,color:P.cyan,lineHeight:1.5}}>+ {r}</div>)}
+        </div>
+      )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
-        <div><div style={{fontSize:12,color:o.col,fontWeight:700,marginBottom:3}}>CATALYST</div><div style={{fontSize:14,color:P.t2,lineHeight:1.6}}>{o.cat}</div></div>
+        <div><div style={{fontSize:12,color:o.col||o.tierColor,fontWeight:700,marginBottom:3}}>CATALYST</div><div style={{fontSize:14,color:P.t2,lineHeight:1.6}}>{o.cat}</div></div>
         <div><div style={{fontSize:12,color:P.red,fontWeight:700,marginBottom:3}}>RISKS & KILL SWITCH</div>
-          {o.risks.map((r,ri)=><div key={ri} style={{fontSize:13,color:P.t3}}>• {r}</div>)}
-          <div style={{fontSize:12,color:P.amber,marginTop:4}}>Kill: {o.kill}</div></div>
+          {o.risks?.map((r,ri)=><div key={ri} style={{fontSize:13,color:P.t3}}>{"\u2022"} {r}</div>)}
+          {o.kill && <div style={{fontSize:12,color:P.amber,marginTop:4}}>Kill: {o.kill}</div>}</div>
       </div>
     </Card>)}
-    <Ins text={`Remaining 5 opportunities (UK Infrastructure, EM Small Cap, Gold, Bed & ISA, Intl Value) have lower composite scores but remain relevant for diversification and tax efficiency. Bed & ISA in particular is a certainty play — no market view required, just annual execution. Combined annual value of all 10 opportunities: £${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`}/>
+    <Ins text={useRanked
+      ? `${rSummary?.executeNow || 0} opportunities scored EXECUTE NOW, ${rSummary?.highPriority || 0} HIGH PRIORITY. Engine composite scores incorporate conviction, timing, market regime alignment, and portfolio state. Combined annual value: \u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`
+      : `Remaining 5 opportunities (UK Infrastructure, EM Small Cap, Gold, Bed & ISA, Intl Value) have lower composite scores but remain relevant for diversification and tax efficiency. Combined annual value of all 10 opportunities: \u00A3${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`}/>
   </div>);
 };
 
 const T9 = ()=>{
-  const drags=[{n:"Amex Interest (22%)",a:2343,c:P.red},{n:"GIA Tax Drag",a:2400,c:P.red},{n:"Rainy Day Opp Cost",a:1180,c:P.amber},{n:"FD Opportunity Cost",a:460,c:P.amber},{n:"TER Drag",a:920,c:P.amber},{n:"Fragment Drag",a:160,c:P.t3}];
+  // Phase 2: Use engine-computed data when available
+  const debtState = ENGINE.debtPriority;
+  const wrapperState = ENGINE.wrapperExposure;
+  const concState = ENGINE.concentration;
+  const amexInterest = debtState?.actions?.find(a=>a.name==='Amex Credit Card')?.annualInterest || 2343;
+  const giaDrag = wrapperState?.cgtDrag?.annualDrag || 2400;
+  const drags=[{n:"Amex Interest (22%)",a:Math.round(amexInterest),c:P.red},{n:"GIA Tax Drag",a:Math.round(giaDrag),c:P.red},{n:"Rainy Day Opp Cost",a:1180,c:P.amber},{n:"FD Opportunity Cost",a:460,c:P.amber},{n:"TER Drag",a:920,c:P.amber},{n:"Fragment Drag",a:concState?.clutter?.count>0?Math.round(concState.clutter.totalValue*0.01):160,c:P.t3}];
   const tot=drags.reduce((a,d)=>a+d.a,0);
   const cumDrag=[{y:"Y1",v:tot},{y:"Y3",v:tot*3*1.04},{y:"Y5",v:tot*5*1.08},{y:"Y10",v:tot*10*1.18}];
-  // Sprint 2 computed metrics
-  const growthAll = HOLDINGS.filter(h=>["ETF","Crypto","Stock","Investment"].includes(h.cls)).reduce((a,h)=>a+h.val,0);
-  const sheltered = 82133 + 18085; // Pension + ISA est.
-  const wrapperEff = +(sheltered / growthAll * 100).toFixed(1);
-  const postFixDrag = tot - 2343 - 1440 - 1180; // remove Amex + 60% GIA tax + excess cash
+  // Sprint 2 computed metrics — now engine-powered
+  const wrapperEff = wrapperState?.efficiency?.taxEfficientPct || 26.7;
+  const postFixDrag = tot - Math.round(amexInterest) - Math.round(giaDrag*0.6) - 1180; // remove Amex + 60% GIA tax + excess cash
   const upliftData = [
     {n:"Current Drag",v:tot,c:P.red},{n:"Clear Amex",v:-2343,c:P.green},
     {n:"ISA Migration",v:-1440,c:P.green},{n:"Redeploy Cash",v:-1180,c:P.green},
@@ -2875,10 +3014,10 @@ const T9 = ()=>{
   ];
   const compoundWith=[{y:"Y1",w:tot,wo:postFixDrag},{y:"Y3",w:Math.round(tot*((Math.pow(1.15,3)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,3)-1)/0.15))},{y:"Y5",w:Math.round(tot*((Math.pow(1.15,5)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,5)-1)/0.15))},{y:"Y10",w:Math.round(tot*((Math.pow(1.15,10)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,10)-1)/0.15))},{y:"Y20",w:Math.round(tot*((Math.pow(1.15,20)-1)/0.15)),wo:Math.round(postFixDrag*((Math.pow(1.15,20)-1)/0.15))}];
   return(<div>
-    <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber}/>
+    <Hd t="CAPITAL EFFICIENCY" s="Pricing every friction — each basis point compounds against you" tag="EFFICIENCY" ac={P.amber} freshness={FRESHNESS} tableKey="holdings"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Annual Drag" v={fmt(tot)} s="Total friction" c={P.negative} sm/><K l="5Y Cost" v={`~${fK(tot*5*1.08)}`} s="Compounded" c={P.negative} sm/>
-      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v="4.4/10" s="Score" c={P.negative} sm/>
+      <K l="10Y Cost" v={`~${fK(tot*10*1.18)}`} s="Compounded" c={P.negative} sm/><K l="Efficiency" v={`${SCORECARD.capitalEff}/10`} s="Score" c={SCORECARD.capitalEff>6?P.positive:P.negative} sm/>
       <K l="Post-Fix Drag" v={fmt(Math.max(postFixDrag,0))} c={P.amber} sm delta="After 3 fixes"/><K l="Savings" v={fmt(tot-Math.max(postFixDrag,0))} c={P.positive} sm delta="Annual uplift"/>
     </FlexRow>
     {/* SPRINT 2: Wrapper Efficiency Score */}
@@ -2971,7 +3110,7 @@ const T10 = ()=>{
   const latestHC = HC_DATA[0];
   const base2035 = wFiltered[9]?.base||0;
   return(<div>
-    <Hd t="LONG-TERM WEALTH PROJECTION" s="Human capital, FIRE path, 5 forecast scenarios, Monte Carlo simulation" tag="WEALTH ENGINE" ac={P.indigo}/>
+    <Hd t="LONG-TERM WEALTH PROJECTION" s="Human capital, FIRE path, 5 forecast scenarios, Monte Carlo simulation" tag="WEALTH ENGINE" ac={P.indigo} freshness={FRESHNESS} tableKey="portfolio_config"/>
     <FlexRow gap={10}>
       <K l="Financial NW" v={fK(PORT.netWorth)} s="Current" sm/><K l="Human Capital" v={`£${(latestHC.hc/1000).toFixed(1)}m`} s="NPV future earnings" c={P.indigo} sm/>
       <K l="Total Wealth" v={`£${(latestHC.total/1000).toFixed(1)}m`} s="HC + Financial" c={P.t1} sm/><K l="HC %" v={`${(latestHC.hc/latestHC.total*100).toFixed(0)}%`} s="Career dominant" c={P.amber} sm/>
@@ -3196,7 +3335,7 @@ const T11 = ()=>{
   const composite = Math.round(mvrvScore*0.30 + nuplScore*0.25 + fearScore*0.20 + rrScore*0.15 + soprScore*0.10);
   const zone = composite >= 70 ? {l:"DEEP ACCUMULATION",c:P.green} : composite >= 50 ? {l:"ACCUMULATE",c:P.green} : composite >= 30 ? {l:"HOLD",c:P.amber} : {l:"TRIM / TAKE PROFIT",c:P.red};
   return(<div>
-    <Hd t="CRYPTO ENGINE" s="On-chain analytics, cycle positioning, disciplined framework" tag="ON-CHAIN" ac={P.btc}/>
+    <Hd t="CRYPTO ENGINE" s="On-chain analytics, cycle positioning, disciplined framework" tag="ON-CHAIN" ac={P.btc} freshness={FRESHNESS} tableKey="crypto_metrics"/>
     <FlexRow gap={10}>
       <K l="BTC" v={`$${(cm.btcPrice/1000).toFixed(1)}k`} s={`DD: ${cm.btcDD}%`} c={P.btc} sm/><K l="Crypto Wt" v={`${cryptoWt.toFixed(1)}%`} s="of assets" c={P.btc} sm/>
       <K l="Risk Contrib" v="32%" s="of total risk" c={P.red} sm/><K l="Signals" v={`${bullish}/${signals.length}`} s="Bullish" c={P.positive} sm/>
@@ -3276,12 +3415,38 @@ const T11 = ()=>{
   </div>);
 };
 const T12 = ()=>{
-  const blocks=[
+  // Phase 2: Engine-driven action plan
+  const debtState = ENGINE.debtPriority;
+  const isaState = ENGINE.isaPensionRouting;
+  const concState = ENGINE.concentration;
+  const driftState = ENGINE.driftMonitor;
+  const topDebt = debtState?.actions?.[0];
+  const daysLeft = isaState?.daysUntilTaxYearEnd || 19;
+  const clutterCount = concState?.clutter?.count || 18;
+  // Engine-driven action blocks from AGENT.actionQueue (falls back to hardcoded)
+  const agentQ = AGENT.actionQueue?.queue;
+  const blocks = agentQ?.length > 0 ? (()=>{
+    const urgencyMap = { immediate: 0, 'this-week': 0, 'this-month': 1, 'this-quarter': 2 };
+    const catLabel = c => c ? c.charAt(0).toUpperCase() + c.slice(1) : 'General';
+    const tiers = [
+      { tf: 'IMMEDIATE — Next 30 Days', c: P.red, acts: [] },
+      { tf: 'Q2 2026 — This Quarter', c: P.amber, acts: [] },
+      { tf: 'H2 2026 — This Year', c: P.cyan, acts: [] },
+    ];
+    agentQ.forEach(a => {
+      const idx = urgencyMap[a.urgency] ?? 2;
+      tiers[idx].acts.push({
+        a: a.action, to: catLabel(a.category),
+        why: a.rationale || '', imp: a.ev > 0 ? `£${Math.round(a.ev).toLocaleString()}/yr` : 'Structural improvement',
+      });
+    });
+    return tiers.filter(t => t.acts.length > 0);
+  })() : [
     {tf:"IMMEDIATE — Next 30 Days",c:P.red,acts:[
-      {a:`Clear Amex in full (${fmt(PORT.amexDebt)})`,to:"From bonus",why:"22% APR = guaranteed 22% return — no investment beats this risk-adjusted",imp:"£2,343/yr saved"},
-      {a:"Max S&S ISA with £20k",to:"S&S ISA: JGEP + quality",why:"ISA deadline 5 April. 29 days. Tax-free compounding is irreplaceable.",imp:"80-120bps/yr"},
-      {a:"Salary sacrifice £1,250/mo to pension",to:"Workplace pension",why:"45% relief in £100-125k band (60% effective marginal rate)",imp:"£6,750/yr tax saved"},
-      {a:"Exit NEXO + consolidate SOL to BTC",to:"Simplify crypto",why:"£57 NEXO and £1.6k SOL are noise — zero portfolio impact",imp:"Reduce from 5 to 2 positions"},
+      {a:`Clear Amex in full (${fmt(PORT.amexDebt)})`,to:"From bonus",why:topDebt ? `${topDebt.apr}% APR = guaranteed ${topDebt.guaranteedAlpha}% alpha vs investing` : "22% APR = guaranteed 22% return",imp:topDebt ? `£${Math.round(topDebt.annualInterest).toLocaleString()}/yr saved` : "£2,343/yr saved"},
+      {a:`Max S&S ISA with £${(isaState?.isaHeadroom?.remaining||20000).toLocaleString()}`,to:"S&S ISA: JGEP + quality",why:`ISA deadline 5 April. ${daysLeft} days. Tax-free compounding is irreplaceable.`,imp:"80-120bps/yr"},
+      {a:"Salary sacrifice £1,250/mo to pension",to:"Workplace pension",why:isaState?.salarySacrificeValue?.inTaperZone ? `${isaState.salarySacrificeValue.effectiveRate}% effective benefit in £100-125k taper zone` : "45% relief in higher rate band",imp:isaState?.salarySacrificeValue?.totalSaving ? `£${Math.round(isaState.salarySacrificeValue.totalSaving).toLocaleString()}/yr tax saved` : "£6,750/yr tax saved"},
+      {a:"Exit NEXO + consolidate SOL to BTC",to:"Simplify crypto",why:`${clutterCount}+ micro-positions = zero portfolio impact`,imp:`Reduce to ${concState?.effectivePositions ? Math.round(concState.effectivePositions) : 15} effective positions`},
     ]},
     {tf:"Q2 2026 — This Quarter",c:P.amber,acts:[
       {a:"Consolidate all sub-£500 positions into core",to:"Sell fragments, reinvest JURE/JGEP",why:"18+ micro-positions = zero return impact, maximum complexity",imp:"40+ → 15 positions"},
@@ -3297,27 +3462,35 @@ const T12 = ()=>{
     ]},
   ];
   return(<div>
-    <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan}/>
+    <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan} freshness={FRESHNESS} tableKey="portfolio_scorecard"/>
 
-    {/* KPI STRIP */}
+    {/* KPI STRIP — Phase 4 agent-driven */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta="30 days"/>
-      <K l="Combined Value" v="£17.8k/yr" c={P.positive} sm delta="All actions"/><K l="Guaranteed" v="£12.7k/yr" c={P.positive} sm delta="No market risk"/>
-      <K l="Positions Target" v="≤15" c={P.t2} sm delta="From 40+"/>
+      <K l="Total Actions" v={AGENT.actionQueue?.summary?.totalActions || blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={AGENT.actionQueue?.summary?.immediateActions || blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
+      <K l="Debt Alpha" v={topDebt?`${topDebt.guaranteedAlpha}%`:'0%'} c={P.positive} sm delta="Guaranteed"/><K l="ISA Left" v={`£${((isaState?.isaHeadroom?.remaining||20000)/1000).toFixed(0)}k`} c={daysLeft<=30?P.negative:P.amber} sm delta={`${daysLeft}d to deadline`}/>
+      <K l="Drift" v={driftState?`${driftState.maxDrift.toFixed(1)}%`:'—'} c={driftState?.maxDrift>5?P.negative:P.positive} sm delta={driftState?.urgency||'—'}/>
+      <K l="Annual EV" v={AGENT.actionQueue?.summary?.totalAnnualEV ? `£${(AGENT.actionQueue.summary.totalAnnualEV/1000).toFixed(1)}k` : '—'} c={P.positive} sm delta="Total queue"/>
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
-    <PanelShell hover title="ACTION IMPACT RANKING (Annual £ Value)" subtitle="All actions competing on one axis — guaranteed returns first" takeaway="Combined annual value: £17.8k/yr. Top 3 guaranteed-return actions deliver £12.7k/yr with zero market risk.">
+    <PanelShell hover title="ACTION IMPACT RANKING (Annual £ Value)" subtitle="All actions competing on one axis — guaranteed returns first" takeaway={AGENT.actionQueue?.summary?.totalAnnualEV ? `Combined annual value: £${(AGENT.actionQueue.summary.totalAnnualEV/1000).toFixed(1)}k/yr from ${AGENT.actionQueue.summary.totalActions} ranked actions.` : "Combined annual value: £17.8k/yr. Top 3 guaranteed-return actions deliver £12.7k/yr with zero market risk."}>
       {(()=>{
-        const actionImpacts = [
-          {n:"Salary Sacrifice",v:6750,c:"#06b6d4",cert:"Guaranteed"},
-          {n:"Max ISA",v:3600,c:P.cyan,cert:"Guaranteed"},
-          {n:"Clear Amex",v:2343,c:P.red,cert:"Guaranteed"},
-          {n:"Bed & ISA",v:1800,c:P.amber,cert:"High"},
-          {n:"Employer Match",v:2400,c:P.green,cert:"High"},
-          {n:"CGT Harvest",v:720,c:P.indigo,cert:"Certain"},
-          {n:"Consolidate",v:160,c:P.t3,cert:"Certain"},
-        ].sort((a,b)=>b.v-a.v);
+        const urgencyColor = u => u === 'immediate' ? P.red : u === 'this-week' ? P.amber : u === 'this-month' ? P.amber : P.cyan;
+        const certLabel = c => c >= 9 ? 'Guaranteed' : c >= 7 ? 'High' : c >= 5 ? 'Medium' : 'Low';
+        const actionImpacts = agentQ?.length > 0
+          ? agentQ.filter(a => a.ev > 0).map(a => ({
+              n: a.action.replace(/\s*[—–-]\s*.+$/, '').split(' ').slice(0, 3).join(' '),
+              v: Math.round(a.ev), c: urgencyColor(a.urgency), cert: certLabel(a.confidence),
+            })).sort((a,b) => b.v - a.v).slice(0, 8)
+          : [
+              {n:"Salary Sacrifice",v:6750,c:"#06b6d4",cert:"Guaranteed"},
+              {n:"Max ISA",v:3600,c:P.cyan,cert:"Guaranteed"},
+              {n:"Clear Amex",v:2343,c:P.red,cert:"Guaranteed"},
+              {n:"Bed & ISA",v:1800,c:P.amber,cert:"High"},
+              {n:"Employer Match",v:2400,c:P.green,cert:"High"},
+              {n:"CGT Harvest",v:720,c:P.indigo,cert:"Certain"},
+              {n:"Consolidate",v:160,c:P.t3,cert:"Certain"},
+            ].sort((a,b)=>b.v-a.v);
         return(
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={actionImpacts} layout="vertical" margin={{left:100}}>
@@ -3375,6 +3548,40 @@ const T12 = ()=>{
         <div style={{fontSize:14,color:P.t2,lineHeight:1.7,fontWeight:500}}>{c}</div>
       </div>)}
     </Card>
+
+    {/* DECISION LOG — Track trade theses and outcomes */}
+    <PanelShell hover title="DECISION LOG" subtitle="Record decisions with thesis, track whether thesis played out" takeaway="Logging decisions creates accountability. Review open theses quarterly to validate or invalidate.">
+      {(()=>{
+        const logEntries = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('lifestack_decision_log') || '[]') : [];
+        const processed = logEntries.length > 0 ? processDecisionLog(logEntries, ENGINE, MKTENG) : { entries: [], summary: { total: 0, open: 0, atRisk: 0, needsReview: 0 } };
+        const statusColor = s => s === 'on-track' ? P.positive : s === 'at-risk' ? P.red : s === 'needs-review' ? P.amber : P.t3;
+        const statusLabel = s => s === 'on-track' ? 'ON TRACK' : s === 'at-risk' ? 'AT RISK' : s === 'needs-review' ? 'NEEDS REVIEW' : 'TRACKING';
+        return (<>
+          <div style={{display:'flex',gap:10,marginBottom:12}}>
+            <K l="Total Decisions" v={processed.summary.total} c={P.t2} sm/>
+            <K l="Open" v={processed.summary.open} c={P.cyan} sm/>
+            <K l="At Risk" v={processed.summary.atRisk} c={P.red} sm/>
+            <K l="Needs Review" v={processed.summary.needsReview} c={P.amber} sm/>
+          </div>
+          {processed.entries.length > 0 ? processed.entries.slice(0, 10).map((e, i) => (
+            <div key={i} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:`1px solid ${P.b2}`,alignItems:'flex-start'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:statusColor(e.latestValidation?.status),flexShrink:0,marginTop:6,boxShadow:`0 0 8px ${statusColor(e.latestValidation?.status)}50`}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,color:P.t1,fontWeight:600}}>{e.action}</div>
+                <div style={{fontSize:11,color:P.t3,marginTop:2}}>{e.thesis?.rationale?.slice(0,120)}{e.thesis?.rationale?.length > 120 ? '...' : ''}</div>
+                <div style={{display:'flex',gap:8,marginTop:4}}>
+                  <span style={{fontSize:9,color:statusColor(e.latestValidation?.status),fontWeight:800,padding:'2px 6px',borderRadius:5,background:`${statusColor(e.latestValidation?.status)}14`,border:`1px solid ${statusColor(e.latestValidation?.status)}20`,textTransform:'uppercase',letterSpacing:0.5}}>{statusLabel(e.latestValidation?.status)}</span>
+                  <span style={{fontSize:10,color:P.t4}}>{e.latestValidation?.daysSince || 0}d ago</span>
+                  <span style={{fontSize:10,color:P.t4}}>{e.category}</span>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div style={{fontSize:12,color:P.t3,padding:'16px 0',textAlign:'center'}}>No decisions logged yet. Decisions from action execution will appear here.</div>
+          )}
+        </>);
+      })()}
+    </PanelShell>
   </div>);
 };
 
@@ -3430,7 +3637,7 @@ const T14 = ()=>{
     {y:2030,gia:12,isa:38,sipp:38,other:12},{y:2035,gia:5,isa:45,sipp:42,other:8},
   ];
   return(<div>
-    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.positive}/>
+    <Hd t="TAX ADVISOR" s="Comprehensive tax optimisation analysis — wrapper strategy, allowances, and structural alpha" tag="TAX STRATEGY" ac={P.positive} freshness={FRESHNESS} tableKey="holdings"/>
     <FlexRow gap={10}>
       <K l="Annual Tax Saving" v={fmt(totalSaving)} s="All strategies combined" c={P.positive}/>
       <K l="Pre-Tax Equiv." v={fmt(Math.round(totalSaving/0.55))} s="At 45% marginal" c={P.cyan}/>
@@ -3727,7 +3934,7 @@ const T13 = ()=>{
   const [openCat,setOpenCat] = useState(null);
 
   return(<div>
-    <Hd t="GLOSSARY & METRICS EXPLAINED" s="Every metric defined, contextualised, and linked to your specific portfolio outcome" tag="REFERENCE" ac={P.purple}/>
+    <Hd t="GLOSSARY & METRICS EXPLAINED" s="Every metric defined, contextualised, and linked to your specific portfolio outcome" tag="REFERENCE" ac={P.purple} freshness={FRESHNESS} tableKey="reference_data"/>
     <Ins text={`This reference guide covers ${categories.reduce((a,c)=>a+c.items.length,0)} metrics across ${categories.length} categories. Each definition is paired with your current reading and a specific interpretation of what it means for your portfolio. Use this as a living reference document for investment committee discussions.`}/>
     {categories.map((cat,ci)=>(
       <Card key={ci} style={{borderLeft:`3px solid ${cat.color}`,cursor:"pointer",overflow:"hidden"}} hover>
@@ -3791,7 +3998,7 @@ const T13 = ()=>{
 // =========================================================================
 // SUPABASE DATA RECALCULATION — updates all derived values from live data
 // =========================================================================
-function recalcDerived() {
+function recalcDerived(priorSnapshot, saveSnapshot) {
   nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
   NW_DD = NW_WEEKLY.map(w => ({d: w.d, dd: ((w.nw - PORT.nwPeak) / PORT.nwPeak * 100)}));
   totalAssets = PORT.assets;
@@ -3847,6 +4054,51 @@ function recalcDerived() {
     return pts;
   })();
   OPPS_TOP5 = [...OPPS].sort((a,b)=>b.val-a.val).slice(0,5);
+
+  // Phase 2 Finance OS — run all engines on current data
+  try {
+    ENGINE.concentration = computeConcentrationState(HOLDINGS);
+    ENGINE.debtPriority = computeDebtPriorityState(PORT);
+    ENGINE.sleeveExposure = computeSleeveExposureState(HOLDINGS);
+    ENGINE.wrapperExposure = computeWrapperExposureState(HOLDINGS);
+    ENGINE.currencyExposure = computeCurrencyExposureState(HOLDINGS);
+    ENGINE.driftMonitor = computeDriftMonitorState(HOLDINGS);
+    ENGINE.isaPensionRouting = computeISAPensionRoutingState(PORT);
+    ENGINE.rebalanceProposal = computeRebalanceProposalState(HOLDINGS, undefined, ENGINE.wrapperExposure);
+  } catch (e) {
+    console.error('LifeStack: Engine computation error', e);
+  }
+
+  // Phase 3 Market Intelligence — compute market engines for agent context
+  try {
+    const MKT = DEFAULT_MARKET;
+    MKTENG.regime = computeRegimeState(MKT);
+    MKTENG.stress = computeCrossAssetStressState(MKT);
+    MKTENG.btcCycle = computeBTCCycleState(MKT);
+    MKTENG.yieldCurve = computeYieldCurveState(DEFAULT_YIELD_CURVE);
+    MKTENG.creditStress = computeCreditStressState(MKT, DEFAULT_CREDIT_TL);
+    MKTENG.sectorLeadership = computeSectorLeadershipState(DEFAULT_SECTOR);
+    MKTENG.cryptoOnChain = computeCryptoOnChainState(MKT);
+  } catch (e) {
+    console.error('LifeStack: Market engine computation error', e);
+  }
+
+  // Phase 4 Agent Layer — research & decisioning engines
+  try {
+    AGENT.rankedOpps = rankOpportunities(OPPS, ENGINE, MKTENG);
+    AGENT.actionQueue = buildActionQueue(ENGINE, MKTENG, OPPS);
+    AGENT.triggerAlerts = generateTriggerAlerts(ENGINE, MKTENG);
+    AGENT.whatChanged = computeWhatChanged(ENGINE, priorSnapshot);
+    AGENT.synthesis = generateWeeklySynthesis(ENGINE, MKTENG, PORT, SCORECARD, OPPS);
+    AGENT.morningCommand = generateMorningCommand(ENGINE, MKTENG, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
+  } catch (e) {
+    console.error('LifeStack: Agent computation error', e);
+  }
+
+  // Save weekly snapshot for future whatChanged comparison
+  if (typeof saveSnapshot === 'function') {
+    try { saveSnapshot(ENGINE, MKTENG, { netWorth: PORT.netWorth, date: PORT.date }); } catch {}
+  }
 }
 
 // =========================================================================
@@ -3894,7 +4146,7 @@ const SYS_STEPS = [
 const T15 = () => {
   const Dot = ({on,c=P.cyan}) => (<div style={{width:12,height:12,borderRadius:'50%',background:on?c:'rgba(0,0,0,0.06)',boxShadow:on?`0 0 10px ${c}50`:'none',border:on?'none':'1px solid rgba(0,0,0,0.08)',transition:'all 0.3s'}}/>);
   return (<div>
-    <Hd t="SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT" s="Module interconnections, platform piping, data flows, and 10-step execution roadmap" tag="LIFESTACK OS" ac={P.indigo}/>
+    <Hd t="SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT" s="Module interconnections, platform piping, data flows, and 10-step execution roadmap" tag="LIFESTACK OS" ac={P.indigo} freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     {/* Module Map */}
     <Card hover tier={2}>
@@ -4107,7 +4359,7 @@ const T16 = () => {
   const typeIcons = {kubera:'📊',monzo:'💳',emma:'💰',market:'📈'};
 
   return(<div>
-    <SectionHeader t="STORAGE & DATA SOURCES" s="Upload source files, manage data pipelines, refresh analysis modules" tag="DATA OPS" ac={P.cyan}/>
+    <SectionHeader t="STORAGE & DATA SOURCES" s="Upload source files, manage data pipelines, refresh analysis modules" tag="DATA OPS" ac={P.cyan} freshness={FRESHNESS} tableKey="reference_data"/>
 
     {/* Upload Zone — Hero Area */}
     <div
@@ -4253,29 +4505,48 @@ const T16 = () => {
       </div>
     </PanelShell>
 
-    {/* Data Freshness Dashboard */}
+    {/* Data Freshness Dashboard — wired to real FRESHNESS state */}
     <Card material="dark" style={{marginBottom:16,padding:'20px 24px'}}>
-      <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1.5,marginBottom:12}}>DATA FRESHNESS</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1.5}}>DATA FRESHNESS</div>
+        <div style={{display:'flex',gap:8}}>
+          {[{l:'Live',c:'#22c55e'},{l:'Stale',c:'#f59e0b'},{l:'Fallback',c:'#ef4444'}].map(x=>(
+            <div key={x.l} style={{display:'flex',alignItems:'center',gap:4,fontSize:8,color:x.c,fontWeight:600}}>
+              <div style={{width:5,height:5,borderRadius:'50%',background:x.c}}/>{x.l}
+            </div>
+          ))}
+        </div>
+      </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
         {[
-          {name:'Holdings',table:'holdings',rows:22,lastSync:'7 Mar 2026',stale:false},
-          {name:'Net Worth',table:'net_worth_history',rows:24,lastSync:'7 Mar 2026',stale:false},
-          {name:'Risk Metrics',table:'risk_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
-          {name:'Debts',table:'debts',rows:2,lastSync:'28 Feb 2026',stale:true},
-          {name:'Monthly Returns',table:'monthly_returns',rows:6,lastSync:'7 Mar 2026',stale:false},
-          {name:'Opportunities',table:'opportunities',rows:10,lastSync:'5 Mar 2026',stale:false},
-          {name:'Stress Tests',table:'stress_scenarios',rows:8,lastSync:'1 Mar 2026',stale:true},
-          {name:'Crypto',table:'crypto_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
-        ].map((d,i)=>(
-          <div key={i} style={{padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.04)',border:`1px solid ${d.stale?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.06)'}`,textAlign:'center'}}>
-            <div style={{fontSize:10,fontWeight:700,color:d.stale?P.amber:P.t1,marginBottom:4}}>{d.name}</div>
-            <div style={{fontSize:14,fontWeight:800,color:d.stale?P.amber:'#fff',fontFamily:P.mono}}>{d.rows}</div>
-            <div style={{fontSize:8,color:P.t4,marginTop:2}}>{d.table}</div>
-            <div style={{fontSize:8,color:d.stale?P.amber:P.positive,marginTop:4,fontWeight:600}}>
-              {d.stale?'⚠ Stale':'● Fresh'} · {d.lastSync}
+          {name:'Portfolio Config',table:'portfolio_config'},
+          {name:'Holdings',table:'holdings'},
+          {name:'Net Worth History',table:'net_worth_history'},
+          {name:'NW Bridge',table:'nw_bridge'},
+          {name:'Risk Metrics',table:'risk_metrics'},
+          {name:'Crypto Metrics',table:'crypto_metrics'},
+          {name:'Opportunities',table:'opportunities'},
+          {name:'Factor Exposures',table:'factor_exposures'},
+          {name:'Stress Scenarios',table:'stress_scenarios'},
+          {name:'Bonus Config',table:'bonus_config'},
+          {name:'Bonus Scenarios',table:'bonus_scenarios'},
+          {name:'Monthly Returns',table:'monthly_returns'},
+          {name:'Scorecard',table:'portfolio_scorecard'},
+          {name:'Reference Data',table:'reference_data'},
+        ].map((d,i)=>{
+          const f = FRESHNESS[d.table] || {level:'fallback',label:'Fallback',isLive:false,isStale:false,isFallback:true};
+          const color = f.level==='live'?'#22c55e':f.level==='stale'?P.amber:'#ef4444';
+          return (
+            <div key={i} style={{padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.04)',border:`1px solid ${color}18`,textAlign:'center'}}>
+              <div style={{fontSize:10,fontWeight:700,color:f.level==='live'?P.t1:color,marginBottom:4}}>{d.name}</div>
+              <div style={{fontSize:8,color:P.t4,marginTop:2,fontFamily:P.mono}}>{d.table}</div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginTop:6}}>
+                <div style={{width:5,height:5,borderRadius:'50%',background:color,boxShadow:`0 0 6px ${color}60`}}/>
+                <div style={{fontSize:8,color:color,fontWeight:600}}>{f.label}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
 
@@ -4320,7 +4591,7 @@ const T17 = () => {
   ];
 
   return(<div>
-    <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3}/>
+    <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3} freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:16}}>
       {/* Settings Sidebar */}
@@ -4475,9 +4746,15 @@ const TABS=[
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   const [,refresh]=useState(0);
+<<<<<<< HEAD
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
   const {data,loading,source,truth}=useSupabaseData();
+=======
+  const {data,loading,source,freshness}=useSupabaseData();
+  const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
+>>>>>>> origin/claude/review-finance-agent-plan-andJc
   useEffect(()=>{
+    if(freshness) FRESHNESS=freshness;
     if(data){
       if(data.PORT) PORT=data.PORT;
       if(data.HOLDINGS) HOLDINGS=data.HOLDINGS;
@@ -4492,9 +4769,10 @@ export default function PortfolioVOS(){
       if(data.MONTHLY) MONTHLY_DATA=data.MONTHLY;
       if(data.SCORECARD) SCORECARD=data.SCORECARD;
       if(data.REF_DATA) REF_DATA=data.REF_DATA;
-      recalcDerived();
+      recalcDerived(priorSnapshot, saveSnapshot);
       refresh(n=>n+1);
     }
+<<<<<<< HEAD
   },[data]);
 
   useEffect(() => {
@@ -4503,6 +4781,9 @@ export default function PortfolioVOS(){
       refresh(n => n + 1);
     }
   }, [truth]);
+=======
+  },[data,freshness,priorSnapshot,saveSnapshot]);
+>>>>>>> origin/claude/review-finance-agent-plan-andJc
   const render=()=>{switch(tab){
     case "exec":return <T1 truthLayer={truthLayer}/>;
     case "struct":return <T2 truthLayer={truthLayer}/>;
@@ -4568,9 +4849,13 @@ export default function PortfolioVOS(){
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0F969C,#072E33)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 16px rgba(15,150,156,0.50), inset 0 1px 0 rgba(255,255,255,0.20)'}}>LS</div>
             <div>
               <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#0F969C',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
+<<<<<<< HEAD
               <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>
                 Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span style={{color:P.amber}}>{"●"} Static Fallback</span>} · {truthLayer.dashboard_freshness_state?.status || 'unknown'}
               </div>
+=======
+              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)',display:'flex',alignItems:'center',gap:8}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}{Object.keys(FRESHNESS).length>0&&<span style={{display:'inline-flex',gap:4,alignItems:'center'}}>{Object.values(FRESHNESS).filter(f=>f.isLive).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#4ade80'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#22c55e',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isLive).length} live</span>}{Object.values(FRESHNESS).filter(f=>f.isStale).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#fbbf24'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isStale).length} stale</span>}{Object.values(FRESHNESS).filter(f=>f.isFallback).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#f87171'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#ef4444',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isFallback).length} fallback</span>}</span>}</div>
+>>>>>>> origin/claude/review-finance-agent-plan-andJc
             </div>
           </div>
           {/* Search + Notifications + Account */}
