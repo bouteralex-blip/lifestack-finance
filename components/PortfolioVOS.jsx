@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useSupabaseData, computeFreshness } from '../lib/useData';
+import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
 import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeCryptoOnChainState } from '../lib/engines/market/index.js';
-import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand } from '../lib/engines/agents/index.js';
+import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand, processDecisionLog, createDecisionEntry } from '../lib/engines/agents/index.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -1241,7 +1241,7 @@ const T1 = ()=>{
               </div>
             </div>
             <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',lineHeight:1.7,maxWidth:800}}>
-              Portfolio at <span style={{color:P.cyan,fontWeight:700}}>{fmt(PORT.netWorth)}</span> after a <span style={{color:P.negative,fontWeight:700}}>{pc(nwReturn)}</span> 6-month return. Crypto correction destroyed {fK(38400)} while equity selection and pension revaluation added {fK(30400)}. New compensation ({fK(PORT.grossSalary+PORT.grossBonus)} gross) transforms the savings engine. Immediate priorities: ISA deployment ({fK(20000)}), Amex clearance ({fmt(PORT.amexDebt)}), salary sacrifice optimisation.
+              {AGENT.synthesis?.executiveSummary || `Portfolio at ${fmt(PORT.netWorth)} after a ${pc(nwReturn)} 6-month return. Crypto correction destroyed ${fK(38400)} while equity selection and pension revaluation added ${fK(30400)}. New compensation (${fK(PORT.grossSalary+PORT.grossBonus)} gross) transforms the savings engine. Immediate priorities: ISA deployment (${fK(20000)}), Amex clearance (${fmt(PORT.amexDebt)}), salary sacrifice optimisation.`}
             </div>
           </div>
           <div style={{display:'flex',gap:10,flexShrink:0,marginLeft:20}}>
@@ -1251,6 +1251,85 @@ const T1 = ()=>{
         </div>
       </div>
     </div>
+
+    {/* MORNING COMMAND CENTER — full daily brief from AGENT.morningCommand */}
+    {AGENT.morningCommand && (()=>{
+      const mc = AGENT.morningCommand;
+      const mp = mc.sections?.marketPulse;
+      const tp = mc.sections?.todaysPriorities;
+      const pv = mc.sections?.portfolioVitals;
+      const cal = mc.sections?.calendarItems;
+      const verdictColor = mc.verdict?.level === 'RED' ? P.red : mc.verdict?.level === 'AMBER' ? P.amber : P.positive;
+      return (
+        <div style={{...G,padding:'16px 20px',marginBottom:14,borderLeft:`3px solid ${verdictColor}`,background:'rgba(7,46,51,0.45)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+            <div>
+              <div style={{fontSize:11,color:P.t4,letterSpacing:1,fontWeight:700,marginBottom:4}}>{mc.title?.toUpperCase()}</div>
+              <div style={{fontSize:14,color:P.t1,fontWeight:600,lineHeight:1.6}}>{mc.headline}</div>
+            </div>
+            <div style={{padding:'4px 12px',borderRadius:8,background:`${verdictColor}20`,border:`1px solid ${verdictColor}40`,textAlign:'center'}}>
+              <div style={{fontSize:10,color:P.t4,fontWeight:700}}>STATUS</div>
+              <div style={{fontSize:14,fontWeight:900,color:verdictColor}}>{mc.verdict?.level}</div>
+            </div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+            {/* Today's Priorities */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>TODAY&apos;S PRIORITIES</div>
+              {tp?.actions?.map((a,i)=>(
+                <div key={i} style={{display:'flex',gap:6,padding:'4px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <div style={{width:18,height:18,borderRadius:'50%',background:a.urgency==='immediate'?P.red:P.amber,color:'#000',fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{a.rank}</div>
+                  <div><div style={{fontSize:11,color:P.t1,fontWeight:600}}>{a.action}</div>
+                    {a.ev > 0 && <div style={{fontSize:10,color:P.positive}}>\u00A3{Math.round(a.ev).toLocaleString()}/yr</div>}
+                  </div>
+                </div>
+              )) || <div style={{fontSize:11,color:P.t4}}>No actions queued</div>}
+              {tp?.totalQueued > 3 && <div style={{fontSize:10,color:P.t4,marginTop:4}}>+{tp.totalQueued-3} more in queue</div>}
+            </div>
+            {/* Market Pulse */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>MARKET PULSE</div>
+              {mp?.available ? [
+                {l:'Regime',v:mp.regime,c:mp.riskPosture==='Defensive'?P.amber:P.t2},
+                {l:'Stress',v:`${mp.stress?.score}/100 (${mp.stress?.level})`,c:mp.stress?.score>60?P.red:P.t2},
+                {l:'BTC',v:`${mp.btc?.phase}`,c:P.btc},
+                {l:'Credit',v:mp.credit,c:mp.credit==='Elevated'?P.amber:P.t2},
+                {l:'Curve',v:mp.yieldCurve,c:mp.yieldCurve==='INVERTED'?P.red:P.t2},
+              ].map((m,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <span style={{fontSize:11,color:P.t3}}>{m.l}</span>
+                  <span style={{fontSize:11,color:m.c,fontWeight:600}}>{m.v}</span>
+                </div>
+              )) : <div style={{fontSize:11,color:P.t4}}>Market data pending</div>}
+            </div>
+            {/* Portfolio Vitals + Calendar */}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:P.cyan,letterSpacing:0.8,marginBottom:6}}>PORTFOLIO VITALS</div>
+              {pv?.available ? [
+                {l:'Max Drift',v:`${pv.drift?.max?.toFixed(1)}%`,c:pv.drift?.max>5?P.red:P.t2},
+                {l:'HHI',v:pv.concentration?.hhi,c:pv.concentration?.hhi>2000?P.amber:P.t2},
+                {l:'Wrapper Eff.',v:`${pv.wrapper?.efficiency?.toFixed(1)}/10`,c:pv.wrapper?.efficiency<4?P.red:P.t2},
+                {l:'ISA Left',v:`\u00A3${(pv.isa?.remaining||0).toLocaleString()}`,c:pv.isa?.daysLeft<=30?P.red:P.t2},
+                {l:'Total Debt',v:`\u00A3${(pv.debt?.total||0).toLocaleString()}`,c:pv.debt?.highestAPR>10?P.red:P.t2},
+              ].map((m,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:`1px solid ${P.b2}`}}>
+                  <span style={{fontSize:11,color:P.t3}}>{m.l}</span>
+                  <span style={{fontSize:11,color:m.c,fontWeight:600}}>{m.v}</span>
+                </div>
+              )) : <div style={{fontSize:11,color:P.t4}}>Engine data pending</div>}
+              {cal?.length > 0 && (<>
+                <div style={{fontSize:10,fontWeight:700,color:P.amber,letterSpacing:0.8,marginTop:8,marginBottom:4}}>DEADLINES</div>
+                {cal.map((c,i)=>(
+                  <div key={i} style={{fontSize:11,color:c.urgency==='critical'?P.red:P.t2,padding:'2px 0'}}>
+                    {c.daysUntil != null ? `${c.daysUntil}d` : ''} {c.event}
+                  </div>
+                ))}
+              </>)}
+            </div>
+          </div>
+        </div>
+      );
+    })()}
 
     {/* ROW 1: 12-col KPI grid — variable sizing: hero(3), standard(2), compact(1.5) */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
@@ -2771,15 +2850,19 @@ const T8 = ()=>{
       </svg>
     );
   };
-  const valRanked = [...OPPS].sort((a,b)=>b.val-a.val);
+  const ranked = AGENT.rankedOpps?.ranked;
+  const useRanked = ranked?.length > 0;
+  const displayOpps = useRanked ? ranked : OPPS;
+  const valRanked = [...displayOpps].sort((a,b)=>b.val-a.val);
+  const rSummary = AGENT.rankedOpps?.summary;
   return(<div>
-    <Hd t="OPPORTUNITY RADAR" s={`${OPPS.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive} freshness={FRESHNESS} tableKey="opportunities"/>
+    <Hd t="OPPORTUNITY RADAR" s={`${displayOpps.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive} freshness={FRESHNESS} tableKey="opportunities"/>
 
-    {/* KPI STRIP */}
+    {/* KPI STRIP — engine-enriched when AGENT.rankedOpps available */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Opportunities" v={OPPS.length} c={P.t2} sm/><K l="Total Ann. Value" v={`£${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
-      <K l="Top Score" v={`${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta="Conv\u00D7Time"/><K l="Execute Now" v={OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
-      <K l="Avg Conviction" v={(OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={P.t2} sm/><K l="Avg Timing" v={(OPPS.reduce((a,o)=>a+o.tm,0)/OPPS.length).toFixed(1)} c={P.t2} sm/>
+      <K l="Opportunities" v={displayOpps.length} c={P.t2} sm/><K l="Total Ann. Value" v={`\u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
+      <K l="Top Score" v={useRanked ? rSummary?.topScore?.toFixed(0) : `${Math.max(...OPPS.map(o=>o.c*o.tm))}`} c={P.cyan} sm delta={useRanked ? "Composite" : "Conv\u00D7Time"}/><K l="Execute Now" v={useRanked ? (rSummary?.executeNow || 0) : OPPS.filter(o=>o.c>=8&&o.tm>=8).length} c={P.positive} sm delta="High/High"/>
+      <K l={useRanked ? "High Priority" : "Avg Conviction"} v={useRanked ? (rSummary?.highPriority || 0) : (OPPS.reduce((a,o)=>a+o.c,0)/OPPS.length).toFixed(1)} c={useRanked ? "#06b6d4" : P.t2} sm/><K l="Avg Timing" v={(displayOpps.reduce((a,o)=>a+(o.tm||0),0)/displayOpps.length).toFixed(1)} c={P.t2} sm/>
     </FlexRow>
 
     <PanelShell hover title="CONVICTION vs TIMING MATRIX" subtitle="Bubble size = est. annual value. Top-right = execute now. 1-10 scale" takeaway="3 opportunities in the Execute Now quadrant. Pension sacrifice and ISA max have highest composite scores.">
@@ -2809,34 +2892,51 @@ const T8 = ()=>{
         </ResponsiveContainer>
       </PanelShell>
     </div>
-    <PanelShell hover title="FULL OPPORTUNITY RANKING — ALL 10" subtitle="Complete scoring matrix with wrapper, alpha source, and priority" takeaway="Combined annual value of all 10 opportunities: £45k+. The top 3 guaranteed actions alone deliver £12.7k/yr.">
-      <Tbl h={["#","Opportunity","Conv","Time","Score","Alpha","Wrapper","Est. Value","Priority"]}
-        r={valRanked.map((o,i)=>[`${i+1}`,o.t,`${o.c}/10`,`${o.tm}/10`,`${o.c*o.tm}`,o.alpha,o.w,`£${(o.val/1000).toFixed(1)}k/yr`,i<3?"Immediate":i<6?"This Quarter":"This Year"])} hl={7}/>
+    <PanelShell hover title="FULL OPPORTUNITY RANKING — ALL 10" subtitle={useRanked ? "Engine-ranked by composite score (conviction + timing + market alignment)" : "Complete scoring matrix with wrapper, alpha source, and priority"} takeaway={`Combined annual value of all ${displayOpps.length} opportunities: \u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k+/yr.`}>
+      <Tbl h={["#","Opportunity",useRanked?"Composite":"Conv","Time",useRanked?"Tier":"Score","Alpha","Wrapper","Est. Value"]}
+        r={valRanked.map((o,i)=>[`${i+1}`,o.t,useRanked?`${o.compositeScore?.toFixed(0)}`:`${o.c}/10`,`${o.tm}/10`,useRanked?(o.tier||'—'):`${o.c*o.tm}`,o.alpha,o.w,`\u00A3${(o.val/1000).toFixed(1)}k/yr`])} hl={7}/>
     </PanelShell>
-    {OPPS_TOP5.map((o,i)=><Card key={i} style={{borderLeft:`3px solid ${o.col}`}} hover>
+    {valRanked.slice(0,5).map((o,i)=><Card key={i} style={{borderLeft:`3px solid ${useRanked ? (o.tierColor || o.col) : o.col}`}} hover>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div><div style={{fontSize:18,fontWeight:800,color:P.t1}}>{o.t}</div>
-          <div style={{fontSize:13,color:P.t3,marginTop:3}}>Wrapper: {o.w} · Size: {o.sz} · Alpha: {o.alpha} · Value: £{(o.val/1000).toFixed(1)}k/yr</div></div>
+        <div><div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{fontSize:18,fontWeight:800,color:P.t1}}>{o.t}</div>
+          {useRanked && o.tier && <span style={{fontSize:9,fontWeight:800,padding:'3px 8px',borderRadius:6,background:`${o.tierColor}20`,color:o.tierColor,border:`1px solid ${o.tierColor}40`,letterSpacing:0.5}}>{o.tier}</span>}
+        </div>
+          <div style={{fontSize:13,color:P.t3,marginTop:3}}>Wrapper: {o.w} · Size: {o.sz} · Alpha: {o.alpha} · Value: \u00A3{(o.val/1000).toFixed(1)}k/yr</div></div>
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
-            <div style={{fontSize:9,color:P.t4}}>CONV</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.c}</div>
-          </div>
-          <div style={{fontSize:14,color:P.t4}}>×</div>
-          <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
-            <div style={{fontSize:9,color:P.t4}}>TIME</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.tm}</div>
-          </div>
-          <div style={{fontSize:14,color:P.t4}}>=</div>
-          <div style={{background:o.col,color:"#000",padding:"6px 10px",borderRadius:14,fontSize:16,fontWeight:800}}>{o.c*o.tm}</div>
+          {useRanked ? (<>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.tierColor||o.col}15`,border:`1px solid ${o.tierColor||o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>SCORE</div><div style={{fontSize:16,fontWeight:800,color:o.tierColor||o.col}}>{o.compositeScore?.toFixed(0)}</div>
+            </div>
+          </>) : (<>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>CONV</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.c}</div>
+            </div>
+            <div style={{fontSize:14,color:P.t4}}>\u00D7</div>
+            <div style={{textAlign:"center",padding:"4px 8px",borderRadius:8,background:`${o.col}15`,border:`1px solid ${o.col}25`}}>
+              <div style={{fontSize:9,color:P.t4}}>TIME</div><div style={{fontSize:16,fontWeight:800,color:o.col}}>{o.tm}</div>
+            </div>
+            <div style={{fontSize:14,color:P.t4}}>=</div>
+            <div style={{background:o.col,color:"#000",padding:"6px 10px",borderRadius:14,fontSize:16,fontWeight:800}}>{o.c*o.tm}</div>
+          </>)}
         </div>
       </div>
+      {/* Engine rationale when available */}
+      {useRanked && o.rationale?.length > 0 && (
+        <div style={{marginBottom:8,padding:'6px 10px',background:'rgba(15,150,156,0.06)',borderRadius:8,borderLeft:`2px solid ${P.cyan}`}}>
+          {o.rationale.map((r,ri)=><div key={ri} style={{fontSize:11,color:P.cyan,lineHeight:1.5}}>+ {r}</div>)}
+        </div>
+      )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
-        <div><div style={{fontSize:12,color:o.col,fontWeight:700,marginBottom:3}}>CATALYST</div><div style={{fontSize:14,color:P.t2,lineHeight:1.6}}>{o.cat}</div></div>
+        <div><div style={{fontSize:12,color:o.col||o.tierColor,fontWeight:700,marginBottom:3}}>CATALYST</div><div style={{fontSize:14,color:P.t2,lineHeight:1.6}}>{o.cat}</div></div>
         <div><div style={{fontSize:12,color:P.red,fontWeight:700,marginBottom:3}}>RISKS & KILL SWITCH</div>
-          {o.risks.map((r,ri)=><div key={ri} style={{fontSize:13,color:P.t3}}>• {r}</div>)}
-          <div style={{fontSize:12,color:P.amber,marginTop:4}}>Kill: {o.kill}</div></div>
+          {o.risks?.map((r,ri)=><div key={ri} style={{fontSize:13,color:P.t3}}>{"\u2022"} {r}</div>)}
+          {o.kill && <div style={{fontSize:12,color:P.amber,marginTop:4}}>Kill: {o.kill}</div>}</div>
       </div>
     </Card>)}
-    <Ins text={`Remaining 5 opportunities (UK Infrastructure, EM Small Cap, Gold, Bed & ISA, Intl Value) have lower composite scores but remain relevant for diversification and tax efficiency. Bed & ISA in particular is a certainty play — no market view required, just annual execution. Combined annual value of all 10 opportunities: £${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`}/>
+    <Ins text={useRanked
+      ? `${rSummary?.executeNow || 0} opportunities scored EXECUTE NOW, ${rSummary?.highPriority || 0} HIGH PRIORITY. Engine composite scores incorporate conviction, timing, market regime alignment, and portfolio state. Combined annual value: \u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`
+      : `Remaining 5 opportunities (UK Infrastructure, EM Small Cap, Gold, Bed & ISA, Intl Value) have lower composite scores but remain relevant for diversification and tax efficiency. Combined annual value of all 10 opportunities: \u00A3${(OPPS.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k.`}/>
   </div>);
 };
 
@@ -3269,7 +3369,25 @@ const T12 = ()=>{
   const topDebt = debtState?.actions?.[0];
   const daysLeft = isaState?.daysUntilTaxYearEnd || 19;
   const clutterCount = concState?.clutter?.count || 18;
-  const blocks=[
+  // Engine-driven action blocks from AGENT.actionQueue (falls back to hardcoded)
+  const agentQ = AGENT.actionQueue?.queue;
+  const blocks = agentQ?.length > 0 ? (()=>{
+    const urgencyMap = { immediate: 0, 'this-week': 0, 'this-month': 1, 'this-quarter': 2 };
+    const catLabel = c => c ? c.charAt(0).toUpperCase() + c.slice(1) : 'General';
+    const tiers = [
+      { tf: 'IMMEDIATE — Next 30 Days', c: P.red, acts: [] },
+      { tf: 'Q2 2026 — This Quarter', c: P.amber, acts: [] },
+      { tf: 'H2 2026 — This Year', c: P.cyan, acts: [] },
+    ];
+    agentQ.forEach(a => {
+      const idx = urgencyMap[a.urgency] ?? 2;
+      tiers[idx].acts.push({
+        a: a.action, to: catLabel(a.category),
+        why: a.rationale || '', imp: a.ev > 0 ? `£${Math.round(a.ev).toLocaleString()}/yr` : 'Structural improvement',
+      });
+    });
+    return tiers.filter(t => t.acts.length > 0);
+  })() : [
     {tf:"IMMEDIATE — Next 30 Days",c:P.red,acts:[
       {a:`Clear Amex in full (${fmt(PORT.amexDebt)})`,to:"From bonus",why:topDebt ? `${topDebt.apr}% APR = guaranteed ${topDebt.guaranteedAlpha}% alpha vs investing` : "22% APR = guaranteed 22% return",imp:topDebt ? `£${Math.round(topDebt.annualInterest).toLocaleString()}/yr saved` : "£2,343/yr saved"},
       {a:`Max S&S ISA with £${(isaState?.isaHeadroom?.remaining||20000).toLocaleString()}`,to:"S&S ISA: JGEP + quality",why:`ISA deadline 5 April. ${daysLeft} days. Tax-free compounding is irreplaceable.`,imp:"80-120bps/yr"},
@@ -3301,17 +3419,24 @@ const T12 = ()=>{
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
-    <PanelShell hover title="ACTION IMPACT RANKING (Annual £ Value)" subtitle="All actions competing on one axis — guaranteed returns first" takeaway="Combined annual value: £17.8k/yr. Top 3 guaranteed-return actions deliver £12.7k/yr with zero market risk.">
+    <PanelShell hover title="ACTION IMPACT RANKING (Annual £ Value)" subtitle="All actions competing on one axis — guaranteed returns first" takeaway={AGENT.actionQueue?.summary?.totalAnnualEV ? `Combined annual value: £${(AGENT.actionQueue.summary.totalAnnualEV/1000).toFixed(1)}k/yr from ${AGENT.actionQueue.summary.totalActions} ranked actions.` : "Combined annual value: £17.8k/yr. Top 3 guaranteed-return actions deliver £12.7k/yr with zero market risk."}>
       {(()=>{
-        const actionImpacts = [
-          {n:"Salary Sacrifice",v:6750,c:"#06b6d4",cert:"Guaranteed"},
-          {n:"Max ISA",v:3600,c:P.cyan,cert:"Guaranteed"},
-          {n:"Clear Amex",v:2343,c:P.red,cert:"Guaranteed"},
-          {n:"Bed & ISA",v:1800,c:P.amber,cert:"High"},
-          {n:"Employer Match",v:2400,c:P.green,cert:"High"},
-          {n:"CGT Harvest",v:720,c:P.indigo,cert:"Certain"},
-          {n:"Consolidate",v:160,c:P.t3,cert:"Certain"},
-        ].sort((a,b)=>b.v-a.v);
+        const urgencyColor = u => u === 'immediate' ? P.red : u === 'this-week' ? P.amber : u === 'this-month' ? P.amber : P.cyan;
+        const certLabel = c => c >= 9 ? 'Guaranteed' : c >= 7 ? 'High' : c >= 5 ? 'Medium' : 'Low';
+        const actionImpacts = agentQ?.length > 0
+          ? agentQ.filter(a => a.ev > 0).map(a => ({
+              n: a.action.replace(/\s*[—–-]\s*.+$/, '').split(' ').slice(0, 3).join(' '),
+              v: Math.round(a.ev), c: urgencyColor(a.urgency), cert: certLabel(a.confidence),
+            })).sort((a,b) => b.v - a.v).slice(0, 8)
+          : [
+              {n:"Salary Sacrifice",v:6750,c:"#06b6d4",cert:"Guaranteed"},
+              {n:"Max ISA",v:3600,c:P.cyan,cert:"Guaranteed"},
+              {n:"Clear Amex",v:2343,c:P.red,cert:"Guaranteed"},
+              {n:"Bed & ISA",v:1800,c:P.amber,cert:"High"},
+              {n:"Employer Match",v:2400,c:P.green,cert:"High"},
+              {n:"CGT Harvest",v:720,c:P.indigo,cert:"Certain"},
+              {n:"Consolidate",v:160,c:P.t3,cert:"Certain"},
+            ].sort((a,b)=>b.v-a.v);
         return(
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={actionImpacts} layout="vertical" margin={{left:100}}>
@@ -3369,6 +3494,40 @@ const T12 = ()=>{
         <div style={{fontSize:14,color:P.t2,lineHeight:1.7,fontWeight:500}}>{c}</div>
       </div>)}
     </Card>
+
+    {/* DECISION LOG — Track trade theses and outcomes */}
+    <PanelShell hover title="DECISION LOG" subtitle="Record decisions with thesis, track whether thesis played out" takeaway="Logging decisions creates accountability. Review open theses quarterly to validate or invalidate.">
+      {(()=>{
+        const logEntries = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('lifestack_decision_log') || '[]') : [];
+        const processed = logEntries.length > 0 ? processDecisionLog(logEntries, ENGINE, MKTENG) : { entries: [], summary: { total: 0, open: 0, atRisk: 0, needsReview: 0 } };
+        const statusColor = s => s === 'on-track' ? P.positive : s === 'at-risk' ? P.red : s === 'needs-review' ? P.amber : P.t3;
+        const statusLabel = s => s === 'on-track' ? 'ON TRACK' : s === 'at-risk' ? 'AT RISK' : s === 'needs-review' ? 'NEEDS REVIEW' : 'TRACKING';
+        return (<>
+          <div style={{display:'flex',gap:10,marginBottom:12}}>
+            <K l="Total Decisions" v={processed.summary.total} c={P.t2} sm/>
+            <K l="Open" v={processed.summary.open} c={P.cyan} sm/>
+            <K l="At Risk" v={processed.summary.atRisk} c={P.red} sm/>
+            <K l="Needs Review" v={processed.summary.needsReview} c={P.amber} sm/>
+          </div>
+          {processed.entries.length > 0 ? processed.entries.slice(0, 10).map((e, i) => (
+            <div key={i} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:`1px solid ${P.b2}`,alignItems:'flex-start'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:statusColor(e.latestValidation?.status),flexShrink:0,marginTop:6,boxShadow:`0 0 8px ${statusColor(e.latestValidation?.status)}50`}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,color:P.t1,fontWeight:600}}>{e.action}</div>
+                <div style={{fontSize:11,color:P.t3,marginTop:2}}>{e.thesis?.rationale?.slice(0,120)}{e.thesis?.rationale?.length > 120 ? '...' : ''}</div>
+                <div style={{display:'flex',gap:8,marginTop:4}}>
+                  <span style={{fontSize:9,color:statusColor(e.latestValidation?.status),fontWeight:800,padding:'2px 6px',borderRadius:5,background:`${statusColor(e.latestValidation?.status)}14`,border:`1px solid ${statusColor(e.latestValidation?.status)}20`,textTransform:'uppercase',letterSpacing:0.5}}>{statusLabel(e.latestValidation?.status)}</span>
+                  <span style={{fontSize:10,color:P.t4}}>{e.latestValidation?.daysSince || 0}d ago</span>
+                  <span style={{fontSize:10,color:P.t4}}>{e.category}</span>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div style={{fontSize:12,color:P.t3,padding:'16px 0',textAlign:'center'}}>No decisions logged yet. Decisions from action execution will appear here.</div>
+          )}
+        </>);
+      })()}
+    </PanelShell>
   </div>);
 };
 
@@ -3785,7 +3944,7 @@ const T13 = ()=>{
 // =========================================================================
 // SUPABASE DATA RECALCULATION — updates all derived values from live data
 // =========================================================================
-function recalcDerived() {
+function recalcDerived(priorSnapshot, saveSnapshot) {
   nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
   NW_DD = NW_WEEKLY.map(w => ({d: w.d, dd: ((w.nw - PORT.nwPeak) / PORT.nwPeak * 100)}));
   totalAssets = PORT.assets;
@@ -3875,11 +4034,16 @@ function recalcDerived() {
     AGENT.rankedOpps = rankOpportunities(OPPS, ENGINE, MKTENG);
     AGENT.actionQueue = buildActionQueue(ENGINE, MKTENG, OPPS);
     AGENT.triggerAlerts = generateTriggerAlerts(ENGINE, MKTENG);
-    AGENT.whatChanged = computeWhatChanged(ENGINE, null);
+    AGENT.whatChanged = computeWhatChanged(ENGINE, priorSnapshot);
     AGENT.synthesis = generateWeeklySynthesis(ENGINE, MKTENG, PORT, SCORECARD, OPPS);
     AGENT.morningCommand = generateMorningCommand(ENGINE, MKTENG, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
   } catch (e) {
     console.error('LifeStack: Agent computation error', e);
+  }
+
+  // Save weekly snapshot for future whatChanged comparison
+  if (typeof saveSnapshot === 'function') {
+    try { saveSnapshot(ENGINE, MKTENG, { netWorth: PORT.netWorth, date: PORT.date }); } catch {}
   }
 }
 
@@ -4529,6 +4693,7 @@ export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   const [,refresh]=useState(0);
   const {data,loading,source,freshness}=useSupabaseData();
+  const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
   useEffect(()=>{
     if(freshness) FRESHNESS=freshness;
     if(data){
@@ -4545,10 +4710,10 @@ export default function PortfolioVOS(){
       if(data.MONTHLY) MONTHLY_DATA=data.MONTHLY;
       if(data.SCORECARD) SCORECARD=data.SCORECARD;
       if(data.REF_DATA) REF_DATA=data.REF_DATA;
-      recalcDerived();
+      recalcDerived(priorSnapshot, saveSnapshot);
       refresh(n=>n+1);
     }
-  },[data,freshness]);
+  },[data,freshness,priorSnapshot,saveSnapshot]);
   const render=()=>{switch(tab){
     case "exec":return <T1/>;
     case "struct":return <T2/>;
