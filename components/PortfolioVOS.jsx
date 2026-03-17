@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSupabaseData, computeFreshness } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
+import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand } from '../lib/engines/agents/index.js';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -326,6 +327,7 @@ let REF_DATA = {};
 let FRESHNESS = {};
 // Phase 2 Finance OS — engine-computed state objects, recalculated on data change
 let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null };
+let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -1158,13 +1160,17 @@ const T1 = ()=>{
   const debtToAsset = (PORT.debts / PORT.assets * 100);
   const leverage = PORT.debts / PORT.netWorth;
 
-  const alerts = [
-    {msg:"ISA deadline: 29 days. £0 of £20k deployed.", sev:"high"},
-    {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
-    {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
-    {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
-    {msg:"18 positions below £1k. Fragment drag ~£160/yr.", sev:"low"},
-  ];
+  // Phase 4: Engine-driven alerts with fallback to hardcoded
+  const engineAlerts = AGENT.triggerAlerts?.alerts || [];
+  const alerts = engineAlerts.length > 0
+    ? engineAlerts.map(a => ({ msg: a.message, sev: a.severity === 'critical' ? 'high' : a.severity === 'warning' ? 'med' : 'low' }))
+    : [
+      {msg:"ISA deadline: 29 days. £0 of £20k deployed.", sev:"high"},
+      {msg:`Amex at 22% APR: ${fmt(PORT.amexDebt)} outstanding.`, sev:"high"},
+      {msg:`Cash buffer: ${runway.toFixed(1)} months vs 3.0 target.`, sev: runway < 3 ? "med" : "low"},
+      {msg:"Crypto risk budget: 32% risk from 13% capital (2.5x limit).", sev:"med"},
+      {msg:"18 positions below £1k. Fragment drag ~£160/yr.", sev:"low"},
+    ];
 
   const decomp = [
     {name:"Crypto Allocation", val: -5.4, c: P.red},
@@ -1263,9 +1269,9 @@ const T1 = ()=>{
 
     {/* AGENT INSIGHT BANNER — synthesis + regime context */}
     <CIOInsightBanner
-      regime="Late Cycle"
-      confidence={72}
-      text={`Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
+      regime={AGENT.synthesis?.sections?.marketContext?.regime || "Late Cycle"}
+      confidence={AGENT.synthesis?.sections?.marketContext?.regimeConfidence || 72}
+      text={AGENT.synthesis?.executiveSummary || `Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
     />
 
     {/* CONTROL BAR — time filter between Zone 1 and Zone 2 */}
@@ -1280,7 +1286,7 @@ const T1 = ()=>{
     {/* ROW 2: Alerts + Scorecard Radar + Return Decomp (3 col) */}
     <div style={{display:"grid",gridTemplateColumns:"3fr 4fr 5fr",gap:14,marginBottom:14}}>
       {/* Alerts */}
-      <PanelShell tier={1} title="GOVERNANCE ALERTS" subtitle={`${alerts.filter(a=>a.sev==="high").length} high priority`} metricColor={P.red} takeaway="Address high-severity items within 30 days. ISA deadline is time-critical. Amex clearance is highest financial return action.">
+      <PanelShell tier={1} title="GOVERNANCE ALERTS" subtitle={`${alerts.filter(a=>a.sev==="high").length} high priority${AGENT.morningCommand?.verdict ? ` · ${AGENT.morningCommand.verdict.level}` : ''}`} metricColor={P.red} takeaway={AGENT.morningCommand?.verdict?.message || "Address high-severity items within 30 days. ISA deadline is time-critical. Amex clearance is highest financial return action."}>
         {alerts.map((a,i) => {
           const dc = a.sev==="high" ? P.red : a.sev==="med" ? P.amber : P.t4;
           return (
@@ -3284,11 +3290,12 @@ const T12 = ()=>{
   return(<div>
     <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan} freshness={FRESHNESS} tableKey="portfolio_scorecard"/>
 
-    {/* KPI STRIP */}
+    {/* KPI STRIP — Phase 4 agent-driven */}
     <FlexRow gap={6} style={{marginBottom:14}}>
-      <K l="Total Actions" v={blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
+      <K l="Total Actions" v={AGENT.actionQueue?.summary?.totalActions || blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={AGENT.actionQueue?.summary?.immediateActions || blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
       <K l="Debt Alpha" v={topDebt?`${topDebt.guaranteedAlpha}%`:'0%'} c={P.positive} sm delta="Guaranteed"/><K l="ISA Left" v={`£${((isaState?.isaHeadroom?.remaining||20000)/1000).toFixed(0)}k`} c={daysLeft<=30?P.negative:P.amber} sm delta={`${daysLeft}d to deadline`}/>
       <K l="Drift" v={driftState?`${driftState.maxDrift.toFixed(1)}%`:'—'} c={driftState?.maxDrift>5?P.negative:P.positive} sm delta={driftState?.urgency||'—'}/>
+      <K l="Annual EV" v={AGENT.actionQueue?.summary?.totalAnnualEV ? `£${(AGENT.actionQueue.summary.totalAnnualEV/1000).toFixed(1)}k` : '—'} c={P.positive} sm delta="Total queue"/>
     </FlexRow>
 
     {/* SPRINT 2: Impact by Action — all actions ranked by annual £ value */}
@@ -3845,6 +3852,18 @@ function recalcDerived() {
     ENGINE.rebalanceProposal = computeRebalanceProposalState(HOLDINGS, undefined, ENGINE.wrapperExposure);
   } catch (e) {
     console.error('LifeStack: Engine computation error', e);
+  }
+
+  // Phase 4 Agent Layer — research & decisioning engines
+  try {
+    AGENT.rankedOpps = rankOpportunities(OPPS, ENGINE, null);
+    AGENT.actionQueue = buildActionQueue(ENGINE, null, OPPS);
+    AGENT.triggerAlerts = generateTriggerAlerts(ENGINE, null);
+    AGENT.whatChanged = computeWhatChanged(ENGINE, null);
+    AGENT.synthesis = generateWeeklySynthesis(ENGINE, null, PORT, SCORECARD, OPPS);
+    AGENT.morningCommand = generateMorningCommand(ENGINE, null, AGENT.actionQueue, AGENT.triggerAlerts, AGENT.whatChanged, AGENT.synthesis);
+  } catch (e) {
+    console.error('LifeStack: Agent computation error', e);
   }
 }
 
