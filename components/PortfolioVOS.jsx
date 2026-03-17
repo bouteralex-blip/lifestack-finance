@@ -1732,7 +1732,7 @@ const T2 = ()=>{
   const microValue = sorted.filter(h=>h.val<1000).reduce((a,h)=>a+h.val,0);
 
   return(<div>
-    <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, exposure analysis, wrapper efficiency, concentration risk" tag="HOLDINGS"/>
+    <SectionHeader t="STRUCTURE & CONCENTRATION" s="Holdings decomposition, exposure analysis, wrapper efficiency, concentration risk" tag="HOLDINGS" freshness={FRESHNESS} tableKey="holdings"/>
 
     {/* KPI ROW — 8 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:8,marginBottom:14}}>
@@ -2072,7 +2072,7 @@ const T3 = ()=>{
   ];
 
   return(<div>
-    <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, return decomposition, contribution analysis, risk-adjusted metrics" tag="PM REVIEW"/>
+    <SectionHeader t="PERFORMANCE & ATTRIBUTION" s="NAV reconciliation, return decomposition, contribution analysis, risk-adjusted metrics" tag="PM REVIEW" freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     {/* KPI ROW — 10 dense KPIs */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(10, 1fr)",gap:8,marginBottom:14}}>
@@ -2343,7 +2343,7 @@ const T4 = ()=>{
   ];
   const volTrend=MONTHLY_DATA.filter(m=>m.vol!=null).map(m=>({d:m.m,vol:m.vol,dd:m.r}));
   return(<div>
-    <SectionHeader t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red}/>
+    <SectionHeader t="RISK ENGINE" s="Volatility, tail risk, VaR, factor analysis, correlation structure" tag="RISK" ac={P.red} freshness={FRESHNESS} tableKey="risk_metrics"/>
 
     {/* KPI ROW */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -2479,7 +2479,7 @@ const T4 = ()=>{
 const T5 = ()=>{
   const probWeighted = STRESS.map(s=>({...s,wImpact:+(s.impact*parseFloat(s.pr)/100).toFixed(2)}));
   return(<div>
-    <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red}/>
+    <SectionHeader t="STRESS TESTS & SCENARIOS" s="Shock analysis and wealth projections with probability weighting" tag="TAIL RISK" ac={P.red} freshness={FRESHNESS} tableKey="stress_scenarios"/>
 
     {/* KPI STRIP — Zone 1 Signal */}
     <FlexRow gap={6} style={{marginBottom:14}}>
@@ -2579,7 +2579,7 @@ const T6 = ()=>{
     {m:"Investable",v:+((netSalary/12)-PORT.monthlyExpenses).toFixed(0)},
   ];
   return(<div>
-    <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL"/>
+    <SectionHeader t="CASHFLOW & CAPITAL ENGINE" s="Income, savings velocity, balance sheet health" tag="CAPITAL" freshness={FRESHNESS} tableKey="portfolio_config"/>
     <FlexRow gap={6} style={{marginBottom:14}}>
       <KpiTile l="Gross Salary" v={fK(PORT.grossSalary)} s="£170k from March" bench="£120k med"/><KpiTile l="Gross Bonus" v="£150-190k" s="Performance-based" c={P.amber} bench="0-50%"/>
       <KpiTile l="Total Net" v={`~${fK(totalNet)}`} s="Post tax+NI" c={P.positive}/><KpiTile l="Expenses" v="£6k/mo" s="£72k/yr" bench="£5k avg"/>
@@ -3697,7 +3697,7 @@ const T13 = ()=>{
   const [openCat,setOpenCat] = useState(null);
 
   return(<div>
-    <Hd t="GLOSSARY & METRICS EXPLAINED" s="Every metric defined, contextualised, and linked to your specific portfolio outcome" tag="REFERENCE" ac={P.purple}/>
+    <Hd t="GLOSSARY & METRICS EXPLAINED" s="Every metric defined, contextualised, and linked to your specific portfolio outcome" tag="REFERENCE" ac={P.purple} freshness={FRESHNESS} tableKey="reference_data"/>
     <Ins text={`This reference guide covers ${categories.reduce((a,c)=>a+c.items.length,0)} metrics across ${categories.length} categories. Each definition is paired with your current reading and a specific interpretation of what it means for your portfolio. Use this as a living reference document for investment committee discussions.`}/>
     {categories.map((cat,ci)=>(
       <Card key={ci} style={{borderLeft:`3px solid ${cat.color}`,cursor:"pointer",overflow:"hidden"}} hover>
@@ -3864,7 +3864,7 @@ const SYS_STEPS = [
 const T15 = () => {
   const Dot = ({on,c=P.cyan}) => (<div style={{width:12,height:12,borderRadius:'50%',background:on?c:'rgba(0,0,0,0.06)',boxShadow:on?`0 0 10px ${c}50`:'none',border:on?'none':'1px solid rgba(0,0,0,0.08)',transition:'all 0.3s'}}/>);
   return (<div>
-    <Hd t="SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT" s="Module interconnections, platform piping, data flows, and 10-step execution roadmap" tag="LIFESTACK OS" ac={P.indigo}/>
+    <Hd t="SYSTEM ARCHITECTURE & OPERATIONAL BLUEPRINT" s="Module interconnections, platform piping, data flows, and 10-step execution roadmap" tag="LIFESTACK OS" ac={P.indigo} freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     {/* Module Map */}
     <Card hover tier={2}>
@@ -4223,29 +4223,48 @@ const T16 = () => {
       </div>
     </PanelShell>
 
-    {/* Data Freshness Dashboard */}
+    {/* Data Freshness Dashboard — wired to real FRESHNESS state */}
     <Card material="dark" style={{marginBottom:16,padding:'20px 24px'}}>
-      <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1.5,marginBottom:12}}>DATA FRESHNESS</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1.5}}>DATA FRESHNESS</div>
+        <div style={{display:'flex',gap:8}}>
+          {[{l:'Live',c:'#22c55e'},{l:'Stale',c:'#f59e0b'},{l:'Fallback',c:'#ef4444'}].map(x=>(
+            <div key={x.l} style={{display:'flex',alignItems:'center',gap:4,fontSize:8,color:x.c,fontWeight:600}}>
+              <div style={{width:5,height:5,borderRadius:'50%',background:x.c}}/>{x.l}
+            </div>
+          ))}
+        </div>
+      </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
         {[
-          {name:'Holdings',table:'holdings',rows:22,lastSync:'7 Mar 2026',stale:false},
-          {name:'Net Worth',table:'net_worth_history',rows:24,lastSync:'7 Mar 2026',stale:false},
-          {name:'Risk Metrics',table:'risk_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
-          {name:'Debts',table:'debts',rows:2,lastSync:'28 Feb 2026',stale:true},
-          {name:'Monthly Returns',table:'monthly_returns',rows:6,lastSync:'7 Mar 2026',stale:false},
-          {name:'Opportunities',table:'opportunities',rows:10,lastSync:'5 Mar 2026',stale:false},
-          {name:'Stress Tests',table:'stress_scenarios',rows:8,lastSync:'1 Mar 2026',stale:true},
-          {name:'Crypto',table:'crypto_metrics',rows:1,lastSync:'7 Mar 2026',stale:false},
-        ].map((d,i)=>(
-          <div key={i} style={{padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.04)',border:`1px solid ${d.stale?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.06)'}`,textAlign:'center'}}>
-            <div style={{fontSize:10,fontWeight:700,color:d.stale?P.amber:P.t1,marginBottom:4}}>{d.name}</div>
-            <div style={{fontSize:14,fontWeight:800,color:d.stale?P.amber:'#fff',fontFamily:P.mono}}>{d.rows}</div>
-            <div style={{fontSize:8,color:P.t4,marginTop:2}}>{d.table}</div>
-            <div style={{fontSize:8,color:d.stale?P.amber:P.positive,marginTop:4,fontWeight:600}}>
-              {d.stale?'⚠ Stale':'● Fresh'} · {d.lastSync}
+          {name:'Portfolio Config',table:'portfolio_config'},
+          {name:'Holdings',table:'holdings'},
+          {name:'Net Worth History',table:'net_worth_history'},
+          {name:'NW Bridge',table:'nw_bridge'},
+          {name:'Risk Metrics',table:'risk_metrics'},
+          {name:'Crypto Metrics',table:'crypto_metrics'},
+          {name:'Opportunities',table:'opportunities'},
+          {name:'Factor Exposures',table:'factor_exposures'},
+          {name:'Stress Scenarios',table:'stress_scenarios'},
+          {name:'Bonus Config',table:'bonus_config'},
+          {name:'Bonus Scenarios',table:'bonus_scenarios'},
+          {name:'Monthly Returns',table:'monthly_returns'},
+          {name:'Scorecard',table:'portfolio_scorecard'},
+          {name:'Reference Data',table:'reference_data'},
+        ].map((d,i)=>{
+          const f = FRESHNESS[d.table] || {level:'fallback',label:'Fallback',isLive:false,isStale:false,isFallback:true};
+          const color = f.level==='live'?'#22c55e':f.level==='stale'?P.amber:'#ef4444';
+          return (
+            <div key={i} style={{padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.04)',border:`1px solid ${color}18`,textAlign:'center'}}>
+              <div style={{fontSize:10,fontWeight:700,color:f.level==='live'?P.t1:color,marginBottom:4}}>{d.name}</div>
+              <div style={{fontSize:8,color:P.t4,marginTop:2,fontFamily:P.mono}}>{d.table}</div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginTop:6}}>
+                <div style={{width:5,height:5,borderRadius:'50%',background:color,boxShadow:`0 0 6px ${color}60`}}/>
+                <div style={{fontSize:8,color:color,fontWeight:600}}>{f.label}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
 
