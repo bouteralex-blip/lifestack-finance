@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter, PieChart, Pie, Legend } from "recharts";
 import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, Landmark, CircleDot, FileText, Briefcase, Factory, Flame, Map, Users, Gem, ChevronRight, ChevronDown } from "lucide-react";
+import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState, computeBTCDominanceState } from '../lib/engines/market/index.js';
 
 // =========================================================================
 // LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
@@ -480,8 +481,8 @@ const P1=()=>(<div>
 
 {/* Regime hero — MAT tile */}
 <Row style={{marginBottom:0}}>
-  <MatStat label="Macro Regime" value={M.regime} sub={`${M.regimeConf}% confidence`} mat="amber"/>
-  <MatStat label="S&P 500" value={M.sp500.toLocaleString()} sub={`PE ${M.sp500PE}x · CAPE ${M.sp500CAPE}x`} mat="dark"/>
+  <MatStat label="Macro Regime" value={MKTENG.regime?.regime||M.regime} sub={`${MKTENG.regime?.confidence||M.regimeConf}% confidence · ${MKTENG.regime?.riskPosture||'Defensive'}`} mat="amber"/>
+  <MatStat label="Stress Score" value={MKTENG.stress?`${MKTENG.stress.compositeScore}/100`:M.vix.toFixed(0)} sub={`${MKTENG.stress?.compositeLevel||'ELEVATED'} · ${MKTENG.stress?.elevatedAssets||0} stressed assets`} mat={MKTENG.stress?.compositeScore>50?"red":"dark"}/>
   <MatStat label="Gold" value={`$${M.gold.toLocaleString()}`} sub="+80% 12M · HALO trade" mat="teal"/>
   <MatStat label="Brent Crude" value={`$${M.brent}`} sub="Iran shock · +22% 12M" mat="red"/>
 </Row>
@@ -532,7 +533,7 @@ const P2=()=>(<div>
 <Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS" showFreshness/>
 
 <Row style={{marginBottom:0}}>
-  <MatStat label="HY OAS" value={`${M.hyOAS}bp`} sub="Watching 400bp threshold" mat="amber"/>
+  <MatStat label="Credit Stress" value={MKTENG.creditStress?`${MKTENG.creditStress.compositeScore.toFixed(0)}/100`:M.hyOAS+'bp'} sub={`${MKTENG.creditStress?.compositeLevel||'NORMAL'} · HY ${M.hyOAS}bp · Trend: ${MKTENG.creditStress?.trend||'stable'}`} mat={MKTENG.creditStress?.compositeScore>50?"red":"amber"}/>
   <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol elevated · Crisis level" mat="red"/>
   <MatStat label="Best 1Y Fix" value={`${M.bestSave}%`} sub="Cash competitive vs equities" mat="teal"/>
   <MatStat label="STLFSI" value={M.stlfsi.toFixed(1)} sub="Mild financial stress index" mat="dark"/>
@@ -753,9 +754,9 @@ const P9=()=>(<div>
 {/* Crypto hero MAT tiles */}
 <Row style={{marginBottom:0}}>
   <MatStat label="Bitcoin" value={`$${M.btcPrice.toLocaleString()}`} sub={`ATH $${M.btcATH.toLocaleString()} · DD ${M.btcDD}%`} mat="amber"/>
-  <MatStat label="Fear & Greed" value={M.fearGreed.toString()} sub="EXTREME FEAR · RSI 27.5" mat="red"/>
-  <MatStat label="MVRV Z-Score" value={M.mvrvZ.toFixed(2)} sub="Near undervalued zone" mat="teal"/>
-  <MatStat label="ETF Flows" value={M.etfFlow} sub="6-week outflow streak broken" mat="indigo"/>
+  <MatStat label="Cycle Phase" value={MKTENG.btcCycle?.phase||'ACCUMULATION'} sub={`${MKTENG.btcCycle?.confidence||0}% conf · ${MKTENG.btcCycle?.posture||'DCA and hold'}`} mat={MKTENG.btcCycle?.bias>=2?"teal":"red"}/>
+  <MatStat label="On-Chain Health" value={MKTENG.cryptoOnChain?`${MKTENG.cryptoOnChain.healthScore}/100`:'—'} sub={`${MKTENG.cryptoOnChain?.healthLevel||'—'} · ${MKTENG.cryptoOnChain?.netPositioning||'—'}`} mat={MKTENG.cryptoOnChain?.healthScore>60?"teal":"amber"}/>
+  <MatStat label="Dominance" value={`${M.btcDom}%`} sub={MKTENG.btcDominance?.phase||'BTC SEASON'} mat="indigo"/>
 </Row>
 
 <Ins type="risk" text={`BTC -44% from ATH. ETH -60%. SOL -71%. Fear & Greed hit 10. Weekly RSI 27.5 — third time below 30 in history. Previous instances (Jan 2015, Dec 2018) preceded bull runs of 9,900% and 1,700%. Structural supply case extreme: exchange reserves ATL, illiquid supply 75%, whales accumulating $23B in 30 days.`}/>
@@ -1178,6 +1179,22 @@ items={[
 {l:"Digital Build-Out",v:"Fibre + DC",n:"TeleGeography free data",c:T.blue},{l:"Circular Economy",v:"Less crowded",n:"Waste/water still infra-like",c:T.neutral},{l:"Resilience Infra",v:"Emerging",n:"Energy security becoming investable",c:T.cyan},{l:"BNEF Transition",v:"$2.3T (2025)",n:"Record global energy transition investment",c:T.teal}
 ]} sources={["IEA World Energy Investment (free)","IRENA (free)","ENTSO-E (free)","SEC EDGAR (hyperscaler 10-Q)","Lazard LCOE (free)","CarbonCredits.com (uranium, free)","BP/Energy Institute (free)"]}
 verdict="AI POWER + GRID = HIGHEST-CONVICTION STRUCTURAL THEME" imp={["All energy transition data sources are FREE: IEA, IRENA, ENTSO-E, Lazard, CarbonCredits.","Grid bottlenecks are the binding constraint on AI scaling — creates multi-year capex cycle.","Nuclear/SMR revival (uranium $78.50) is the underappreciated sub-theme within AI power."]} mon={["Hyperscaler Q1 capex","IEA quarterly report","Grid investment announcements","Battery cost trajectory"]}/>;
+
+// =========================================================================
+// PHASE 3: MARKET INTELLIGENCE — ENGINE-COMPUTED STATE
+// All engines run at module load on static M data; will run on live data in Phase 4
+// =========================================================================
+const MKTENG = {
+  regime: computeRegimeState(M),
+  stress: computeCrossAssetStressState(M),
+  btcCycle: computeBTCCycleState(M),
+  yieldCurve: computeYieldCurveState(YIELD_CURVE),
+  creditStress: computeCreditStressState(M, CREDIT_TL),
+  sectorLeadership: computeSectorLeadershipState(SECTOR),
+  etfFlows: computeETFFlowState(SENT_DIV, M),
+  cryptoOnChain: computeCryptoOnChainState(M),
+  btcDominance: computeBTCDominanceState(M),
+};
 
 // =========================================================================
 // NAVIGATION & SHELL

@@ -4338,7 +4338,7 @@ const T17 = () => {
   ];
 
   return(<div>
-    <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3}/>
+    <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3} freshness={FRESHNESS} tableKey="portfolio_config"/>
 
     <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:16}}>
       {/* Settings Sidebar */}
