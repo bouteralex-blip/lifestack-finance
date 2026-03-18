@@ -4794,13 +4794,9 @@ const TABS=[
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   const [,refresh]=useState(0);
-<<<<<<< HEAD
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
-  const {data,loading,source,truth}=useSupabaseData();
-=======
   const {data,loading,source,freshness}=useSupabaseData();
   const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
->>>>>>> origin/claude/review-finance-agent-plan-andJc
   useEffect(()=>{
     if(freshness) FRESHNESS=freshness;
     if(data){
@@ -4820,18 +4816,7 @@ export default function PortfolioVOS(){
       recalcDerived(priorSnapshot, saveSnapshot);
       refresh(n=>n+1);
     }
-<<<<<<< HEAD
-  },[data]);
-
-  useEffect(() => {
-    if (truth) {
-      setTruthLayer(truth);
-      refresh(n => n + 1);
-    }
-  }, [truth]);
-=======
   },[data,freshness,priorSnapshot,saveSnapshot]);
->>>>>>> origin/claude/review-finance-agent-plan-andJc
   const render=()=>{switch(tab){
     case "exec":return <T1 truthLayer={truthLayer}/>;
     case "struct":return <T2 truthLayer={truthLayer}/>;
@@ -4897,13 +4882,7 @@ export default function PortfolioVOS(){
             <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#0F969C,#072E33)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:800,boxShadow:'0 4px 16px rgba(15,150,156,0.50), inset 0 1px 0 rgba(255,255,255,0.20)'}}>LS</div>
             <div>
               <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:'#0F969C',fontWeight:700}}>LIFESTACK OS {"·"} PORTFOLIO INTELLIGENCE vOS</span>
-<<<<<<< HEAD
-              <div style={{fontSize:10,color:'rgba(232,244,245,0.40)'}}>
-                Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span style={{color:P.amber}}>{"●"} Static Fallback</span>} · {truthLayer.dashboard_freshness_state?.status || 'unknown'}
-              </div>
-=======
               <div style={{fontSize:10,color:'rgba(232,244,245,0.40)',display:'flex',alignItems:'center',gap:8}}>Institutional Review — {source==="supabase"?<span style={{color:'#0F969C'}}>{"●"} Live Data</span>:<span>Real Data</span>}{Object.keys(FRESHNESS).length>0&&<span style={{display:'inline-flex',gap:4,alignItems:'center'}}>{Object.values(FRESHNESS).filter(f=>f.isLive).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#4ade80'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#22c55e',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isLive).length} live</span>}{Object.values(FRESHNESS).filter(f=>f.isStale).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#fbbf24'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isStale).length} stale</span>}{Object.values(FRESHNESS).filter(f=>f.isFallback).length>0&&<span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:9,color:'#f87171'}}><span style={{width:4,height:4,borderRadius:'50%',background:'#ef4444',display:'inline-block'}}></span>{Object.values(FRESHNESS).filter(f=>f.isFallback).length} fallback</span>}</span>}</div>
->>>>>>> origin/claude/review-finance-agent-plan-andJc
             </div>
           </div>
           {/* Search + Notifications + Account */}
