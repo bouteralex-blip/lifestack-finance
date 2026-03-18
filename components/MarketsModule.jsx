@@ -1343,18 +1343,21 @@ const[side,setSide]=useState(true);
 const[open,setOpen]=useState({A:true});
 const[refreshing,setRefreshing]=useState(false);
 const[lastRefresh,setLastRefresh]=useState(null);
-const[liveM,setLiveM]=useState(null); // Live market data from API
+const[,setLiveM]=useState(0); // incremented to trigger re-render after M mutation
 const Act=TABS.find(t=>t.id===tab)?.C||P1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 
-// Receive computed MKTENG from PortfolioVOS via EngineContext
-const { MKTENG: ctxMKTENG } = useEngines();
+// Receive computed MKTENG from PortfolioVOS via EngineContext + publish raw prices
+const { MKTENG: ctxMKTENG, setPrices } = useEngines();
 // Override the module-level MKTENG with live context when available
 useEffect(()=>{
   if(ctxMKTENG && Object.values(ctxMKTENG).some(v=>v!=null)){
     Object.assign(MKTENG, ctxMKTENG);
   }
 },[ctxMKTENG]);
+
+// Publish current M prices to context on mount so other modules can read them
+useEffect(()=>{ setPrices({...M}); },[]);// eslint-disable-line react-hooks/exhaustive-deps
 
 // Refresh live market data from /api/market
 const refreshMarketData = async () => {
@@ -1390,7 +1393,8 @@ const refreshMarketData = async () => {
         commodityShock: computeCommodityShockState(M),
         inflationShock: computeInflationShockState(M),
       });
-      setLiveM({...M});
+      setLiveM(n => n+1);
+      setPrices({...M});
       setLastRefresh(new Date());
     }
   } catch(e) { /* silently fail, keep static data */ }

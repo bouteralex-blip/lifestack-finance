@@ -381,37 +381,16 @@ const[open,setOpen]=useState({A:true,B:true});
 const Act=TABS.find(t=>t.id===tab)?.C||C1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 
-// Sync live market data from EngineContext into M
-const { MKTENG: ctxMKTENG } = useEngines();
+// Sync live market prices from EngineContext (published by MarketsModule on mount/refresh)
+const { PRICES: ctxPrices } = useEngines();
 const [, forceUpdate] = useState(0);
 useEffect(()=>{
-  if(!ctxMKTENG) return;
+  if(!ctxPrices) return;
+  const keys = ['gbpusd','gbpzar','dxy','gilt10y','gilt2y','boeRate','ukCPI','ukCore','ukGDP','ukUnemp','btcPrice','ethPrice','vix','fearGreed','brent','gold'];
   let updated = false;
-  const map = {
-    gbpusd:'gbpusd', gbpzar:'gbpzar', dxy:'dxy',
-    gilt10y:'gilt10y', gilt2y:'gilt2y', boeRate:'boeRate',
-    ukCPI:'ukCPI', ukCore:'ukCore', ukGDP:'ukGDP', ukUnemp:'ukUnemp',
-    btcPrice:'btcPrice', ethPrice:'ethPrice', vix:'vix', fearGreed:'fearGreed',
-    brent:'brent', gold:'gold',
-  };
-  // Pull from ctxMKTENG.macro/fx/crypto if available, else from raw keys
-  const src = ctxMKTENG;
-  const trySet = (mKey, val) => { if(val != null && val !== M[mKey]) { M[mKey] = val; updated = true; } };
-  trySet('gbpusd', src.gbpusd);
-  trySet('gbpzar', src.gbpzar);
-  trySet('dxy', src.dxy);
-  trySet('gilt10y', src.gilt10y);
-  trySet('gilt2y', src.gilt2y);
-  trySet('boeRate', src.boeRate);
-  trySet('ukCPI', src.ukCPI);
-  trySet('vix', src.vix);
-  trySet('fearGreed', src.fearGreed);
-  trySet('btcPrice', src.btcPrice);
-  trySet('ethPrice', src.ethPrice);
-  trySet('brent', src.brent);
-  trySet('gold', src.gold);
+  keys.forEach(k => { if(ctxPrices[k] != null && ctxPrices[k] !== M[k]) { M[k] = ctxPrices[k]; updated = true; } });
   if(updated) forceUpdate(n => n+1);
-},[ctxMKTENG]);
+},[ctxPrices]);
 
 return(
 <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
