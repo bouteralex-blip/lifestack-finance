@@ -3,6 +3,8 @@ import dynamic from "next/dynamic";
 
 const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
+const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false });
+const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false });
 
 const T = {
   bg: "#05161A",
@@ -13,11 +15,15 @@ const T = {
   t3: "#7a9da6",
   amber: "#f59e0b",
   teal: "#0F969C",
+  indigo: "#6DA5C0",
+  purple: "#a855f7",
 };
 
 const modules = [
-  { id: "finance",  label: "WEALTH ENGINE",    accent: T.amber, icon: "£" },
-  { id: "markets",  label: "MARKET & RESEARCH", accent: T.teal,  icon: "≡" },
+  { id: "finance",  label: "WEALTH ENGINE",           accent: T.amber,  icon: "£" },
+  { id: "markets",  label: "MARKET & RESEARCH",       accent: T.teal,   icon: "≡" },
+  { id: "career",   label: "CAREER & INFRA",          accent: T.indigo, icon: "◆" },
+  { id: "systems",  label: "SYSTEMS & INFO",          accent: T.purple, icon: "⚙" },
 ];
 
 export default function AppShell() {
@@ -97,6 +103,8 @@ export default function AppShell() {
       {/* Module content */}
       {activeModule === "finance"  && <PortfolioVOS />}
       {activeModule === "markets"  && <MarketsModule />}
+      {activeModule === "career"   && <CareerModule />}
+      {activeModule === "systems"  && <SystemsModule />}
     </div>
   );
 }

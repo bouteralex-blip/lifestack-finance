@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter, PieChart, Pie, Legend } from "recharts";
-import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, Landmark, CircleDot, FileText, Briefcase, Factory, Flame, Map, Users, Gem, ChevronRight, ChevronDown } from "lucide-react";
+import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, CircleDot, FileText, Gem, ChevronRight, ChevronDown } from "lucide-react";
 import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState, computeBTCDominanceState } from '../lib/engines/market/index.js';
 import {
   computeCentralBankState,
@@ -27,7 +27,7 @@ import {
 // =========================================================================
 // LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
 // Horizon Glass · Liquid Refraction · Luxury Teal-Navy System
-// 24 Tabs | 17 Upgrades Integrated | Teal-Navy Accent
+// 16 Tabs | 17 Upgrades Integrated | Teal-Navy Accent
 // Data: 7 March 2026 | Sources: FRED, GMD, MacroMicro, CoinGecko,
 // LookIntoBitcoin, WB PPI, StockGeist, Dune, CarbonCredits, CFTC
 // Phase 2 MCP: FRED, Yahoo Finance, FMP, Octagon AI, Financial Datasets
@@ -1288,122 +1288,6 @@ return (<div>
 };
 
 // =========================================================================
-// CAREER TABS C1-C8 (Enhanced with Upgrade #2: World Bank PPI)
-// =========================================================================
-const CareerTab=({name,tag,hero,items,sources,verdict,imp,mon})=>(<div>
-<Hd t={name} tag={tag}/>
-{hero&&<Row style={{marginBottom:0}}>{hero.map((h,i)=><MatStat key={i} {...h}/>)}</Row>}
-<Glass>
-<PH title="INTELLIGENCE DASHBOARD"/>
-<MetricGrid items={items}/>
-{sources&&<SourceTag sources={sources}/>}
-</Glass>
-<Verdict label={verdict} imp={imp} mon={mon}/></div>);
-
-const C1=()=><CareerTab name="GP ACTIVITY, STRATEGY & SPONSOR TRACKER" tag="SPONSOR MAP"
-hero={[
-  {label:"Deal Flow",value:"Elevated",sub:"Data centres dominating pipeline",mat:"teal"},
-  {label:"Dry Powder",value:"$1.2T+",sub:"KKR Fund V · Brookfield successor",mat:"indigo"},
-  {label:"Top Sector",value:"Data Centres",sub:"$40B Aligned/GIP benchmark deal",mat:"amber"},
-  {label:"Signal",value:"BULLISH",sub:"Defence adjacencies opening",mat:"dark"},
-]}
-items={[
-{l:"Blackstone",v:"Data Centres",n:"$40B+ AUM. Publicly traded vehicle planned.",c:T.violet},{l:"KKR",v:"Energy Transition",n:"Global Infra Fund V. Active in Europe.",c:T.blue},{l:"EQT",v:"Digital + Transport",n:"Nordic HQ. Strong European pipeline.",c:T.cyan},{l:"Macquarie",v:"Exiting positions",n:"$40B Aligned Data Centers sale to GIP consortium.",c:T.amber},{l:"Brookfield",v:"Renewables + Grid",n:"Largest infra AUM globally.",c:T.teal},{l:"AXA IM Alts",v:"Core / Core+",n:"Long-hold institutional infra.",c:T.neutral},{l:"Antin",v:"Mid-market Europe",n:"Digital, energy, transport, social.",c:T.blue},{l:"Igneo (First Sentier)",v:"Selective acquirer",n:"M&A reopening narrative.",c:T.violet}
-]} sources={["Infrastructure Investor","GP Annual Reports","PitchBook (free news)","PE Hub"]}
-verdict="SPONSOR APPETITE: ELEVATED FOR DATA CENTRES & ENERGY TRANSITION" imp={["Data centres dominating deal flow. $40B Aligned/GIP deal sets pricing benchmark.","Defence spending creating adjacencies for UK infra advisory at DC.","Fresh dry powder (KKR Fund V, Brookfield successor) = more credible buyers in processes."]} mon={["Infrastructure Investor weekly deal flow","GP fund close announcements","DC Advisory internal pipeline","Hyperscaler capex driving sponsor confidence"]}/>;
-
-const C2=()=><CareerTab name="ENERGY & INFRASTRUCTURE DEAL INTELLIGENCE" tag="DEAL FLOW"
-hero={[
-  {label:"Deal Volume",value:"Growing",sub:"Energy transition + digital dominating",mat:"teal"},
-  {label:"Top Subsector",value:"Data Centres",sub:"EV/EBITDA 20-25x · $40B deal",mat:"indigo"},
-  {label:"WB PPI",value:"235 Projects",sub:"FREE global infra deal data",mat:"amber"},
-  {label:"Financing",value:"Tightening",sub:"Gilt shock raising UK deal costs",mat:"red"},
-]}
-items={[
-{l:"Deal Volume",v:"Growing",n:"Energy transition + digital dominating",c:T.teal},{l:"Top Subsector",v:"Data Centres",n:"Multi-billion equity checks. $40B Aligned deal.",c:T.violet},{l:"Valuations",v:"Rich for digital",n:"Data centre EV/EBITDA 20-25x",c:T.coral},{l:"Financing",v:"Tightening",n:"Gilt shock raising UK deal costs",c:T.amber},
-{l:"WB PPI Database",v:"235 projects (2025)",n:"FREE infra deal data globally",c:T.teal},{l:"Africa Deals",v:"47 SSA projects",n:"$12.8B. Energy dominant.",c:T.blue},{l:"Failed Auctions",v:"Rising",n:"Pricing discipline tightening",c:T.amber},{l:"Pipeline",v:"Strong",n:"Energy security + grid driving mandates",c:T.teal}
-]} sources={["World Bank PPI (free)","Infrastructure Investor","IJGlobal (free summaries)","EIB Project Database","Press releases"]}
-verdict="DEAL VELOCITY HIGH — DATA CENTRES + ENERGY TRANSITION DOMINATING" imp={["World Bank PPI database provides FREE project-level deal data. Reduces IJGlobal dependency.","Data centre valuations (20-25x) are stretched. Watch for repricing if AI capex disappoints.","Gilt shock raising UK infra financing costs. Expect more selective sponsor behaviour."]} mon={["World Bank PPI quarterly updates","Deal announcement tracking","Valuation multiple trends","Financing condition trajectory"]}/>;
-
-const C3=()=><CareerTab name="FINANCING & CAPITAL MARKETS FOR INFRA" tag="DEBT MARKETS"
-hero={[
-  {label:"Gilt 10Y",value:"4.62%",sub:"40bp weekly surge · mini-budget level",mat:"red"},
-  {label:"Infra Spreads",value:"Widening",sub:"Gilt shock transmitting to PF",mat:"amber"},
-  {label:"DFI Appetite",value:"Strong",sub:"IFC · AfDB · EBRD co-lending",mat:"teal"},
-  {label:"Verdict",value:"SELECTIVE",sub:"Financing backdrop tightening",mat:"dark"},
-]}
-items={[
-{l:"Infra Debt Spreads",v:"Widening",n:"Gilt shock transmitting to project finance",c:T.coral},{l:"Leverage Tolerance",v:"Tightening",n:"Lenders more selective post-rate spike",c:T.amber},{l:"Project Finance",v:"Selective",n:"Bank appetite focused on contracted assets",c:T.amber},{l:"Recap Window",v:"Narrowing",n:"Higher rates reduce recap economics",c:T.coral},
-{l:"EIB Pipeline",v:"Active",n:"Free project-level data",c:T.teal},{l:"DFI Appetite",v:"Strong",n:"IFC, AfDB, EBRD co-lending robust",c:T.teal},{l:"Hedge Cost",v:"Rising",n:"Swap rates following gilt surge",c:T.coral},{l:"Verdict",v:"SELECTIVE",n:"Financing backdrop tightening",c:T.amber}
-]} sources={["FRED base rates","BoE SONIA swaps","EIB Project Database (free)","DFI annual reports","Published deal terms"]}
-verdict="FINANCING TIGHTENING — SPONSORS MUST BE MORE SELECTIVE" imp={["Gilt 4.62% directly impacts UK infra deal IRRs. Leveraged returns compress.","EIB and DFI databases are free and comprehensive for pipeline tracking.","If financing loosens (rate cuts resume), expect rapid acceleration in deal velocity."]} mon={["Gilt trajectory","Bank lending surveys","Published deal financing terms","EIB/EBRD pipeline updates"]}/>;
-
-const C4=()=><CareerTab name="LISTED INFRA & PUBLIC-PRIVATE BRIDGE" tag="SIGNAL BRIDGE"
-hero={[
-  {label:"AI Power Capex",value:"$660-690B",sub:"Hyperscaler spend 2026 · grid bottleneck",mat:"teal"},
-  {label:"EU Grid Need",value:"€1.4T",sub:"ENTSO-E · structural multi-year cycle",mat:"indigo"},
-  {label:"DC REITs",value:"Strong",sub:"DLR · EQIX structural winners",mat:"amber"},
-  {label:"Nuclear / SMR",value:"Rising",sub:"Uranium $78.50 · AI power narrative",mat:"dark"},
-]}
-items={[
-{l:"AI Power Demand",v:"$660-690B capex",n:"Hyperscaler spending in 2026",c:T.violet},{l:"Grid Investment",v:"Accelerating",n:"\u20AC1.4T needed for EU grid upgrades",c:T.teal},{l:"Data Centre REITs",v:"Strong",n:"DLR, EQIX structural winners",c:T.teal},{l:"Utility Capex",v:"Rising",n:"NEE, SO, DUK expanding generation",c:T.blue},
-{l:"Renewables LCOE",v:"Declining",n:"IRENA + Lazard data (free)",c:T.teal},{l:"Transport Infra",v:"Recovering",n:"Airport volumes normalising",c:T.neutral},{l:"Pub-Priv Gap",v:"Narrowing",n:"Listed re-rating toward private comps",c:T.amber},{l:"Nuclear / SMR",v:"Narrative rising",n:"Uranium $78.50 (CarbonCredits.com)",c:T.cyan}
-]} sources={["SEC EDGAR (hyperscaler 10-Q)","IRENA (LCOE, free)","Lazard LCOE (free)","ENTSO-E (grid data, free)","IEA Electricity Report","CarbonCredits.com (uranium)"]}
-verdict="AI POWER DEMAND = RICHEST CROSSOVER BETWEEN JOB AND INVESTING" imp={["Hyperscaler capex confirms multi-year power demand cycle. Grid + utilities = structural winners.","IRENA, Lazard, ENTSO-E all provide free data for renewables and grid economics.","Nuclear/SMR narrative strengthening. Uranium at $78.50 via CarbonCredits.com (free, replacing UxC paid)."]} mon={["Hyperscaler Q1 capex guidance","ENTSO-E grid data","IRENA annual cost report","Listed infra vs broad index performance"]}/>;
-
-const C5=()=><CareerTab name="PE, PRIVATE CREDIT & SECONDARIES" tag="ALTERNATIVES"
-hero={[
-  {label:"Secondaries Vol",value:"$103B",sub:"H1 2025 record · Jefferies (free)",mat:"teal"},
-  {label:"LP Pricing",value:"90% NAV",sub:"Discount narrowing · confidence rising",mat:"indigo"},
-  {label:"PE Temperature",value:"Warming",sub:"Exits reopening · IPO pipeline building",mat:"amber"},
-  {label:"Priv Credit",value:"Stress rising",sub:"Proskauer default index · free quarterly",mat:"red"},
-]}
-items={[
-{l:"PE Temperature",v:"Warming",n:"Exits reopening. IPO pipeline building.",c:T.teal},{l:"Secondaries Volume",v:"Record $103B",n:"H1 2025 Jefferies report (free)",c:T.teal},{l:"LP Pricing",v:"90% NAV",n:"Discount narrowing",c:T.amber},{l:"Private Credit",v:"Stress rising",n:"Proskauer default index (free quarterly)",c:T.coral},
-{l:"Infra Secondaries",v:"Active",n:"GP-led continuation vehicles growing",c:T.blue},{l:"VC Late-Stage",v:"Selective",n:"AI funding robust. Other sectors challenged.",c:T.amber},{l:"Real Estate",v:"Bifurcated",n:"Data centres premium. Office distressed.",c:T.amber},{l:"Alt Policy",v:"Max 5% NAV",n:"Liquidity limits enforced",c:T.accent}
-]} sources={["Jefferies Secondary Market Review (free)","Bain Global PE Report (free)","McKinsey Private Markets Review (free)","Proskauer Default Index (free)","Campbell Lutyens (free)"]}
-verdict="SECONDARIES AT RECORD — STRESS INDICATOR AND OPPORTUNITY" imp={["All key PE/secondaries data available FREE: Jefferies, Bain, McKinsey, Proskauer, Campbell Lutyens.","Secondaries pricing at 90% NAV signals improving confidence but not euphoria.","Private credit stress rising — Proskauer free quarterly is the key monitor."]} mon={["Jefferies H2 2025 report","Bain Global PE Report 2026","Proskauer quarterly index","IPO pipeline development"]}/>;
-
-const C6=()=><CareerTab name="AFRICA MACRO, COUNTRY RISK & OPPORTUNITY" tag="AFRICA"
-hero={[
-  {label:"Africa GDP",value:"3.9%",sub:"AfDB 2025 · Energy reform progress",mat:"teal"},
-  {label:"GBP/ZAR",value:M.gbpzar.toFixed(2),sub:"Rand +7% YoY · Don't add until 23",mat:"amber"},
-  {label:"Financing Gap",value:"$245B/yr",sub:"Sub-Saharan infra need",mat:"red"},
-  {label:"DC Opportunity",value:"<1% Global",sub:"Africa data centre gap · AI theme",mat:"indigo"},
-]}
-items={[
-{l:"Africa GDP Growth",v:"3.9%",n:"AfDB 2025 estimate. Modest downgrade.",c:T.amber},{l:"Financing Gap",v:"$245B/yr",n:"Sub-Saharan Africa infrastructure need",c:T.coral},{l:"GBP/ZAR",v:M.gbpzar.toFixed(2),n:"Rand strengthening. -7% YoY.",c:T.amber},{l:"SA Load Shedding",v:"Improving",n:"Energy reform progress",c:T.teal},
-{l:"Nigeria FX",v:"Liberalising",n:"Reform progress but volatile",c:T.amber},{l:"Kenya PPP",v:"Framework developing",n:"Digital infra opportunities",c:T.blue},{l:"ODA Decline",v:"-9-17%",n:"Aid cuts forcing private capital",c:T.coral},{l:"Data Centre Gap",v:"<1% global",n:"Africa has <1% of world DC capacity",c:T.violet}
-]} sources={["AfDB Economic Outlook (free)","IMF Data Portal (free)","World Bank Africa (free)","AfDB Open Data (free)","GMD v2026 (free)","World Bank PPI (free)"]}
-verdict="SA IMPROVING BUT FINANCING GAP DEMANDS PRIVATE CAPITAL" imp={["All Africa macro data available FREE: AfDB, IMF, World Bank, GMD. Zero paid sources needed.","GBP/ZAR at 21.87: existing ZAR assets worth more. Don't add until above 23.","Africa data centre gap (<1% global) is the biggest digital infra opportunity — aligns with AI power theme."]} mon={["AfDB Annual Report","SA load-shedding status","Nigeria FX reform","GBP/ZAR trajectory"]}/>;
-
-const C7=()=><CareerTab name="AFRICA INVESTOR & DEAL TRACKER" tag="AFRICA BUYERS"
-hero={[
-  {label:"WB PPI Africa",value:"47 Deals",sub:"$12.8B SSA · energy dominant · FREE",mat:"teal"},
-  {label:"DFI Appetite",value:"Strong",sub:"IFC · AfDB · EBRD co-lending active",mat:"indigo"},
-  {label:"Priority Market",value:"SA + Kenya",sub:"Strongest reform + growth combo",mat:"amber"},
-  {label:"DC Opportunity",value:"<1% Global",sub:"Africa data centre gap · AI theme",mat:"dark"},
-]}
-items={[
-{l:"Helios Investment",v:"PE/Climate/Digital",n:"Pan-African. West Africa focus.",c:T.violet},{l:"AIIM",v:"Long-term Infra",n:"Institutional. Southern Africa.",c:T.blue},{l:"Africa Finance Corp",v:"Principal Investing",n:"Infrastructure mobilisation. Free reports.",c:T.teal},{l:"Actis",v:"Sustainable Infra",n:"Energy transition focus.",c:T.cyan},
-{l:"Adenia",v:"Control-Growth",n:"Francophone Africa. Mid-market.",c:T.amber},{l:"WB PPI (Africa)",v:"47 SSA deals",n:"$12.8B value. Energy dominant.",c:T.teal},{l:"DFI Co-Lending",v:"Strong",n:"IFC, AfDB, EBRD active in Africa",c:T.teal},{l:"Priority",v:"SA + Kenya",n:"Strongest reform + growth combo",c:T.accent}
-]} sources={["GP Websites (free)","Infrastructure Investor (free)","AFC Annual Report (free)","World Bank PPI (free)","DFI Reports (free)"]}
-verdict="AFRICA INVESTOR MAP: ALL DATA AVAILABLE FREE" imp={["GP websites and annual reports provide free strategy and portfolio information.","World Bank PPI gives project-level African deal data at zero cost.","AFC publications provide free pipeline data and risk-mitigation frameworks."]} mon={["Helios, AIIM, AFC, Actis website updates","Infrastructure Investor Africa coverage","AFC annual report","DFI co-lending announcements"]}/>;
-
-const C8=()=><CareerTab name="ENERGY TRANSITION, POWER & DIGITAL INFRA" tag="THEMATIC CAPSTONE"
-hero={[
-  {label:"AI Power Capex",value:"$660-690B",sub:"Hyperscaler spend 2026 · Grid bottleneck",mat:"teal"},
-  {label:"Grid Need",value:"€1.4T",sub:"EU upgrades · ENTSO-E",mat:"indigo"},
-  {label:"BNEF Transition",value:"$2.3T",sub:"Record 2025 global energy investment",mat:"amber"},
-  {label:"Uranium",value:"$78.50",sub:"+18% · AI nuclear revival · CarbonCredits",mat:"dark"},
-]}
-items={[
-{l:"Grid Investment",v:"Accelerating",n:"\u20AC1.4T EU upgrades needed (ENTSO-E)",c:T.teal},{l:"AI Power Demand",v:"$660-690B",n:"Hyperscaler capex in 2026",c:T.violet},{l:"Battery/Storage",v:"Costs declining",n:"IRENA data (free)",c:T.teal},{l:"Gas-to-Power",v:"Necessary",n:"Transition needs dispatchable support",c:T.amber},
-{l:"Digital Build-Out",v:"Fibre + DC",n:"TeleGeography free data",c:T.blue},{l:"Circular Economy",v:"Less crowded",n:"Waste/water still infra-like",c:T.neutral},{l:"Resilience Infra",v:"Emerging",n:"Energy security becoming investable",c:T.cyan},{l:"BNEF Transition",v:"$2.3T (2025)",n:"Record global energy transition investment",c:T.teal}
-]} sources={["IEA World Energy Investment (free)","IRENA (free)","ENTSO-E (free)","SEC EDGAR (hyperscaler 10-Q)","Lazard LCOE (free)","CarbonCredits.com (uranium, free)","BP/Energy Institute (free)"]}
-verdict="AI POWER + GRID = HIGHEST-CONVICTION STRUCTURAL THEME" imp={["All energy transition data sources are FREE: IEA, IRENA, ENTSO-E, Lazard, CarbonCredits.","Grid bottlenecks are the binding constraint on AI scaling — creates multi-year capex cycle.","Nuclear/SMR revival (uranium $78.50) is the underappreciated sub-theme within AI power."]} mon={["Hyperscaler Q1 capex","IEA quarterly report","Grid investment announcements","Battery cost trajectory"]}/>;
-
-// =========================================================================
 // PHASE 3: MARKET INTELLIGENCE — ENGINE-COMPUTED STATE
 // All engines run at module load on static M data; will run on live data in Phase 4
 // =========================================================================
@@ -1448,13 +1332,9 @@ const TABS=[
 {id:"P9",n:"Crypto Intelligence",ic:CircleDot,s:"A",C:P9},{id:"P10",n:"Flows & Positioning",ic:Activity,s:"A",C:P10},
 {id:"P11",n:"Valuation & Factors",ic:Target,s:"A",C:P11},{id:"P12",n:"Volatility & Stress",ic:AlertTriangle,s:"A",C:P12},
 {id:"P13",n:"Alpha Frontier",ic:Zap,s:"A",C:P13},{id:"P14",n:"Scenario Lab",ic:Box,s:"A",C:P14},
-{id:"P15",n:"Cash & Defence",ic:Shield,s:"A",C:P15},{id:"P16",n:"Weekly Synthesis",ic:FileText,s:"A",C:P16},
-{id:"C1",n:"GP & Sponsors",ic:Briefcase,s:"B",C:C1},{id:"C2",n:"Infra Deal Intel",ic:Factory,s:"B",C:C2},
-{id:"C3",n:"Infra Financing",ic:Landmark,s:"B",C:C3},{id:"C4",n:"Listed Infra Bridge",ic:TrendingUp,s:"B",C:C4},
-{id:"C5",n:"PE & Secondaries",ic:Layers,s:"B",C:C5},{id:"C6",n:"Africa Macro",ic:Map,s:"B",C:C6},
-{id:"C7",n:"Africa Investors",ic:Users,s:"B",C:C7},{id:"C8",n:"Energy Transition",ic:Flame,s:"B",C:C8}];
+{id:"P15",n:"Cash & Defence",ic:Shield,s:"A",C:P15},{id:"P16",n:"Weekly Synthesis",ic:FileText,s:"A",C:P16}];
 
-const SECS={A:"PERSONAL MARKETS & PORTFOLIO",B:"CAREER & INFRA INTELLIGENCE"};
+const SECS={A:"PERSONAL MARKETS & PORTFOLIO"};
 
 export default function LifeStackMarkets(){
 const[tab,setTab]=useState("P1");
@@ -1494,7 +1374,7 @@ return(
         <div style={{fontSize:9,color:P.cyan,fontWeight:800,letterSpacing:2.5,textTransform:'uppercase',marginBottom:2}}>LIFESTACK OS</div>
         <div style={{fontSize:15,fontWeight:800,color:P.t1,letterSpacing:-0.3}}>Market & Research</div>
         <div style={{fontSize:10,fontWeight:600,color:P.cyan,letterSpacing:0.5,marginTop:1}}>v3.0 · Horizon Glass</div>
-        <div style={{fontSize:8.5,color:P.t3,marginTop:3}}>{M.date} · 24 tabs · 17 upgrades</div>
+        <div style={{fontSize:8.5,color:P.t3,marginTop:3}}>{M.date} · 16 tabs · 17 upgrades</div>
       </div>
       {/* Nav sections */}
       {Object.entries(SECS).map(([k,l])=>(
