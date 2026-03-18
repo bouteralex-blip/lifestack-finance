@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence } from '../lib/useData';
+import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence, buildEngineTruthLayer } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
 import { computeRiskBudgetState } from '../lib/engines/risk-budget.js';
@@ -4771,6 +4771,272 @@ const T17 = () => {
   </div>);
 };
 
+// =========================================================================
+// TAB 18 — AGENT COMMAND CENTER
+// =========================================================================
+const T18 = ({ ENGINE, MKTENG, AGENT }) => {
+  const [view, setView] = useState('overview');
+  const [selectedAgent, setSelectedAgent] = useState(null);
+
+  const engineAgents = [
+    { id: 'concentration', name: 'Concentration Engine', category: 'Portfolio', source: ENGINE, key: 'concentration', trigger: 'Daily', desc: 'HHI, position limits, clutter detection' },
+    { id: 'debtPriority', name: 'Debt Priority', category: 'Portfolio', source: ENGINE, key: 'debtPriority', trigger: 'Daily', desc: 'Debt ranking, guaranteed alpha calculation' },
+    { id: 'sleeveExposure', name: 'Sleeve Exposure', category: 'Portfolio', source: ENGINE, key: 'sleeveExposure', trigger: 'Daily', desc: 'Asset class breakdown' },
+    { id: 'wrapperExposure', name: 'Wrapper Exposure', category: 'Portfolio', source: ENGINE, key: 'wrapperExposure', trigger: 'Daily', desc: 'ISA/GIA/SIPP tax efficiency' },
+    { id: 'currencyExposure', name: 'Currency Exposure', category: 'Portfolio', source: ENGINE, key: 'currencyExposure', trigger: 'Daily', desc: 'FX concentration monitoring' },
+    { id: 'driftMonitor', name: 'Drift Monitor', category: 'Portfolio', source: ENGINE, key: 'driftMonitor', trigger: 'Daily', desc: 'Rebalance urgency scoring' },
+    { id: 'isaPensionRouting', name: 'ISA / Pension Routing', category: 'Portfolio', source: ENGINE, key: 'isaPensionRouting', trigger: 'Weekly', desc: 'Tax-optimal wrapper placement' },
+    { id: 'rebalanceProposal', name: 'Rebalance Proposal', category: 'Portfolio', source: ENGINE, key: 'rebalanceProposal', trigger: 'Weekly', desc: 'Trade generation' },
+    { id: 'riskBudget', name: 'Risk Budget', category: 'Portfolio', source: ENGINE, key: 'riskBudget', trigger: 'Daily', desc: 'Risk allocation tracking' },
+    { id: 'drawdown', name: 'Drawdown Monitor', category: 'Portfolio', source: ENGINE, key: 'drawdown', trigger: 'Daily', desc: 'Peak-to-trough analysis' },
+    { id: 'monteCarlo', name: 'Monte Carlo', category: 'Portfolio', source: ENGINE, key: 'monteCarlo', trigger: 'Weekly', desc: 'Probabilistic wealth projection' },
+    { id: 'liquidityLadder', name: 'Liquidity Ladder', category: 'Portfolio', source: ENGINE, key: 'liquidityLadder', trigger: 'Daily', desc: 'Maturity analysis' },
+    { id: 'bonusAllocation', name: 'Bonus Allocation', category: 'Portfolio', source: ENGINE, key: 'bonusAllocation', trigger: 'Event', desc: 'Bonus deployment logic' },
+    { id: 'capitalEfficiency', name: 'Capital Efficiency', category: 'Portfolio', source: ENGINE, key: 'capitalEfficiency', trigger: 'Weekly', desc: 'Return on capital metrics' },
+    { id: 'cryptoRebalance', name: 'Crypto Rebalance', category: 'Crypto', source: ENGINE, key: 'cryptoRebalance', trigger: 'Weekly', desc: 'Crypto-specific rebalancing' },
+    { id: 'cryptoScenario', name: 'Crypto Scenario Lab', category: 'Crypto', source: ENGINE, key: 'cryptoScenario', trigger: 'Weekly', desc: 'BTC/ETH/SOL stress testing' },
+    { id: 'scenarioSensitivity', name: 'Scenario Sensitivity', category: 'Portfolio', source: ENGINE, key: 'scenarioSensitivity', trigger: 'Weekly', desc: 'Stress testing' },
+    { id: 'contributionAttribution', name: 'Contribution Attribution', category: 'Portfolio', source: ENGINE, key: 'contributionAttribution', trigger: 'Daily', desc: 'Performance attribution' },
+  ];
+
+  const marketAgents = [
+    { id: 'regime', name: 'Macro Regime Classifier', category: 'Market', source: MKTENG, key: 'regime', trigger: 'Daily', desc: 'Risk-on/off classification' },
+    { id: 'stress', name: 'Cross-Asset Stress', category: 'Market', source: MKTENG, key: 'stress', trigger: 'Daily', desc: 'VIX, MOVE, spreads, dollar' },
+    { id: 'btcCycle', name: 'BTC Cycle', category: 'Crypto', source: MKTENG, key: 'btcCycle', trigger: 'Daily', desc: 'MVRV, NUPL, SOPR cycle scoring' },
+    { id: 'yieldCurve', name: 'Yield Curve', category: 'Market', source: MKTENG, key: 'yieldCurve', trigger: 'Daily', desc: '2s10s, curve shape' },
+    { id: 'creditStress', name: 'Credit Stress', category: 'Market', source: MKTENG, key: 'creditStress', trigger: 'Daily', desc: 'IG/HY OAS monitoring' },
+    { id: 'sectorLeadership', name: 'Sector Leadership', category: 'Market', source: MKTENG, key: 'sectorLeadership', trigger: 'Daily', desc: 'Sector rotation tracking' },
+    { id: 'cryptoOnChain', name: 'Crypto On-Chain', category: 'Crypto', source: MKTENG, key: 'cryptoOnChain', trigger: 'Daily', desc: 'On-chain metrics' },
+  ];
+
+  const decisionAgents = [
+    { id: 'morningCommand', name: 'Morning Command', category: 'Decision', source: AGENT, key: 'morningCommand', trigger: 'Daily', desc: 'Daily priority briefing' },
+    { id: 'dailyBrief', name: 'Daily Brief', category: 'Research', source: AGENT, key: 'dailyBrief', trigger: 'Daily', desc: '1-page daily market brief' },
+    { id: 'synthesis', name: 'Weekly Synthesis', category: 'Research', source: AGENT, key: 'synthesis', trigger: 'Weekly', desc: 'CIO-style weekly memo' },
+    { id: 'actionQueue', name: 'Action Queue', category: 'Decision', source: AGENT, key: 'actionQueue', trigger: 'Daily', desc: 'Ranked action recommendations' },
+    { id: 'rankedOpps', name: 'Opportunity Ranker', category: 'Decision', source: AGENT, key: 'rankedOpps', trigger: 'Daily', desc: 'Conviction-scored opportunities' },
+    { id: 'triggerAlerts', name: 'Trigger Alerts', category: 'Decision', source: AGENT, key: 'triggerAlerts', trigger: 'Event', desc: 'Threshold-based notifications' },
+    { id: 'whatChanged', name: 'What Changed', category: 'Dashboard', source: AGENT, key: 'whatChanged', trigger: 'Daily', desc: 'Delta detection engine' },
+    { id: 'whatMattersNow', name: 'What Matters Now', category: 'Dashboard', source: AGENT, key: 'whatMattersNow', trigger: 'Daily', desc: 'Priority ranking engine' },
+    { id: 'insightCallouts', name: 'Insight Callouts', category: 'Dashboard', source: AGENT, key: 'insightCallouts', trigger: 'Daily', desc: 'Plain-English insight writer' },
+    { id: 'tilePriority', name: 'Tile Priority', category: 'Dashboard', source: AGENT, key: 'tilePriority', trigger: 'Daily', desc: 'Dashboard tile reordering' },
+    { id: 'thesisMonitor', name: 'Thesis Monitor', category: 'Decision', source: AGENT, key: 'thesisMonitor', trigger: 'Weekly', desc: 'Investment thesis tracking' },
+    { id: 'opportunityRadar', name: 'Opportunity Radar', category: 'Decision', source: AGENT, key: 'opportunityRadar', trigger: 'Weekly', desc: 'Opportunity detection' },
+    { id: 'watchlist', name: 'Watchlist', category: 'Decision', source: AGENT, key: 'watchlist', trigger: 'Daily', desc: 'Dynamic asset watchlist' },
+    { id: 'deadlines', name: 'Deadline Agent', category: 'Execution', source: AGENT, key: 'deadlines', trigger: 'Daily', desc: 'ISA, tax, review deadlines' },
+    { id: 'rebalanceApproval', name: 'Rebalance Pack', category: 'Execution', source: AGENT, key: 'rebalanceApproval', trigger: 'Weekly', desc: 'Drift + cost + tax approval memo' },
+    { id: 'monthlyReview', name: 'Monthly Review', category: 'Research', source: AGENT, key: 'monthlyReview', trigger: 'Monthly', desc: 'Full scorecard review' },
+    { id: 'freshnessAudit', name: 'Freshness Audit', category: 'Dashboard', source: AGENT, key: 'freshnessAudit', trigger: 'Daily', desc: 'Data staleness checker' },
+    { id: 'altcoinRiskCap', name: 'Altcoin Risk Cap', category: 'Crypto', source: AGENT, key: 'altcoinRiskCap', trigger: 'Daily', desc: 'Hard sleeve cap enforcement' },
+    { id: 'performanceBridge', name: 'Performance Bridge', category: 'Research', source: AGENT, key: 'performanceBridge', trigger: 'Weekly', desc: 'NAV attribution memo' },
+    { id: 'reportExport', name: 'Report Exporter', category: 'Dashboard', source: AGENT, key: 'reportExport', trigger: 'Weekly', desc: 'Markdown report generator' },
+  ];
+
+  const allAgents = [...engineAgents, ...marketAgents, ...decisionAgents];
+  const categories = ['Portfolio', 'Market', 'Crypto', 'Decision', 'Research', 'Execution', 'Dashboard'];
+  const triggers = ['Daily', 'Weekly', 'Monthly', 'Event'];
+
+  const getStatus = (agent) => {
+    const data = agent.source?.[agent.key];
+    if (!data) return { label: 'Idle', color: 'rgba(232,244,245,0.25)' };
+    if (data.error) return { label: 'Error', color: P.red };
+    return { label: 'Active', color: '#22c55e' };
+  };
+
+  const getOutputPreview = (agent) => {
+    const data = agent.source?.[agent.key];
+    if (!data) return 'No output yet';
+    if (data.error) return `Error: ${data.error}`;
+    const keys = Object.keys(data);
+    if (keys.length <= 5) return keys.join(', ');
+    return `${keys.slice(0, 4).join(', ')} + ${keys.length - 4} more`;
+  };
+
+  const activeCount = allAgents.filter(a => getStatus(a).label === 'Active').length;
+  const errorCount = allAgents.filter(a => getStatus(a).label === 'Error').length;
+
+  const cronSchedules = [
+    { name: 'Daily Orchestration', schedule: '0 7 * * *', desc: 'Runs all engines + agents at 7 AM UTC', endpoint: '/api/cron/daily' },
+    { name: 'Weekly Synthesis', schedule: '0 8 * * 1', desc: 'Weekly memo + review on Monday 8 AM UTC', endpoint: '/api/cron/weekly' },
+  ];
+
+  const views = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'engines', label: 'Portfolio Engines' },
+    { id: 'market', label: 'Market Engines' },
+    { id: 'agents', label: 'Decision Agents' },
+    { id: 'workflows', label: 'Automated Workflows' },
+    { id: 'output', label: 'Agent Output Inspector' },
+  ];
+
+  const filteredAgents = view === 'engines' ? engineAgents : view === 'market' ? marketAgents : view === 'agents' ? decisionAgents : allAgents;
+
+  const AgentCard = ({ agent }) => {
+    const status = getStatus(agent);
+    const isSelected = selectedAgent?.id === agent.id;
+    return (
+      <div onClick={() => setSelectedAgent(isSelected ? null : agent)} style={{ ...GS, borderRadius: 12, padding: '12px 16px', cursor: 'pointer', border: isSelected ? '1px solid rgba(15,150,156,0.5)' : '1px solid rgba(255,255,255,0.06)', transition: 'all 0.2s' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: P.t1 }}>{agent.name}</span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(15,150,156,0.15)', color: P.teal }}>{agent.trigger}</span>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: status.color, display: 'inline-block' }}/>
+          </div>
+        </div>
+        <div style={{ fontSize: 10, color: P.t3, marginBottom: 4 }}>{agent.desc}</div>
+        <div style={{ fontSize: 9, color: 'rgba(232,244,245,0.3)' }}>Output: {getOutputPreview(agent)}</div>
+        {isSelected && agent.source?.[agent.key] && !agent.source[agent.key].error && (
+          <div style={{ marginTop: 10, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 8, maxHeight: 200, overflow: 'auto' }}>
+            <div style={{ fontSize: 10, color: P.teal, marginBottom: 6, fontWeight: 600 }}>Live Output Inspector</div>
+            <pre style={{ fontSize: 9, color: P.t3, whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>
+              {JSON.stringify(agent.source[agent.key], null, 2).slice(0, 2000)}
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (<div>
+    <SectionHeader t="AGENT COMMAND CENTER" s={`${allAgents.length} engines & agents · ${activeCount} active · ${errorCount} errors · 2 cron workflows`} tag="OPS" ac={P.teal} freshness={FRESHNESS} tableKey="agent_status"/>
+
+    {/* View switcher */}
+    <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+      {views.map(v => (
+        <div key={v.id} onClick={() => { setView(v.id); setSelectedAgent(null); }}
+          style={{ padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            background: view === v.id ? 'rgba(15,150,156,0.25)' : 'rgba(255,255,255,0.04)',
+            color: view === v.id ? P.teal : P.t3,
+            border: `1px solid ${view === v.id ? 'rgba(15,150,156,0.4)' : 'rgba(255,255,255,0.06)'}` }}>
+          {v.label}
+        </div>
+      ))}
+    </div>
+
+    {/* Overview stats */}
+    {view === 'overview' && (<>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+        {categories.map(cat => {
+          const agents = allAgents.filter(a => a.category === cat);
+          const active = agents.filter(a => getStatus(a).label === 'Active').length;
+          return (
+            <PanelShell key={cat} style={{ padding: 14 }}>
+              <div style={{ fontSize: 11, color: P.t3, marginBottom: 4 }}>{cat}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: P.t1 }}>{agents.length}</div>
+              <div style={{ fontSize: 10, color: active === agents.length ? '#22c55e' : P.amber }}>{active}/{agents.length} active</div>
+            </PanelShell>
+          );
+        })}
+      </div>
+
+      {/* Cron workflows */}
+      <PanelShell style={{ padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.t1, marginBottom: 10 }}>Automated Workflows (Vercel Cron)</div>
+        {cronSchedules.map((c, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < cronSchedules.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: P.t1 }}>{c.name}</div>
+              <div style={{ fontSize: 10, color: P.t3 }}>{c.desc}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, fontFamily: 'monospace', color: P.teal }}>{c.schedule}</div>
+              <div style={{ fontSize: 9, color: 'rgba(232,244,245,0.3)' }}>{c.endpoint}</div>
+            </div>
+          </div>
+        ))}
+      </PanelShell>
+
+      {/* Pipeline diagram */}
+      <PanelShell style={{ padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.t1, marginBottom: 12 }}>3-Stage Orchestration Pipeline</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Stage 1: Portfolio Engines', count: engineAgents.length, color: '#0F969C' },
+            { label: '→', count: null, color: P.t3 },
+            { label: 'Stage 2: Market Engines', count: marketAgents.length, color: '#6DA5C0' },
+            { label: '→', count: null, color: P.t3 },
+            { label: 'Stage 3: Decision Agents', count: decisionAgents.length, color: '#4ade80' },
+          ].map((s, i) => s.count !== null ? (
+            <div key={i} style={{ padding: '10px 16px', borderRadius: 10, background: `${s.color}20`, border: `1px solid ${s.color}40`, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: s.color }}>{s.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: P.t1, marginTop: 2 }}>{s.count}</div>
+            </div>
+          ) : (
+            <span key={i} style={{ fontSize: 16, color: P.t3 }}>{s.label}</span>
+          ))}
+        </div>
+      </PanelShell>
+    </>)}
+
+    {/* Workflows view */}
+    {view === 'workflows' && (
+      <PanelShell style={{ padding: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.t1, marginBottom: 12 }}>Execution Schedule</div>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {triggers.map(t => {
+            const agents = allAgents.filter(a => a.trigger === t);
+            return (
+              <div key={t} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: P.teal }}>{t} ({agents.length} agents)</span>
+                  <span style={{ fontSize: 10, color: P.t3 }}>{t === 'Daily' ? '7:00 AM UTC' : t === 'Weekly' ? 'Monday 8:00 AM UTC' : t === 'Monthly' ? '1st of month' : 'On threshold breach'}</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {agents.map(a => {
+                    const s = getStatus(a);
+                    return <span key={a.id} style={{ fontSize: 9, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: s.label === 'Active' ? '#22c55e' : s.label === 'Error' ? P.red : P.t3, border: '1px solid rgba(255,255,255,0.06)' }}>{a.name}</span>;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </PanelShell>
+    )}
+
+    {/* Agent Output Inspector */}
+    {view === 'output' && (
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 600, overflow: 'auto' }}>
+          {allAgents.filter(a => getStatus(a).label === 'Active').map(a => (
+            <div key={a.id} onClick={() => setSelectedAgent(a)}
+              style={{ padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 11, color: selectedAgent?.id === a.id ? P.teal : P.t2,
+                background: selectedAgent?.id === a.id ? 'rgba(15,150,156,0.15)' : 'transparent',
+                border: `1px solid ${selectedAgent?.id === a.id ? 'rgba(15,150,156,0.3)' : 'transparent'}` }}>
+              {a.name}
+            </div>
+          ))}
+        </div>
+        <PanelShell style={{ padding: 16, maxHeight: 600, overflow: 'auto' }}>
+          {selectedAgent ? (<>
+            <div style={{ fontSize: 14, fontWeight: 700, color: P.t1, marginBottom: 4 }}>{selectedAgent.name}</div>
+            <div style={{ fontSize: 10, color: P.t3, marginBottom: 12 }}>{selectedAgent.desc} · {selectedAgent.trigger} · {selectedAgent.category}</div>
+            <pre style={{ fontSize: 10, color: P.t2, whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0, lineHeight: 1.5 }}>
+              {JSON.stringify(selectedAgent.source?.[selectedAgent.key] || {}, null, 2).slice(0, 5000)}
+            </pre>
+          </>) : (
+            <div style={{ fontSize: 12, color: P.t3, padding: 40, textAlign: 'center' }}>Select an agent to inspect its output</div>
+          )}
+        </PanelShell>
+      </div>
+    )}
+
+    {/* Agent cards grid */}
+    {(view === 'engines' || view === 'market' || view === 'agents' || view === 'overview') && view !== 'overview' && (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+        {filteredAgents.map(a => <AgentCard key={a.id} agent={a}/>)}
+      </div>
+    )}
+
+    {/* Overview: all agents summary */}
+    {view === 'overview' && (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+        {allAgents.map(a => <AgentCard key={a.id} agent={a}/>)}
+      </div>
+    )}
+  </div>);
+};
+
 const TABS=[
   {k:"exec",l:"T1 Executive Summary"},
   {k:"struct",l:"T2 Structure & Concentration"},
@@ -4789,6 +5055,7 @@ const TABS=[
   {k:"sys",l:"T15 System Architecture"},
   {k:"storage",l:"T16 Storage & Data"},
   {k:"settings",l:"T17 Settings"},
+  {k:"agents",l:"T18 Agent Command Center"},
 ];
 
 export default function PortfolioVOS(){
@@ -4814,6 +5081,11 @@ export default function PortfolioVOS(){
       if(data.SCORECARD) SCORECARD=data.SCORECARD;
       if(data.REF_DATA) REF_DATA=data.REF_DATA;
       recalcDerived(priorSnapshot, saveSnapshot);
+      // Update truth layer with engine/agent outputs (fills the 7 null state objects)
+      try {
+        const sourceMeta = { source: source || 'fallback', lastUpdated: freshness?.lastUpdated || null, snapshotDate: PORT.date };
+        setTruthLayer(buildEngineTruthLayer(data, sourceMeta, MKTENG, AGENT));
+      } catch (e) { console.error('TruthLayer update:', e); }
       refresh(n=>n+1);
     }
   },[data,freshness,priorSnapshot,saveSnapshot]);
@@ -4835,6 +5107,7 @@ export default function PortfolioVOS(){
     case "sys":return <T15/>;
     case "storage":return <T16/>;
     case "settings":return <T17/>;
+    case "agents":return <T18 ENGINE={ENGINE} MKTENG={MKTENG} AGENT={AGENT}/>;
     default:return <T1/>;
   }};
   const [showMenu,setShowMenu]=useState(false);
