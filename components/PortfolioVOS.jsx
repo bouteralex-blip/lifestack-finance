@@ -409,6 +409,8 @@ let FRESHNESS = {};
 let ENGINE = { concentration: null, debtPriority: null, sleeveExposure: null, wrapperExposure: null, currencyExposure: null, driftMonitor: null, isaPensionRouting: null, rebalanceProposal: null, riskBudget: null, contributionAttribution: null, drawdown: null, scenarioSensitivity: null, monteCarlo: null, liquidityLadder: null, bonusAllocation: null, capitalEfficiency: null, cryptoRebalance: null, cryptoScenario: null };
 let MKTENG = { regime: null, stress: null, btcCycle: null, yieldCurve: null, creditStress: null, sectorLeadership: null, cryptoOnChain: null };
 let AGENT = { synthesis: null, rankedOpps: null, whatChanged: null, actionQueue: null, triggerAlerts: null, morningCommand: null, dailyBrief: null, opportunityRadar: null, watchlist: null, deadlines: null, rebalanceApproval: null, monthlyReview: null, freshnessAudit: null, tilePriority: null, insightCallouts: null, whatMattersNow: null, reportExport: null, altcoinRiskCap: null, performanceBridge: null, thesisMonitor: null };
+// Module-level nav ref — lets child components trigger tab navigation without prop drilling
+const NAV = { setTab: null };
 // =========================================================================
 // UI COMPONENTS — ORION GLASS (Light Mode)
 // =========================================================================
@@ -1214,12 +1216,27 @@ const SankeyChart = () => {
   );
 };
 const T1 = ({ truthLayer })=>{
+  const [activePeriod, setActivePeriod] = useState('6M');
+  const [exporting, setExporting] = useState(false);
   const fire=(PORT.netWorth/PORT.fireTarget*100);
   const contribData = HOLDINGS.filter(h=>h.prev).map(h=>({name:h.name.split("(")[0].split(" ").slice(0,2).join(" ").trim(),pnl:((h.val-h.prev)/1000)})).sort((a,b)=>b.pnl-a.pnl);
   const monthlyReturns = MONTHLY_DATA.map(m=>({m:m.m,r:m.r}));
 
-  const activeReturn = nwReturn - ((PORT.benchReturn != null ? PORT.benchReturn : -0.028) * 100);
-  const realReturn = nwReturn - ((PORT.inflation != null ? PORT.inflation : 0.032) * 100 / 2);
+  // Period-aware return calculation
+  const getReturnForPeriod = (p) => {
+    const wks = {['1M']:4,['3M']:13,['6M']:26,['YTD']:Math.min(Math.round((new Date()-new Date(new Date().getFullYear(),0,1))/(7*24*3600*1000)),52),['1Y']:52,['ALL']:NW_WEEKLY.length-1}[p] || 26;
+    const startNW = NW_WEEKLY[Math.max(NW_WEEKLY.length - wks - 1, 0)]?.nw || PORT.nw6moAgo;
+    return ((PORT.netWorth - startNW) / (startNW||1) * 100);
+  };
+  const periodReturn = getReturnForPeriod(activePeriod);
+  // Filter NW chart data based on selected period
+  const nwChartData = (() => {
+    const wks = {['1M']:4,['3M']:13,['6M']:26,['YTD']:Math.min(Math.round((new Date()-new Date(new Date().getFullYear(),0,1))/(7*24*3600*1000)),52),['1Y']:52,['ALL']:NW_WEEKLY.length}[activePeriod] || 26;
+    return NW_WEEKLY.slice(-wks);
+  })();
+
+  const activeReturn = periodReturn - ((PORT.benchReturn != null ? PORT.benchReturn : -0.028) * 100);
+  const realReturn = periodReturn - ((PORT.inflation != null ? PORT.inflation : 0.032) * 100 / (activePeriod==='1Y'||activePeriod==='ALL'?1:2));
   const probNW = Math.round(0.15*PORT.netWorth*0.85 + 0.50*PORT.netWorth*1.12 + 0.25*PORT.netWorth*1.25 + 0.10*PORT.netWorth*1.45);
   const liquidCash = 15752+406+94;
   const runway = liquidCash / PORT.monthlyExpenses;
@@ -1227,6 +1244,17 @@ const T1 = ({ truthLayer })=>{
   const ret3m = ((PORT.netWorth - nw3moAgo) / nw3moAgo * 100);
   const nw1moAgo = NW_WEEKLY[Math.max(NW_WEEKLY.length - 5, 0)]?.nw || PORT.netWorth;
   const ret1m = ((PORT.netWorth - nw1moAgo) / nw1moAgo * 100);
+
+  const handleExport = () => {
+    setExporting(true);
+    const md = AGENT.reportExport || `# LifeStack Portfolio Report\n\nExported: ${new Date().toLocaleDateString('en-GB')}\n\n## Summary\n- Net Worth: £${PORT.netWorth?.toLocaleString('en-GB')}\n- ${activePeriod} Return: ${periodReturn.toFixed(1)}%\n- Assets: £${PORT.assets?.toLocaleString('en-GB')}\n- FIRE Progress: ${(PORT.netWorth/PORT.fireTarget*100).toFixed(0)}%\n`;
+    const blob = new Blob([md],{type:'text/markdown'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`lifestack-${new Date().toISOString().slice(0,10)}.md`; a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(() => setExporting(false), 1500);
+  };
 
   const growthAssets = HOLDINGS.filter(h=>["ETF","Crypto","Stock","Investment"].includes(h.cls)).reduce((a,h)=>a+h.val,0);
   const growthInShelter = (82133 + 18085);
@@ -1414,7 +1442,7 @@ const T1 = ({ truthLayer })=>{
     {/* ROW 1: 12-col KPI grid — variable sizing: hero(3), standard(2), compact(1.5) */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
       <div style={{gridColumn:"span 3"}}><KpiTile l="Net Worth" v={fK(PORT.netWorth)} c={P.cyan} delta={`Peak: ${fK(PORT.nwPeak)}`} deltaType={PORT.netWorth>=PORT.nwPeak?"up":"down"} bench={`Target: ${fK(PORT.fireTarget*0.25)}`}/></div>
-      <div style={{gridColumn:"span 3"}}><KpiTile l="6-Mo Return" v={pc(nwReturn)} c={nwReturn>0?P.positive:P.negative} delta="20 Sep → 7 Mar" deltaType={nwReturn>0?"up":"down"} bench={`MSCI: ${pc((PORT.benchReturn||-.028)*100)}`}/></div>
+      <div style={{gridColumn:"span 3"}}><KpiTile l={`${activePeriod} Return`} v={pc(periodReturn)} c={periodReturn>0?P.positive:P.negative} delta={activePeriod==='6M'?'20 Sep → 7 Mar':activePeriod} deltaType={periodReturn>0?"up":"down"} bench={`MSCI: ${pc((PORT.benchReturn||-.028)*100)}`}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Total Assets" v={fK(PORT.assets)} c={P.indigo} delta={`Debts: ${fK(PORT.debts)}`} bench={`D/A: ${debtToAsset.toFixed(1)}%`}/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Active Return" v={pc(activeReturn)} c={activeReturn>0?P.positive:P.negative} delta="vs MSCI World" deltaType={activeReturn>0?"up":"down"} bench="Target: +2%" sm/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Real Return" v={pc(realReturn)} c={realReturn>0?P.positive:P.negative} delta="After inflation" deltaType={realReturn>0?"up":"down"} bench={`CPI: ${((PORT.inflation||0.032)*100).toFixed(1)}%`} sm/></div>
@@ -1438,10 +1466,12 @@ const T1 = ({ truthLayer })=>{
     {/* CONTROL BAR — time filter between Zone 1 and Zone 2 */}
     <ControlBar
       periods={['1M','3M','6M','YTD','1Y','ALL']}
-      activePeriod="6M"
-      filters={['All','NW','Assets','Drawdown']}
-      activeFilter="All"
-      actions={[{label:'Export PDF',icon:'↓'},{label:'Refresh',icon:'↺'}]}
+      activePeriod={activePeriod}
+      onPeriod={setActivePeriod}
+      actions={[
+        {label:exporting?'Exporting...':'Export MD',icon:'↓',onClick:handleExport},
+        {label:'Refresh',icon:'↺',onClick:()=>window.location.reload()},
+      ]}
     />
 
     {/* ROW 2: Alerts + Scorecard Radar + Return Decomp (3 col) */}
@@ -1516,7 +1546,7 @@ const T1 = ({ truthLayer })=>{
             <div key={i} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:3,borderRadius:2,background:x.c}}/><span style={{fontSize:9,color:P.t4}}>{x.l}</span></div>
           ))}
         </div>
-        <PeriodSelector/>
+        <PeriodSelector active={activePeriod} onChange={setActivePeriod}/>
       </div>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={NW_FORECAST} margin={{left:10,right:10,top:5,bottom:5}}>
@@ -2661,8 +2691,8 @@ const T5 = ()=>{
 
     {/* RISK ALERT STACK — Blueprint Component 8 */}
     <RiskAlertStack alerts={[
-      {level:'critical',metric:'Crypto VaR',message:'Crypto allocation contributes 32% of total portfolio VaR from 13% of capital — 2.5× risk budget limit breached.'},
-      {level:'critical',metric:'Amex APR',message:`${fmt(PORT.amexDebt)} at 22% APR is destroying £2,343/yr in guaranteed return. Immediate clearance outperforms any investment.`},
+      {level:'critical',metric:'Crypto VaR',message:'Crypto allocation contributes 32% of total portfolio VaR from 13% of capital — 2.5× risk budget limit breached.',onAction:()=>NAV.setTab?.('act')},
+      {level:'critical',metric:'Amex APR',message:`${fmt(PORT.amexDebt)} at 22% APR is destroying £2,343/yr in guaranteed return. Immediate clearance outperforms any investment.`,onAction:()=>NAV.setTab?.('act')},
       {level:'warning',metric:'ISA Deadline',message:`£20,000 ISA allowance expires 5 April. ${Math.round((new Date('2026-04-05')-new Date())/86400000)} days remaining. Zero deployed.`},
       {level:'warning',metric:'Cash Buffer',message:'3.4-month cash runway below 6-month institutional standard. Market shock could force forced selling.'},
     ]}/>
@@ -3440,6 +3470,99 @@ const T11 = ()=>{
     <Ins type="action" text={`Plan: (1) Do NOT sell BTC into extreme fear — signals overwhelmingly say accumulate. (2) Consolidate EC10+ETH+SOL into BTC to simplify to a single position. (3) Exit NEXO dust immediately. (4) Set mechanical trim targets: take profit if MVRV >2.5 and Fear >75. BTC 200-week MA at ~$65K is key structural support.`}/>
   </div>);
 };
+const DecisionLogPanel = () => {
+  const DL_KEY = 'lifestack_decision_log';
+  const loadEntries = () => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(DL_KEY) || '[]'); } catch { return []; }
+  };
+  const [entries, setEntries] = useState(loadEntries);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ action: '', rationale: '', category: 'trade', conviction: 7 });
+
+  const save = (list) => {
+    setEntries(list);
+    if (typeof window !== 'undefined') localStorage.setItem(DL_KEY, JSON.stringify(list));
+  };
+  const addEntry = () => {
+    if (!form.action.trim()) return;
+    save([{ id: Date.now().toString(), timestamp: new Date().toISOString(), action: form.action.trim(), category: form.category, thesis: { rationale: form.rationale.trim(), conviction: Number(form.conviction) }, status: 'open' }, ...entries]);
+    setForm({ action: '', rationale: '', category: 'trade', conviction: 7 });
+    setShowForm(false);
+  };
+  const completeEntry = (id) => save(entries.map(e => e.id === id ? {...e, status:'completed', completedAt: new Date().toISOString()} : e));
+  const dismissEntry = (id) => save(entries.filter(e => e.id !== id));
+
+  const processed = entries.length > 0 ? processDecisionLog(entries, ENGINE, MKTENG) : { entries: [], summary: { total:0, open:0, atRisk:0, needsReview:0 } };
+  const statusColor = s => s==='on-track' ? P.positive : s==='at-risk' ? P.red : s==='needs-review' ? P.amber : P.t3;
+  const statusLabel = s => s==='on-track' ? 'ON TRACK' : s==='at-risk' ? 'AT RISK' : s==='needs-review' ? 'NEEDS REVIEW' : 'TRACKING';
+  const inp = { background: P.b1, border: `1px solid ${P.b2}`, borderRadius: 6, color: P.t1, padding: '6px 10px', fontSize: 13, width: '100%', outline: 'none', boxSizing: 'border-box' };
+
+  return (<>
+    <div style={{display:'flex',gap:10,marginBottom:12,alignItems:'center',flexWrap:'wrap'}}>
+      <K l="Total" v={processed.summary.total} c={P.t2} sm/>
+      <K l="Open" v={processed.summary.open} c={P.cyan} sm/>
+      <K l="At Risk" v={processed.summary.atRisk} c={P.red} sm/>
+      <K l="Needs Review" v={processed.summary.needsReview} c={P.amber} sm/>
+      <button onClick={()=>setShowForm(f=>!f)} style={{marginLeft:'auto',background:showForm?`${P.red}15`:`${P.cyan}15`,border:`1px solid ${showForm?P.red:P.cyan}40`,borderRadius:7,color:showForm?P.red:P.cyan,fontSize:11,fontWeight:700,padding:'5px 14px',cursor:'pointer',letterSpacing:0.5}}>
+        {showForm ? '✕ CANCEL' : '+ ADD DECISION'}
+      </button>
+    </div>
+    {showForm && (
+      <div style={{...G,padding:14,marginBottom:12,borderLeft:`3px solid ${P.cyan}`}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+          <div>
+            <div style={{fontSize:10,color:P.t3,marginBottom:4,letterSpacing:0.5,textTransform:'uppercase'}}>Action / Decision *</div>
+            <input style={inp} placeholder="e.g. Trim BTC position by 20%" value={form.action} onChange={e=>setForm(f=>({...f,action:e.target.value}))} />
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div>
+              <div style={{fontSize:10,color:P.t3,marginBottom:4,letterSpacing:0.5,textTransform:'uppercase'}}>Category</div>
+              <select style={{...inp,cursor:'pointer'}} value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}>
+                <option value="trade">Trade</option>
+                <option value="risk">Risk</option>
+                <option value="research">Research</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div>
+              <div style={{fontSize:10,color:P.t3,marginBottom:4,letterSpacing:0.5,textTransform:'uppercase'}}>Conviction (1-10)</div>
+              <input style={inp} type="number" min={1} max={10} value={form.conviction} onChange={e=>setForm(f=>({...f,conviction:e.target.value}))} />
+            </div>
+          </div>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:P.t3,marginBottom:4,letterSpacing:0.5,textTransform:'uppercase'}}>Thesis / Rationale</div>
+          <textarea style={{...inp,resize:'vertical',minHeight:60,fontFamily:'inherit'}} placeholder="Why are you making this decision? What would prove it right or wrong?" value={form.rationale} onChange={e=>setForm(f=>({...f,rationale:e.target.value}))} />
+        </div>
+        <button onClick={addEntry} disabled={!form.action.trim()} style={{background:`${P.cyan}20`,border:`1px solid ${P.cyan}50`,borderRadius:7,color:form.action.trim()?P.cyan:P.t3,fontSize:12,fontWeight:700,padding:'7px 18px',cursor:form.action.trim()?'pointer':'not-allowed',letterSpacing:0.5}}>
+          SAVE DECISION
+        </button>
+      </div>
+    )}
+    {processed.entries.length > 0 ? processed.entries.slice(0,10).map((e,i)=>(
+      <div key={e.id||i} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:`1px solid ${P.b2}`,alignItems:'flex-start'}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:statusColor(e.latestValidation?.status),flexShrink:0,marginTop:6,boxShadow:`0 0 8px ${statusColor(e.latestValidation?.status)}50`}}/>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,color:P.t1,fontWeight:600}}>{e.action}</div>
+          <div style={{fontSize:11,color:P.t3,marginTop:2}}>{e.thesis?.rationale?.slice(0,120)}{(e.thesis?.rationale?.length||0)>120?'...':''}</div>
+          <div style={{display:'flex',gap:8,marginTop:4,alignItems:'center',flexWrap:'wrap'}}>
+            <span style={{fontSize:9,color:statusColor(e.latestValidation?.status),fontWeight:800,padding:'2px 6px',borderRadius:5,background:`${statusColor(e.latestValidation?.status)}14`,border:`1px solid ${statusColor(e.latestValidation?.status)}20`,textTransform:'uppercase',letterSpacing:0.5}}>{statusLabel(e.latestValidation?.status)}</span>
+            <span style={{fontSize:10,color:P.t4}}>{e.latestValidation?.daysSince||0}d ago</span>
+            <span style={{fontSize:10,color:P.t4}}>{e.category}</span>
+            {e.status !== 'completed' && (
+              <button onClick={()=>completeEntry(e.id)} style={{marginLeft:'auto',background:`${P.positive}15`,border:`1px solid ${P.positive}30`,borderRadius:5,color:P.positive,fontSize:9,fontWeight:700,padding:'2px 8px',cursor:'pointer',letterSpacing:0.5}}>COMPLETE</button>
+            )}
+            <button onClick={()=>dismissEntry(e.id)} style={{background:`${P.red}10`,border:`1px solid ${P.red}25`,borderRadius:5,color:P.red,fontSize:9,fontWeight:700,padding:'2px 8px',cursor:'pointer',letterSpacing:0.5,marginLeft:e.status==='completed'?'auto':0}}>DISMISS</button>
+          </div>
+        </div>
+      </div>
+    )) : (
+      <div style={{fontSize:12,color:P.t3,padding:'16px 0',textAlign:'center'}}>No decisions logged yet. Click "+ ADD DECISION" to record your first trade thesis.</div>
+    )}
+  </>);
+};
+
 const T12 = ()=>{
   // Phase 2: Engine-driven action plan
   const debtState = ENGINE.debtPriority;
@@ -3577,36 +3700,7 @@ const T12 = ()=>{
 
     {/* DECISION LOG — Track trade theses and outcomes */}
     <PanelShell hover title="DECISION LOG" subtitle="Record decisions with thesis, track whether thesis played out" takeaway="Logging decisions creates accountability. Review open theses quarterly to validate or invalidate.">
-      {(()=>{
-        const logEntries = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('lifestack_decision_log') || '[]') : [];
-        const processed = logEntries.length > 0 ? processDecisionLog(logEntries, ENGINE, MKTENG) : { entries: [], summary: { total: 0, open: 0, atRisk: 0, needsReview: 0 } };
-        const statusColor = s => s === 'on-track' ? P.positive : s === 'at-risk' ? P.red : s === 'needs-review' ? P.amber : P.t3;
-        const statusLabel = s => s === 'on-track' ? 'ON TRACK' : s === 'at-risk' ? 'AT RISK' : s === 'needs-review' ? 'NEEDS REVIEW' : 'TRACKING';
-        return (<>
-          <div style={{display:'flex',gap:10,marginBottom:12}}>
-            <K l="Total Decisions" v={processed.summary.total} c={P.t2} sm/>
-            <K l="Open" v={processed.summary.open} c={P.cyan} sm/>
-            <K l="At Risk" v={processed.summary.atRisk} c={P.red} sm/>
-            <K l="Needs Review" v={processed.summary.needsReview} c={P.amber} sm/>
-          </div>
-          {processed.entries.length > 0 ? processed.entries.slice(0, 10).map((e, i) => (
-            <div key={i} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:`1px solid ${P.b2}`,alignItems:'flex-start'}}>
-              <div style={{width:8,height:8,borderRadius:'50%',background:statusColor(e.latestValidation?.status),flexShrink:0,marginTop:6,boxShadow:`0 0 8px ${statusColor(e.latestValidation?.status)}50`}}/>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,color:P.t1,fontWeight:600}}>{e.action}</div>
-                <div style={{fontSize:11,color:P.t3,marginTop:2}}>{e.thesis?.rationale?.slice(0,120)}{e.thesis?.rationale?.length > 120 ? '...' : ''}</div>
-                <div style={{display:'flex',gap:8,marginTop:4}}>
-                  <span style={{fontSize:9,color:statusColor(e.latestValidation?.status),fontWeight:800,padding:'2px 6px',borderRadius:5,background:`${statusColor(e.latestValidation?.status)}14`,border:`1px solid ${statusColor(e.latestValidation?.status)}20`,textTransform:'uppercase',letterSpacing:0.5}}>{statusLabel(e.latestValidation?.status)}</span>
-                  <span style={{fontSize:10,color:P.t4}}>{e.latestValidation?.daysSince || 0}d ago</span>
-                  <span style={{fontSize:10,color:P.t4}}>{e.category}</span>
-                </div>
-              </div>
-            </div>
-          )) : (
-            <div style={{fontSize:12,color:P.t3,padding:'16px 0',textAlign:'center'}}>No decisions logged yet. Decisions from action execution will appear here.</div>
-          )}
-        </>);
-      })()}
+      <DecisionLogPanel />
     </PanelShell>
   </div>);
 };
@@ -4174,6 +4268,7 @@ const SECS={A:"PORTFOLIO OVERVIEW",B:"STRATEGY & PLANNING",C:"ANALYSIS & GROWTH"
 
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
+  NAV.setTab = setTab; // expose to child components for HEDGE → Action Plan navigation
   const [,refresh]=useState(0);
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
   const {data,loading,source,freshness}=useSupabaseData();

@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Briefcase, Factory, Landmark, TrendingUp, Layers, Map, Users, Flame, ChevronDown, ChevronRight } from 'lucide-react';
+import { useEngines } from '../lib/engineContext';
 
 // ── PALETTE ──
 const P={
@@ -379,6 +380,38 @@ const[side,setSide]=useState(true);
 const[open,setOpen]=useState({A:true,B:true});
 const Act=TABS.find(t=>t.id===tab)?.C||C1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
+
+// Sync live market data from EngineContext into M
+const { MKTENG: ctxMKTENG } = useEngines();
+const [, forceUpdate] = useState(0);
+useEffect(()=>{
+  if(!ctxMKTENG) return;
+  let updated = false;
+  const map = {
+    gbpusd:'gbpusd', gbpzar:'gbpzar', dxy:'dxy',
+    gilt10y:'gilt10y', gilt2y:'gilt2y', boeRate:'boeRate',
+    ukCPI:'ukCPI', ukCore:'ukCore', ukGDP:'ukGDP', ukUnemp:'ukUnemp',
+    btcPrice:'btcPrice', ethPrice:'ethPrice', vix:'vix', fearGreed:'fearGreed',
+    brent:'brent', gold:'gold',
+  };
+  // Pull from ctxMKTENG.macro/fx/crypto if available, else from raw keys
+  const src = ctxMKTENG;
+  const trySet = (mKey, val) => { if(val != null && val !== M[mKey]) { M[mKey] = val; updated = true; } };
+  trySet('gbpusd', src.gbpusd);
+  trySet('gbpzar', src.gbpzar);
+  trySet('dxy', src.dxy);
+  trySet('gilt10y', src.gilt10y);
+  trySet('gilt2y', src.gilt2y);
+  trySet('boeRate', src.boeRate);
+  trySet('ukCPI', src.ukCPI);
+  trySet('vix', src.vix);
+  trySet('fearGreed', src.fearGreed);
+  trySet('btcPrice', src.btcPrice);
+  trySet('ethPrice', src.ethPrice);
+  trySet('brent', src.brent);
+  trySet('gold', src.gold);
+  if(updated) forceUpdate(n => n+1);
+},[ctxMKTENG]);
 
 return(
 <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>

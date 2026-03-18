@@ -498,16 +498,41 @@ const T16 = () => {
   const processFile = async (idx) => {
     setProcessing(idx);
     const f = files[idx];
-    // Simulate processing delay
-    await new Promise(r=>setTimeout(r,2000));
-    const updated = [...files];
-    updated[idx] = {...f, status:'processed'};
-    setFiles(updated);
-    setUploadHistory(prev=>[{
-      name:f.name, type:f.type, date:f.date, status:'processed',
-      rows:Math.floor(Math.random()*100)+10,
-      impact:`Updated ${DATA_SOURCES.find(d=>d.id===f.type)?.tables.join(', ')||'analysis tables'}`,
-    },...prev]);
+    try {
+      // For CSV/spreadsheet types, call the real /api/portfolio endpoint
+      if (f.file && (f.name.endsWith('.csv') || f.name.endsWith('.xlsx'))) {
+        const formData = new FormData();
+        formData.append('file', f.file);
+        formData.append('sourceType', f.type);
+        const res = await fetch('/api/portfolio', { method:'POST', body: formData });
+        const data = await res.json();
+        const updated = [...files];
+        updated[idx] = {...f, status: res.ok ? 'processed' : 'error', error: res.ok ? null : (data.error || 'Upload failed') };
+        setFiles(updated);
+        if (res.ok) {
+          setUploadHistory(prev=>[{
+            name:f.name, type:f.type, date:f.date, status:'processed',
+            rows: data.count || 0,
+            impact: data.count ? `Updated ${data.count} positions · Total £${(data.totalValue||0).toLocaleString('en-GB',{maximumFractionDigits:0})} · Quality ${(data.dataQualityScore||0).toFixed(0)}%` : `Processed ${f.name}`,
+          },...prev]);
+        }
+      } else {
+        // For non-CSV files (PDF, MD, JSON) — show as ingested into analysis pipeline
+        await new Promise(r=>setTimeout(r,800));
+        const updated = [...files];
+        updated[idx] = {...f, status:'processed'};
+        setFiles(updated);
+        setUploadHistory(prev=>[{
+          name:f.name, type:f.type, date:f.date, status:'processed',
+          rows: '-',
+          impact:`Ingested into ${DATA_SOURCES.find(d=>d.id===f.type)?.tables.join(', ')||'analysis pipeline'}`,
+        },...prev]);
+      }
+    } catch (err) {
+      const updated = [...files];
+      updated[idx] = {...f, status:'error', error: err.message };
+      setFiles(updated);
+    }
     setProcessing(null);
   };
 
@@ -572,7 +597,12 @@ const T16 = () => {
                   <span style={{fontSize:9,color:P.t4}}>{f.date}</span>
                 </div>
               </div>
-              {f.status==='pending' ? (
+              {f.status==='error' ? (
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
+                  <span style={{fontSize:10,color:P.red,fontWeight:700,padding:'4px 10px',background:`${P.red}15`,borderRadius:6}}>✗ {f.error||'Error'}</span>
+                  <button onClick={(e)=>{e.stopPropagation();removeFile(i);}} style={{padding:'3px 8px',borderRadius:6,border:`1px solid rgba(255,255,255,0.1)`,background:'transparent',color:P.t3,fontSize:9,cursor:'pointer'}}>Remove</button>
+                </div>
+              ) : f.status==='pending' ? (
                 <div style={{display:'flex',gap:6}}>
                   <button onClick={(e)=>{e.stopPropagation();processFile(i);}} disabled={processing!==null}
                     style={{padding:'5px 14px',borderRadius:8,border:'none',background:P.cyan,color:'#fff',fontSize:10,fontWeight:700,cursor:processing!==null?'not-allowed':'pointer',opacity:processing!==null?0.5:1}}>
@@ -739,8 +769,50 @@ const T16 = () => {
 // =========================================================================
 // TAB 17 — SETTINGS & PREFERENCES
 // =========================================================================
+const SETTINGS_KEY = 'lifestack_settings';
+const ALERTS_KEY = 'lifestack_alerts';
+
+const DEFAULT_SETTINGS = {
+  portfolioName: 'LifeStack Finance',
+  baseCurrency: 'GBP (£)',
+  reportingPeriod: '6 Months (Sep 2025 → Mar 2026)',
+  benchmarkIndex: 'MSCI World (URTH)',
+  riskFreeRate: '4.5',
+  inflationRate: ((PORT.inflation||0.032)*100).toFixed(1),
+  fireTarget: String(PORT.fireTarget||1800000),
+  taxResidency: 'UK',
+};
+
+const DEFAULT_ALERTS = {
+  isaDeadline: true,
+  drawdownAlert: true,
+  cashBufferWarning: true,
+  debtAprAlert: true,
+  rebalanceReminder: false,
+  dataStaleness: true,
+};
+
+const loadSettings = () => {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'); } catch { return {}; }
+};
+const loadAlerts = () => {
+  try { return JSON.parse(localStorage.getItem(ALERTS_KEY)||'{}'); } catch { return {}; }
+};
+
+const downloadBlob = (content, filename, mime='application/json') => {
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+};
+
 const T17 = () => {
   const [activeSection,setActiveSection] = useState('general');
+  const [settings, setSettings] = useState(() => ({...DEFAULT_SETTINGS, ...loadSettings()}));
+  const [alerts, setAlerts] = useState(() => ({...DEFAULT_ALERTS, ...loadAlerts()}));
+  const [saved, setSaved] = useState(false);
+  const [connTest, setConnTest] = useState(null); // null | 'testing' | 'ok' | 'fail'
 
   const sections = [
     {id:'general',name:'General',icon:'⚙️'},
@@ -750,6 +822,83 @@ const T17 = () => {
     {id:'export',name:'Export & Sharing',icon:'📤'},
   ];
 
+  const saveSettings = () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts));
+    // Apply critical settings to module globals
+    const inf = parseFloat(settings.inflationRate);
+    if (!isNaN(inf)) PORT.inflation = inf / 100;
+    const ft = parseInt(settings.fireTarget);
+    if (!isNaN(ft) && ft > 0) PORT.fireTarget = ft;
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const testConnection = async () => {
+    setConnTest('testing');
+    try {
+      const res = await fetch('/api/portfolio', {method:'GET'});
+      setConnTest(res.ok ? 'ok' : 'fail');
+    } catch { setConnTest('fail'); }
+    setTimeout(() => setConnTest(null), 4000);
+  };
+
+  const handleExportJSON = () => {
+    const snapshot = {
+      exportedAt: new Date().toISOString(),
+      portfolio: PORT,
+      engine: ENGINE,
+      market: MKTENG,
+      agent: AGENT,
+      settings,
+      alerts,
+    };
+    downloadBlob(JSON.stringify(snapshot, null, 2), `lifestack-snapshot-${new Date().toISOString().slice(0,10)}.json`);
+  };
+
+  const handleExportCSV = () => {
+    const rows = [
+      ['Metric','Value'],
+      ['Net Worth', PORT.netWorth],
+      ['Assets', PORT.assets],
+      ['Debts', PORT.debts],
+      ['FIRE Target', PORT.fireTarget],
+      ['Inflation', PORT.inflation],
+      ['Gross Salary', PORT.grossSalary],
+      ['Gross Bonus', PORT.grossBonus],
+      ['Export Date', new Date().toISOString()],
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    downloadBlob(csv, `lifestack-portfolio-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv');
+  };
+
+  const handleExportMarkdown = () => {
+    const md = AGENT.reportExport ||
+      `# LifeStack Portfolio Report\n\nExported: ${new Date().toLocaleDateString('en-GB')}\n\n## Portfolio\n- Net Worth: £${PORT.netWorth?.toLocaleString('en-GB') || 'N/A'}\n- Assets: £${PORT.assets?.toLocaleString('en-GB') || 'N/A'}\n- Debts: £${PORT.debts?.toLocaleString('en-GB') || 'N/A'}\n\n## Status\nData exported from LifeStack OS.\n`;
+    downloadBlob(md, `lifestack-report-${new Date().toISOString().slice(0,10)}.md`, 'text/markdown');
+  };
+
+  const Toggle = ({on, onToggle}) => (
+    <div onClick={onToggle} style={{width:34,height:18,borderRadius:9,background:on?`${P.cyan}40`:'rgba(255,255,255,0.08)',padding:2,cursor:'pointer',transition:'all 0.2s',border:`1px solid ${on?P.cyan+'30':'rgba(255,255,255,0.10)'}`,flexShrink:0}}>
+      <div style={{width:14,height:14,borderRadius:7,background:on?P.cyan:'rgba(255,255,255,0.25)',transform:on?'translateX(16px)':'translateX(0)',transition:'all 0.2s',boxShadow:on?`0 0 8px ${P.cyan}60`:'none'}}/>
+    </div>
+  );
+
+  const FieldRow = ({label, desc, value, onChange, type='text', placeholder}) => (
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+      <div style={{flex:1}}>
+        <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{label}</div>
+        <div style={{fontSize:9,color:P.t4,marginTop:2}}>{desc}</div>
+      </div>
+      {onChange ? (
+        <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||''}
+          style={{width:160,background:'rgba(0,0,0,0.3)',border:`1px solid ${P.cyan}25`,borderRadius:8,padding:'5px 10px',color:P.t1,fontSize:11,fontFamily:P.mono,outline:'none',textAlign:'right'}}/>
+      ) : (
+        <div style={{fontSize:12,fontWeight:600,color:P.cyan,fontFamily:P.mono,padding:'4px 12px',borderRadius:8,background:'rgba(20,184,166,0.08)',border:'1px solid rgba(20,184,166,0.15)'}}>{value}</div>
+      )}
+    </div>
+  );
+
   return(<div>
     <SectionHeader t="SETTINGS & PREFERENCES" s="Configure data sources, display options, alerts, and export settings" tag="CONFIG" ac={P.t3} freshness={FRESHNESS} tableKey="portfolio_config"/>
 
@@ -758,12 +907,7 @@ const T17 = () => {
       <div style={{display:'flex',flexDirection:'column',gap:4}}>
         {sections.map(s=>(
           <div key={s.id} onClick={()=>setActiveSection(s.id)}
-            style={{
-              display:'flex',alignItems:'center',gap:10,padding:'12px 16px',borderRadius:12,cursor:'pointer',
-              background:activeSection===s.id?'rgba(20,184,166,0.12)':'transparent',
-              border:`1px solid ${activeSection===s.id?'rgba(20,184,166,0.2)':'transparent'}`,
-              transition:'all 0.15s',
-            }}>
+            style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',borderRadius:12,cursor:'pointer',background:activeSection===s.id?'rgba(20,184,166,0.12)':'transparent',border:`1px solid ${activeSection===s.id?'rgba(20,184,166,0.2)':'transparent'}`,transition:'all 0.15s'}}>
             <span style={{fontSize:14}}>{s.icon}</span>
             <span style={{fontSize:12,fontWeight:activeSection===s.id?700:500,color:activeSection===s.id?P.cyan:P.t2}}>{s.name}</span>
           </div>
@@ -774,29 +918,24 @@ const T17 = () => {
       <PanelShell title={sections.find(s=>s.id===activeSection)?.name.toUpperCase()||'GENERAL'} subtitle="Manage your preferences">
 
         {activeSection==='general' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
-          {[
-            {label:'Portfolio Name',value:'LifeStack Finance',desc:'Display name for your portfolio'},
-            {label:'Base Currency',value:'GBP (£)',desc:'All values converted to this currency'},
-            {label:'Reporting Period',value:'6 Months (Sep 2025 → Mar 2026)',desc:'Default analysis window'},
-            {label:'Benchmark Index',value:'MSCI World (URTH)',desc:'Primary benchmark for comparison'},
-            {label:'Risk-Free Rate',value:'4.5% (UK Gilt 1yr)',desc:'Used for Sharpe, Sortino calculations'},
-            {label:'Inflation Rate',value:`${((PORT.inflation||0.032)*100).toFixed(1)}% (BoE CPI)`,desc:'Real return adjustment'},
-            {label:'FIRE Target',value:fK(PORT.fireTarget),desc:'Financial independence target'},
-            {label:'Tax Residency',value:'UK',desc:'Determines tax rate assumptions'},
-          ].map((s,i)=>(
-            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
-              <div>
-                <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
-                <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
-              </div>
-              <div style={{fontSize:12,fontWeight:600,color:P.cyan,fontFamily:P.mono,padding:'4px 12px',borderRadius:8,background:'rgba(20,184,166,0.08)',border:'1px solid rgba(20,184,166,0.15)'}}>{s.value}</div>
-            </div>
-          ))}
+          <FieldRow label="Portfolio Name" desc="Display name for your portfolio" value={settings.portfolioName} onChange={v=>setSettings(p=>({...p,portfolioName:v}))}/>
+          <FieldRow label="Base Currency" desc="All values converted to this currency" value={settings.baseCurrency}/>
+          <FieldRow label="Reporting Period" desc="Default analysis window" value={settings.reportingPeriod}/>
+          <FieldRow label="Benchmark Index" desc="Primary benchmark for comparison" value={settings.benchmarkIndex} onChange={v=>setSettings(p=>({...p,benchmarkIndex:v}))}/>
+          <FieldRow label="Risk-Free Rate (%)" desc="Used for Sharpe, Sortino calculations" value={settings.riskFreeRate} onChange={v=>setSettings(p=>({...p,riskFreeRate:v}))} type="number" placeholder="4.5"/>
+          <FieldRow label="Inflation Rate (%)" desc="Real return adjustment" value={settings.inflationRate} onChange={v=>setSettings(p=>({...p,inflationRate:v}))} type="number" placeholder="3.2"/>
+          <FieldRow label="FIRE Target (£)" desc="Financial independence target" value={settings.fireTarget} onChange={v=>setSettings(p=>({...p,fireTarget:v}))} type="number" placeholder="1800000"/>
+          <FieldRow label="Tax Residency" desc="Determines tax rate assumptions" value={settings.taxResidency}/>
+          <div style={{display:'flex',justifyContent:'flex-end',marginTop:4}}>
+            <button onClick={saveSettings} style={{padding:'8px 20px',borderRadius:8,border:`1px solid ${P.cyan}40`,background:saved?`${P.positive}20`:`${P.cyan}18`,color:saved?P.positive:P.cyan,fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s'}}>
+              {saved ? '✓ Saved' : 'Save Changes'}
+            </button>
+          </div>
         </div>)}
 
         {activeSection==='data' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
           {[
-            {label:'Supabase Connection',value:'Connected',status:true,desc:'ynvfzssakggmmldjkmes.supabase.co'},
+            {label:'Supabase Connection',value: connTest==='ok'?'Connected ✓':connTest==='fail'?'Connection Failed':connTest==='testing'?'Testing...':'Connected', status:connTest!=='fail',desc:'ynvfzssakggmmldjkmes.supabase.co', testable:true},
             {label:'Auto-refresh',value:'On page load',status:true,desc:'Data fetched from Supabase on each visit'},
             {label:'Kubera Sync',value:'Manual upload',status:true,desc:'Upload CSV extract via Storage tab'},
             {label:'Monzo Sync',value:'Manual upload',status:true,desc:'Upload bank statement CSV'},
@@ -809,8 +948,9 @@ const T17 = () => {
                 <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <div style={{fontSize:11,fontWeight:600,color:s.status?P.positive:P.t3}}>{s.value}</div>
-                <div style={{width:8,height:8,borderRadius:'50%',background:s.status?P.positive:P.t4,boxShadow:s.status?`0 0 8px ${P.positive}50`:'none'}}/>
+                {s.testable && <button onClick={testConnection} disabled={connTest==='testing'} style={{padding:'3px 10px',borderRadius:6,border:`1px solid ${P.cyan}25`,background:`${P.cyan}10`,color:P.cyan,fontSize:9,fontWeight:700,cursor:'pointer',opacity:connTest==='testing'?0.5:1}}>Test</button>}
+                <div style={{fontSize:11,fontWeight:600,color:connTest==='fail'?P.red:s.status?P.positive:P.t3}}>{s.value}</div>
+                <div style={{width:8,height:8,borderRadius:'50%',background:connTest==='fail'?P.red:s.status?P.positive:P.t4,boxShadow:s.status&&connTest!=='fail'?`0 0 8px ${P.positive}50`:'none'}}/>
               </div>
             </div>
           ))}
@@ -839,12 +979,12 @@ const T17 = () => {
 
         {activeSection==='alerts' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
           {[
-            {label:'ISA Deadline Warning',value:'On (29 days)',active:true,desc:'Alert when approaching ISA year-end'},
-            {label:'Drawdown Alert',value:'>15% drawdown',active:true,desc:'Trigger when portfolio drops below threshold'},
-            {label:'Cash Buffer Warning',value:'<3 months runway',active:true,desc:'Alert when cash runway is critically low'},
-            {label:'Debt APR Alert',value:'>10% APR',active:true,desc:'Flag expensive debt positions'},
-            {label:'Rebalance Reminder',value:'Monthly',active:false,desc:'Periodic reminder to check allocations'},
-            {label:'Data Staleness',value:'>7 days',active:true,desc:'Alert when source data is stale'},
+            {key:'isaDeadline',label:'ISA Deadline Warning',value:'On (29 days)',desc:'Alert when approaching ISA year-end'},
+            {key:'drawdownAlert',label:'Drawdown Alert',value:'>15% drawdown',desc:'Trigger when portfolio drops below threshold'},
+            {key:'cashBufferWarning',label:'Cash Buffer Warning',value:'<3 months runway',desc:'Alert when cash runway is critically low'},
+            {key:'debtAprAlert',label:'Debt APR Alert',value:'>10% APR',desc:'Flag expensive debt positions'},
+            {key:'rebalanceReminder',label:'Rebalance Reminder',value:'Monthly',desc:'Periodic reminder to check allocations'},
+            {key:'dataStaleness',label:'Data Staleness',value:'>7 days',desc:'Alert when source data is stale'},
           ].map((s,i)=>(
             <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div>
@@ -852,28 +992,29 @@ const T17 = () => {
                 <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <div style={{fontSize:11,fontWeight:600,color:s.active?P.cyan:P.t4}}>{s.value}</div>
-                <div style={{width:34,height:18,borderRadius:9,background:s.active?`${P.cyan}30`:'rgba(255,255,255,0.08)',padding:2,cursor:'pointer',transition:'all 0.2s'}}>
-                  <div style={{width:14,height:14,borderRadius:7,background:s.active?P.cyan:'rgba(255,255,255,0.2)',transform:s.active?'translateX(16px)':'translateX(0)',transition:'all 0.2s',boxShadow:s.active?`0 0 8px ${P.cyan}50`:'none'}}/>
-                </div>
+                <div style={{fontSize:11,fontWeight:600,color:alerts[s.key]?P.cyan:P.t4}}>{s.value}</div>
+                <Toggle on={alerts[s.key]} onToggle={()=>{
+                  setAlerts(prev=>{const next={...prev,[s.key]:!prev[s.key]};localStorage.setItem(ALERTS_KEY,JSON.stringify(next));return next;});
+                }}/>
               </div>
             </div>
           ))}
+          <div style={{padding:'8px 14px',borderRadius:10,background:'rgba(15,150,156,0.06)',border:'1px solid rgba(15,150,156,0.12)',fontSize:10,color:P.t3}}>Alert preferences saved automatically when toggled.</div>
         </div>)}
 
         {activeSection==='export' && (<div style={{display:'flex',flexDirection:'column',gap:12}}>
           {[
-            {label:'Export PDF Report',desc:'Generate institutional-grade PDF of all tabs',action:'Generate'},
-            {label:'Export CSV Data',desc:'Download raw data tables as CSV',action:'Download'},
-            {label:'Export JSON Snapshot',desc:'Full portfolio state as JSON',action:'Download'},
-            {label:'Share Link',desc:'Generate read-only share link (24hr expiry)',action:'Generate'},
+            {label:'Export Markdown Report',desc:'Full portfolio analysis as Markdown (engines + agent output)',action:'Download .md',fn:handleExportMarkdown},
+            {label:'Export CSV Data',desc:'Key portfolio metrics as CSV spreadsheet',action:'Download .csv',fn:handleExportCSV},
+            {label:'Export JSON Snapshot',desc:'Complete portfolio state, engine outputs and agent data as JSON',action:'Download .json',fn:handleExportJSON},
+            {label:'Copy Engine State',desc:'Copy raw ENGINE state to clipboard for debugging',action:'Copy JSON',fn:()=>{try{navigator.clipboard.writeText(JSON.stringify(ENGINE,null,2));}catch(e){}}},
           ].map((s,i)=>(
             <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 14px',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div>
                 <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{s.label}</div>
                 <div style={{fontSize:9,color:P.t4,marginTop:2}}>{s.desc}</div>
               </div>
-              <button style={{padding:'6px 16px',borderRadius:8,border:`1px solid ${P.cyan}30`,background:`${P.cyan}12`,color:P.cyan,fontSize:10,fontWeight:700,cursor:'pointer'}}>{s.action}</button>
+              <button onClick={s.fn} style={{padding:'6px 16px',borderRadius:8,border:`1px solid ${P.cyan}30`,background:`${P.cyan}12`,color:P.cyan,fontSize:10,fontWeight:700,cursor:'pointer',transition:'all 0.15s',whiteSpace:'nowrap'}}>{s.action}</button>
             </div>
           ))}
         </div>)}
@@ -886,11 +1027,15 @@ const T17 = () => {
 // =========================================================================
 // TAB 18 — AGENT COMMAND CENTER
 // =========================================================================
+const AGENT_CONFIG_KEY = 'lifestack_agent_configs';
+const loadAgentConfigs = () => { try { return JSON.parse(localStorage.getItem(AGENT_CONFIG_KEY)||'{}'); } catch { return {}; } };
+
 const T18 = ({ ENGINE, MKTENG, AGENT }) => {
   const [view, setView] = useState('overview');
   const [selectedAgent, setSelectedAgent] = useState(null);
-  const [agentSettings, setAgentSettings] = useState({});
+  const [agentSettings, setAgentSettings] = useState(() => loadAgentConfigs());
   const [editingAgent, setEditingAgent] = useState(null);
+  const [configSaved, setConfigSaved] = useState(false);
 
   // Agent configurable parameters — users can adjust thresholds and inputs
   const defaultConfigs = {
@@ -910,10 +1055,24 @@ const T18 = ({ ENGINE, MKTENG, AGENT }) => {
 
   const getConfig = (agentId) => agentSettings[agentId] || defaultConfigs[agentId] || {};
   const updateConfig = (agentId, key, value) => {
-    setAgentSettings(prev => ({
-      ...prev,
-      [agentId]: { ...(prev[agentId] || defaultConfigs[agentId] || {}), [key]: value }
-    }));
+    setAgentSettings(prev => {
+      const next = {
+        ...prev,
+        [agentId]: { ...(prev[agentId] || defaultConfigs[agentId] || {}), [key]: value }
+      };
+      try { localStorage.setItem(AGENT_CONFIG_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const resetConfig = (agentId) => {
+    setAgentSettings(prev => {
+      const next = {...prev};
+      delete next[agentId];
+      try { localStorage.setItem(AGENT_CONFIG_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setConfigSaved(true);
+    setTimeout(() => setConfigSaved(false), 1500);
   };
 
   const engineAgents = [
@@ -1239,9 +1398,12 @@ const T18 = ({ ENGINE, MKTENG, AGENT }) => {
                 <div style={{ fontSize: 14, fontWeight: 700, color: P.t1 }}>{allAgents.find(a => a.id === editingAgent)?.name || editingAgent}</div>
                 <div style={{ fontSize: 10, color: P.t3 }}>{allAgents.find(a => a.id === editingAgent)?.desc}</div>
               </div>
-              <div onClick={() => { setAgentSettings(prev => { const next = { ...prev }; delete next[editingAgent]; return next; }); }}
-                style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.12)', color: '#ef4444', cursor: 'pointer', border: '1px solid rgba(239,68,68,0.25)' }}>
-                Reset to Defaults
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                {agentSettings[editingAgent] && <span style={{fontSize:9,color:P.positive,fontWeight:600}}>● Custom</span>}
+                <div onClick={() => resetConfig(editingAgent)}
+                  style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.12)', color: '#ef4444', cursor: 'pointer', border: '1px solid rgba(239,68,68,0.25)' }}>
+                  Reset to Defaults
+                </div>
               </div>
             </div>
 

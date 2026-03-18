@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useEngines } from '../lib/engineContext';
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter, PieChart, Pie, Legend } from "recharts";
 import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, CircleDot, FileText, Gem, ChevronRight, ChevronDown } from "lucide-react";
 import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState, computeBTCDominanceState } from '../lib/engines/market/index.js';
@@ -1340,8 +1341,61 @@ export default function LifeStackMarkets(){
 const[tab,setTab]=useState("P1");
 const[side,setSide]=useState(true);
 const[open,setOpen]=useState({A:true});
+const[refreshing,setRefreshing]=useState(false);
+const[lastRefresh,setLastRefresh]=useState(null);
+const[liveM,setLiveM]=useState(null); // Live market data from API
 const Act=TABS.find(t=>t.id===tab)?.C||P1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
+
+// Receive computed MKTENG from PortfolioVOS via EngineContext
+const { MKTENG: ctxMKTENG } = useEngines();
+// Override the module-level MKTENG with live context when available
+useEffect(()=>{
+  if(ctxMKTENG && Object.values(ctxMKTENG).some(v=>v!=null)){
+    Object.assign(MKTENG, ctxMKTENG);
+  }
+},[ctxMKTENG]);
+
+// Refresh live market data from /api/market
+const refreshMarketData = async () => {
+  if(refreshing) return;
+  setRefreshing(true);
+  try {
+    const metrics = ['btc_price','eth_price','vix','fear_greed','gilt_10y','gilt_2y','fed_funds','brent','gold','dxy','gbpusd','ig_oas','hy_oas','sp500'];
+    const url = `/api/market?metrics=${metrics.join(',')}&refresh=true`;
+    const res = await fetch(url);
+    if(res.ok){
+      const data = await res.json();
+      const r = data.results || {};
+      // Update M with fresh values where available
+      if(r.btc_price?.value) M.btcPrice = r.btc_price.value;
+      if(r.eth_price?.value) M.ethPrice = r.eth_price.value;
+      if(r.vix?.value) M.vix = r.vix.value;
+      if(r.fear_greed?.value) M.fearGreed = r.fear_greed.value;
+      if(r.gilt_10y?.value) M.gilt10y = r.gilt_10y.value;
+      if(r.gilt_2y?.value) M.gilt2y = r.gilt_2y.value;
+      if(r.brent?.value) M.brent = r.brent.value;
+      if(r.gold?.value) M.gold = r.gold.value;
+      if(r.dxy?.value) M.dxy = r.dxy.value;
+      if(r.gbpusd?.value) M.gbpusd = r.gbpusd.value;
+      if(r.ig_oas?.value) M.igOAS = r.ig_oas.value;
+      if(r.hy_oas?.value) M.hyOAS = r.hy_oas.value;
+      // Re-compute MKTENG with fresh data
+      Object.assign(MKTENG, {
+        regime: computeRegimeState(M),
+        stress: computeCrossAssetStressState(M),
+        btcCycle: computeBTCCycleState(M),
+        creditStress: computeCreditStressState(M, CREDIT_TL),
+        fxRegime: computeFXRegimeState(M),
+        commodityShock: computeCommodityShockState(M),
+        inflationShock: computeInflationShockState(M),
+      });
+      setLiveM({...M});
+      setLastRefresh(new Date());
+    }
+  } catch(e) { /* silently fail, keep static data */ }
+  setRefreshing(false);
+};
 
 return(
 <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
@@ -1418,6 +1472,18 @@ return(
       <div style={{fontSize:9,color:P.t3,fontWeight:600,letterSpacing:0.8}}>
         SECTION {TABS.find(t=>t.id===tab)?.s} · TAB {tab}
       </div>
+      {/* Live data refresh */}
+      <button onClick={refreshMarketData} disabled={refreshing} style={{
+        display:'flex',alignItems:'center',gap:5,
+        background:refreshing?'rgba(7,46,51,0.55)':`${P.cyan}18`,border:`1px solid ${refreshing?P.b2:P.cyan+'35'}`,borderRadius:8,
+        padding:"5px 12px",color:refreshing?P.t3:P.cyan,cursor:refreshing?'not-allowed':'pointer',fontSize:10,fontWeight:700,
+        backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',transition:'all 0.15s',letterSpacing:0.5,
+      }}>
+        <span style={{display:'inline-block',animation:refreshing?'spin 1s linear infinite':'none'}}>↺</span>
+        {refreshing?'Refreshing...':'Refresh Data'}
+      </button>
+      {lastRefresh && <div style={{fontSize:8,color:P.t4,letterSpacing:0.5}}>Updated {lastRefresh.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>}
+      {ctxMKTENG && Object.values(ctxMKTENG).some(v=>v!=null) && <div style={{display:'flex',alignItems:'center',gap:3,fontSize:8,color:P.positive,fontWeight:600,letterSpacing:0.5}}><div style={{width:5,height:5,borderRadius:'50%',background:P.positive,boxShadow:`0 0 6px ${P.positive}60`}}/>LIVE</div>}
       {/* Quick-jump pills */}
       <div style={{marginLeft:"auto",display:"flex",gap:5}}>
         {["P1","P4","P9","P16"].map(q=>(
