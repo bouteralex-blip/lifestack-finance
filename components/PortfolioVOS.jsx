@@ -4777,6 +4777,32 @@ const T17 = () => {
 const T18 = ({ ENGINE, MKTENG, AGENT }) => {
   const [view, setView] = useState('overview');
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const [agentSettings, setAgentSettings] = useState({});
+  const [editingAgent, setEditingAgent] = useState(null);
+
+  // Agent configurable parameters — users can adjust thresholds and inputs
+  const defaultConfigs = {
+    concentration: { maxHHI: 0.15, topNLimit: 5, clutterThreshold: 0.01 },
+    driftMonitor: { driftThreshold: 5, rebalanceBand: 3, urgencyWeight: 0.7 },
+    drawdown: { maxDrawdown: 15, recoveryWindow: 90, alertThreshold: 10 },
+    riskBudget: { maxVol: 12, targetSharpe: 0.8, maxBeta: 1.2 },
+    cryptoRebalance: { btcTarget: 60, ethTarget: 25, altTarget: 15, rebalanceBand: 5 },
+    altcoinRiskCap: { maxAltcoinPct: 5, hardCap: true, reviewCycleDays: 30 },
+    regime: { recessionThreshold: 40, inflationTarget: 2.5, confidenceMin: 60 },
+    stress: { elevatedThreshold: 40, crisisThreshold: 70, contagionWeight: 0.3 },
+    btcCycle: { accumulationMVRV: 1.0, distributionMVRV: 3.0, fearThreshold: 25 },
+    triggerAlerts: { vixSpike: 30, driftAlert: 5, drawdownAlert: 10, isaDeadlineDays: 30 },
+    deadlines: { isaDeadline: '2026-04-05', pensionReview: '2026-06-30', taxReturn: '2026-01-31' },
+    morningCommand: { priorityCount: 5, includeMarket: true, includeCrypto: true },
+  };
+
+  const getConfig = (agentId) => agentSettings[agentId] || defaultConfigs[agentId] || {};
+  const updateConfig = (agentId, key, value) => {
+    setAgentSettings(prev => ({
+      ...prev,
+      [agentId]: { ...(prev[agentId] || defaultConfigs[agentId] || {}), [key]: value }
+    }));
+  };
 
   const engineAgents = [
     { id: 'concentration', name: 'Concentration Engine', category: 'Portfolio', source: ENGINE, key: 'concentration', trigger: 'Daily', desc: 'HHI, position limits, clutter detection' },
@@ -4867,6 +4893,7 @@ const T18 = ({ ENGINE, MKTENG, AGENT }) => {
     { id: 'agents', label: 'Decision Agents' },
     { id: 'workflows', label: 'Automated Workflows' },
     { id: 'output', label: 'Agent Output Inspector' },
+    { id: 'settings', label: 'Agent Settings' },
   ];
 
   const filteredAgents = view === 'engines' ? engineAgents : view === 'market' ? marketAgents : view === 'agents' ? decisionAgents : allAgents;
@@ -4874,22 +4901,62 @@ const T18 = ({ ENGINE, MKTENG, AGENT }) => {
   const AgentCard = ({ agent }) => {
     const status = getStatus(agent);
     const isSelected = selectedAgent?.id === agent.id;
+    const data = agent.source?.[agent.key];
+    const hasConfig = !!defaultConfigs[agent.id];
+    const config = getConfig(agent.id);
+
+    // Extract key metrics from agent output for quick-glance drill-down
+    const getQuickMetrics = () => {
+      if (!data || data.error) return [];
+      const metrics = [];
+      if (data.compositeScore !== undefined) metrics.push({ l: 'Score', v: `${Number(data.compositeScore).toFixed(0)}/100`, c: data.compositeScore > 60 ? '#ef4444' : data.compositeScore > 30 ? '#f59e0b' : '#22c55e' });
+      if (data.phase) metrics.push({ l: 'Phase', v: data.phase, c: '#0F969C' });
+      if (data.regime) metrics.push({ l: 'Regime', v: data.regime, c: '#6DA5C0' });
+      if (data.riskScore !== undefined) metrics.push({ l: 'Risk', v: `${Number(data.riskScore).toFixed(0)}/100`, c: data.riskScore > 60 ? '#ef4444' : '#22c55e' });
+      if (data.confidence !== undefined) metrics.push({ l: 'Conf', v: `${Number(data.confidence).toFixed(0)}%`, c: '#0F969C' });
+      if (data.bias !== undefined) metrics.push({ l: 'Bias', v: `${data.bias}/5`, c: data.bias >= 3 ? '#22c55e' : '#f59e0b' });
+      if (data.healthScore !== undefined) metrics.push({ l: 'Health', v: `${Number(data.healthScore).toFixed(0)}/100`, c: data.healthScore > 60 ? '#22c55e' : '#ef4444' });
+      if (data.alerts?.length) metrics.push({ l: 'Alerts', v: data.alerts.length.toString(), c: '#ef4444' });
+      if (data.topAction) metrics.push({ l: 'Action', v: typeof data.topAction === 'string' ? data.topAction.slice(0, 20) : '1 pending', c: '#0F969C' });
+      return metrics.slice(0, 4);
+    };
+
     return (
       <div onClick={() => setSelectedAgent(isSelected ? null : agent)} style={{ ...GS, borderRadius: 12, padding: '12px 16px', cursor: 'pointer', border: isSelected ? '1px solid rgba(15,150,156,0.5)' : '1px solid rgba(255,255,255,0.06)', transition: 'all 0.2s' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: P.t1 }}>{agent.name}</span>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {hasConfig && <span onClick={(e) => { e.stopPropagation(); setEditingAgent(agent.id); setView('settings'); }} style={{ fontSize: 8, padding: '2px 5px', borderRadius: 4, background: 'rgba(109,165,192,0.15)', color: '#6DA5C0', cursor: 'pointer', border: '1px solid rgba(109,165,192,0.25)' }}>SETTINGS</span>}
             <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(15,150,156,0.15)', color: P.teal }}>{agent.trigger}</span>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: status.color, display: 'inline-block' }}/>
           </div>
         </div>
         <div style={{ fontSize: 10, color: P.t3, marginBottom: 4 }}>{agent.desc}</div>
+
+        {/* Quick metrics drill-down */}
+        {getQuickMetrics().length > 0 && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+            {getQuickMetrics().map((m, i) => (
+              <div key={i} style={{ padding: '2px 7px', borderRadius: 4, background: `${m.c}18`, border: `1px solid ${m.c}30`, fontSize: 9 }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: 3 }}>{m.l}:</span>
+                <span style={{ color: m.c, fontWeight: 700 }}>{m.v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div style={{ fontSize: 9, color: 'rgba(232,244,245,0.3)' }}>Output: {getOutputPreview(agent)}</div>
-        {isSelected && agent.source?.[agent.key] && !agent.source[agent.key].error && (
-          <div style={{ marginTop: 10, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 8, maxHeight: 200, overflow: 'auto' }}>
+
+        {isSelected && data && !data.error && (
+          <div style={{ marginTop: 10, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 8, maxHeight: 300, overflow: 'auto' }}>
             <div style={{ fontSize: 10, color: P.teal, marginBottom: 6, fontWeight: 600 }}>Live Output Inspector</div>
+            {/* Structured output view for common patterns */}
+            {data.narrative && <div style={{ fontSize: 10, color: P.t2, marginBottom: 8, padding: '6px 8px', background: 'rgba(15,150,156,0.08)', borderRadius: 6, borderLeft: '3px solid rgba(15,150,156,0.4)', lineHeight: 1.5 }}>{data.narrative}</div>}
+            {data.alerts?.length > 0 && <div style={{ marginBottom: 8 }}>{data.alerts.slice(0, 3).map((a, i) => (
+              <div key={i} style={{ fontSize: 9, color: '#f59e0b', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{typeof a === 'string' ? a : a.message || a.alert || JSON.stringify(a)}</div>
+            ))}</div>}
             <pre style={{ fontSize: 9, color: P.t3, whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>
-              {JSON.stringify(agent.source[agent.key], null, 2).slice(0, 2000)}
+              {JSON.stringify(data, null, 2).slice(0, 2000)}
             </pre>
           </div>
         )}
@@ -5025,6 +5092,105 @@ const T18 = ({ ENGINE, MKTENG, AGENT }) => {
     {(view === 'engines' || view === 'market' || view === 'agents' || view === 'overview') && view !== 'overview' && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
         {filteredAgents.map(a => <AgentCard key={a.id} agent={a}/>)}
+      </div>
+    )}
+
+    {/* Agent Settings — editable configuration panel */}
+    {view === 'settings' && (
+      <div>
+        <PanelShell style={{ padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: P.t1, marginBottom: 4 }}>Agent Configuration</div>
+          <div style={{ fontSize: 10, color: P.t3, marginBottom: 16 }}>Adjust thresholds, inputs, and parameters for each agent. Changes take effect on the next orchestration run.</div>
+
+          {/* Agent selector */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            {Object.keys(defaultConfigs).map(id => {
+              const agent = allAgents.find(a => a.id === id);
+              return agent ? (
+                <div key={id} onClick={() => setEditingAgent(id)}
+                  style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, fontWeight: 600, cursor: 'pointer',
+                    background: editingAgent === id ? 'rgba(15,150,156,0.25)' : 'rgba(255,255,255,0.04)',
+                    color: editingAgent === id ? P.teal : P.t3,
+                    border: `1px solid ${editingAgent === id ? 'rgba(15,150,156,0.4)' : 'rgba(255,255,255,0.06)'}` }}>
+                  {agent.name}
+                </div>
+              ) : null;
+            })}
+          </div>
+        </PanelShell>
+
+        {/* Editing panel */}
+        {editingAgent && defaultConfigs[editingAgent] && (
+          <PanelShell style={{ padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: P.t1 }}>{allAgents.find(a => a.id === editingAgent)?.name || editingAgent}</div>
+                <div style={{ fontSize: 10, color: P.t3 }}>{allAgents.find(a => a.id === editingAgent)?.desc}</div>
+              </div>
+              <div onClick={() => { setAgentSettings(prev => { const next = { ...prev }; delete next[editingAgent]; return next; }); }}
+                style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.12)', color: '#ef4444', cursor: 'pointer', border: '1px solid rgba(239,68,68,0.25)' }}>
+                Reset to Defaults
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+              {Object.entries(defaultConfigs[editingAgent]).map(([key, defaultVal]) => {
+                const currentVal = getConfig(editingAgent)[key] ?? defaultVal;
+                const isNumber = typeof defaultVal === 'number';
+                const isBool = typeof defaultVal === 'boolean';
+                return (
+                  <div key={key} style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontSize: 10, color: P.t3, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6, textTransform: 'uppercase' }}>{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                    {isBool ? (
+                      <div onClick={() => updateConfig(editingAgent, key, !currentVal)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <div style={{ width: 36, height: 20, borderRadius: 10, background: currentVal ? 'rgba(15,150,156,0.4)' : 'rgba(255,255,255,0.1)', border: `1px solid ${currentVal ? 'rgba(15,150,156,0.6)' : 'rgba(255,255,255,0.15)'}`, position: 'relative', transition: 'all 0.2s' }}>
+                          <div style={{ width: 14, height: 14, borderRadius: '50%', background: currentVal ? P.teal : P.t3, position: 'absolute', top: 2, left: currentVal ? 19 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}/>
+                        </div>
+                        <span style={{ fontSize: 12, color: P.t1, fontWeight: 600 }}>{currentVal ? 'ON' : 'OFF'}</span>
+                      </div>
+                    ) : isNumber ? (
+                      <div>
+                        <input type="range" min={Math.floor(defaultVal * 0.2)} max={Math.ceil(defaultVal * 3)} step={defaultVal >= 10 ? 1 : 0.1}
+                          value={currentVal} onChange={(e) => updateConfig(editingAgent, key, parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: P.teal, height: 4, cursor: 'pointer' }}/>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                          <span style={{ fontSize: 18, fontWeight: 700, color: P.teal, fontFamily: 'monospace' }}>{typeof currentVal === 'number' ? (currentVal % 1 === 0 ? currentVal : currentVal.toFixed(1)) : currentVal}</span>
+                          <span style={{ fontSize: 9, color: 'rgba(232,244,245,0.3)' }}>default: {defaultVal}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <input type="text" value={currentVal} onChange={(e) => updateConfig(editingAgent, key, e.target.value)}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(15,150,156,0.2)', borderRadius: 6, padding: '6px 10px', color: P.t1, fontSize: 12, fontFamily: 'monospace', outline: 'none' }}/>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Show current engine output alongside config */}
+            {(() => {
+              const agent = allAgents.find(a => a.id === editingAgent);
+              const data = agent?.source?.[agent?.key];
+              if (!data || data.error) return null;
+              return (
+                <div style={{ marginTop: 16, padding: 12, background: 'rgba(0,0,0,0.2)', borderRadius: 10, border: '1px solid rgba(15,150,156,0.1)' }}>
+                  <div style={{ fontSize: 10, color: P.teal, fontWeight: 600, marginBottom: 8 }}>Current Output Preview</div>
+                  {data.narrative && <div style={{ fontSize: 10, color: P.t2, marginBottom: 8, padding: '6px 8px', background: 'rgba(15,150,156,0.06)', borderRadius: 6, borderLeft: '3px solid rgba(15,150,156,0.3)', lineHeight: 1.5 }}>{data.narrative}</div>}
+                  <pre style={{ fontSize: 9, color: P.t3, whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0, maxHeight: 150, overflow: 'auto' }}>
+                    {JSON.stringify(data, null, 2).slice(0, 1500)}
+                  </pre>
+                </div>
+              );
+            })()}
+          </PanelShell>
+        )}
+
+        {!editingAgent && (
+          <PanelShell style={{ padding: 30, textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: P.t3 }}>Select an agent above to configure its parameters</div>
+          </PanelShell>
+        )}
       </div>
     )}
 
