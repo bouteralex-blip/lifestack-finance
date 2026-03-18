@@ -1,7 +1,27 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, ScatterChart, Scatter, PieChart, Pie, Legend } from "recharts";
 import { Globe, TrendingUp, AlertTriangle, Activity, BarChart3, Zap, DollarSign, Shield, Target, Radio, Layers, Box, Cpu, Building2, Landmark, CircleDot, FileText, Briefcase, Factory, Flame, Map, Users, Gem, ChevronRight, ChevronDown } from "lucide-react";
+import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState, computeBTCDominanceState } from '../lib/engines/market/index.js';
+import {
+  computeCentralBankState,
+  computeInflationShockState,
+  computeLiquidityDivergenceState,
+  computeNarrativePulseState,
+  computePolicySurpriseState,
+  computeFactorRotationState,
+  computeEarningsRevisionState,
+  computeCFTCPositioningState,
+  computeCorrelationDriftState,
+  computeGapRiskState,
+  computeCommodityShockState,
+  computeFXRegimeState,
+  computeCryptoETFFlowState,
+  computeCryptoFundingState,
+  computeStablecoinLiquidityState,
+  computeCryptoSentimentState,
+  computeOnChainStressBoard,
+} from '../lib/engines/market/index.js';
 
 // =========================================================================
 // LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
@@ -127,7 +147,7 @@ const YIELD_CURVE=[{t:"3M",us:4.35,uk:3.72},{t:"6M",us:4.28,uk:3.68},{t:"1Y",us:
 
 const REGION_RET=[{r:"MSCI Europe",v:36.25,y:11,c:T.violet},{r:"MSCI EM",v:33.57,y:9.2,c:T.teal},{r:"Nikkei",v:25.05,y:5.8,c:T.cyan},{r:"FTSE 100",v:19,y:3.2,c:T.blue},{r:"MSCI World",v:19.7,y:3.0,c:T.neutral},{r:"S&P 500",v:18,y:-0.01,c:T.amber},{r:"FTSE 250",v:12,y:1.5,c:T.coral}];
 
-const SECTOR=[{s:"Semis (SMH)",v:70,c:T.teal},{s:"Comm Svcs",v:33.6,c:T.violet},{s:"Info Tech",v:24,c:T.blue},{s:"Industrials",v:19.4,c:T.cyan},{s:"Financials",v:15,c:T.amber},{s:"Healthcare",v:14.6,c:T.positive},{s:"Energy",v:8.7,c:T.coral},{s:"Software (IGV)",v:-30,c:T.negative}];
+const SECTOR=[{s:"Semis (SMH)",v:70,y:12,c:T.teal},{s:"Comm Svcs",v:33.6,y:5.2,c:T.violet},{s:"Info Tech",v:24,y:-2.1,c:T.blue},{s:"Industrials",v:19.4,y:3.8,c:T.cyan},{s:"Financials",v:15,y:4.1,c:T.amber},{s:"Healthcare",v:14.6,y:2.9,c:T.positive},{s:"Energy",v:8.7,y:1.5,c:T.coral},{s:"Software (IGV)",v:-30,y:-14,c:T.negative}];
 
 const FACTORS=[{f:"Enhanced Value",r:39.4,y:7.8,st:"Leading"},{f:"Value",r:23.5,y:7.8,st:"Leading"},{f:"Momentum",r:20.1,y:3.4,st:"Neutral"},{f:"Small Cap",r:20.4,y:5.6,st:"Improving"},{f:"Quality",r:16.9,y:0,st:"Lagging"},{f:"Growth",r:19.3,y:-1.9,st:"Lagging"}];
 
@@ -271,11 +291,31 @@ const KPI=({label,value,delta,dt="up",sub,ac})=>{
 };
 
 // Section header — 24px luxury title matching PortfolioVOS
-const Hd=({t,s,tag,ac=P.cyan})=>(
+// ── FreshnessChip — Phase 1 Truth Layer: shows data source state ──
+const FreshnessChip = ({level='static', label}) => {
+  const config = {
+    live:     { dot: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
+    stale:    { dot: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#fbbf24' },
+    fallback: { dot: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#f87171' },
+    static:   { dot: '#6DA5C0', bg: 'rgba(109,165,192,0.12)', border: 'rgba(109,165,192,0.25)', text: '#6DA5C0' },
+  };
+  const s = config[level] || config.static;
+  return (
+    <div style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:6,
+      background:s.bg,border:`1px solid ${s.border}`,fontSize:9,fontWeight:600,letterSpacing:0.3,
+      color:s.text,userSelect:'none',flexShrink:0}}>
+      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,boxShadow:`0 0 6px ${s.dot}60`}}/>
+      {label || (level === 'static' ? `Static (${M.date})` : level)}
+    </div>
+  );
+};
+
+const Hd=({t,s,tag,ac=P.cyan,showFreshness=false})=>(
   <div style={{marginBottom:18,marginTop:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
       <h2 style={{fontSize:24,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
       {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
+      {showFreshness&&<FreshnessChip level="static"/>}
     </div>
     {s&&<p style={{fontSize:12,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -456,12 +496,12 @@ const MatStat=({label,value,sub,mat="teal",icon})=>(
 // P1 — GLOBAL MACRO REGIME DASHBOARD (Upgrades: #1 GMD, #6 MacroMicro MOVE, #14 Liquidity Divergence)
 // =========================================================================
 const P1=()=>(<div>
-<Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE"/>
+<Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE" showFreshness/>
 
 {/* Regime hero — MAT tile */}
 <Row style={{marginBottom:0}}>
-  <MatStat label="Macro Regime" value={M.regime} sub={`${M.regimeConf}% confidence`} mat="amber"/>
-  <MatStat label="S&P 500" value={M.sp500.toLocaleString()} sub={`PE ${M.sp500PE}x · CAPE ${M.sp500CAPE}x`} mat="dark"/>
+  <MatStat label="Macro Regime" value={MKTENG.regime?.regime||M.regime} sub={`${MKTENG.regime?.confidence||M.regimeConf}% confidence · ${MKTENG.regime?.riskPosture||'Defensive'}`} mat="amber"/>
+  <MatStat label="Stress Score" value={MKTENG.stress?`${MKTENG.stress.compositeScore}/100`:M.vix.toFixed(0)} sub={`${MKTENG.stress?.compositeLevel||'ELEVATED'} · ${MKTENG.stress?.elevatedAssets||0} stressed assets`} mat={MKTENG.stress?.compositeScore>50?"red":"dark"}/>
   <MatStat label="Gold" value={`$${M.gold.toLocaleString()}`} sub="+80% 12M · HALO trade" mat="teal"/>
   <MatStat label="Brent Crude" value={`$${M.brent}`} sub="Iran shock · +22% 12M" mat="red"/>
 </Row>
@@ -509,10 +549,10 @@ const P1=()=>(<div>
 // P2 — LIQUIDITY, RATES & CREDIT (Upgrade #6: MOVE from MacroMicro)
 // =========================================================================
 const P2=()=>(<div>
-<Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS"/>
+<Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS" showFreshness/>
 
 <Row style={{marginBottom:0}}>
-  <MatStat label="HY OAS" value={`${M.hyOAS}bp`} sub="Watching 400bp threshold" mat="amber"/>
+  <MatStat label="Credit Stress" value={MKTENG.creditStress?`${MKTENG.creditStress.compositeScore.toFixed(0)}/100`:M.hyOAS+'bp'} sub={`${MKTENG.creditStress?.compositeLevel||'NORMAL'} · HY ${M.hyOAS}bp · Trend: ${MKTENG.creditStress?.trend||'stable'}`} mat={MKTENG.creditStress?.compositeScore>50?"red":"amber"}/>
   <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol elevated · Crisis level" mat="red"/>
   <MatStat label="Best 1Y Fix" value={`${M.bestSave}%`} sub="Cash competitive vs equities" mat="teal"/>
   <MatStat label="STLFSI" value={M.stlfsi.toFixed(1)} sub="Mild financial stress index" mat="dark"/>
@@ -555,7 +595,7 @@ const P2=()=>(<div>
 // P3 — NEWS, NARRATIVE & POLICY (Upgrades: #4 StockGeist, #5 Octagon AI, #16 Media-vs-Flow)
 // =========================================================================
 const P3=()=>(<div>
-<Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR"/>
+<Hd t="BREAKING NEWS, NARRATIVE PULSE & POLICY SHOCK" s="Top stories, sentiment divergence, policy shocks, earnings tracking" tag="NARRATIVE RADAR" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Top Risk" value="Iran Shock" sub="Gilt +40bp · BoE cut <20% prob" mat="red"/>
   <MatStat label="Value Rotation" value="99.8th pct" sub="+7.8% YTD vs Growth -1.9%" mat="amber"/>
@@ -589,7 +629,7 @@ const P3=()=>(<div>
 // P4 — EQUITIES, SECTORS & FACTORS (minor upgrades, already built in v1)
 // =========================================================================
 const P4=()=>(<div>
-<Hd t="GLOBAL EQUITIES, SECTORS & FACTORS" s="Regional returns, sector leadership, factor rotation, JPM REI suite" tag="EQUITY INTELLIGENCE"/>
+<Hd t="GLOBAL EQUITIES, SECTORS & FACTORS" s="Regional returns, sector leadership, factor rotation, JPM REI suite" tag="EQUITY INTELLIGENCE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="MSCI Europe 12M" value="+36.3%" sub="Value + defence rotation" mat="teal"/>
   <MatStat label="MSCI EM 12M" value="+33.6%" sub="USD weakness tailwind" mat="indigo"/>
@@ -629,7 +669,7 @@ const P4=()=>(<div>
 // P5 — BONDS, DURATION & FIXED INCOME
 // =========================================================================
 const P5=()=>(<div>
-<Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX"/>
+<Hd t="SOVEREIGN BONDS, DURATION & FIXED INCOME" s="Curves, duration returns, breakevens, term premium, infra debt" tag="RATES COMPLEX" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Gilt 10Y" value="4.62%" sub="+40bp weekly · mini-budget level" mat="red"/>
   <MatStat label="Duration Status" value="DANGEROUS" sub="Avoid adding long gilts/TLT" mat="amber"/>
@@ -656,7 +696,7 @@ const P5=()=>(<div>
 // P6 — FX, EM & FRONTIER (Upgrade #1: GMD for EM macro)
 // =========================================================================
 const P6=()=>(<div>
-<Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM"/>
+<Hd t="FX, EM & FRONTIER MARKETS" s="GBP base board, EM carry, ZAR module, China impulse, political risk" tag="CURRENCY & EM" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="DXY Index" value={M.dxy.toString()} sub="-10% from 110 · multi-year low" mat="teal"/>
   <MatStat label="GBP/USD" value={M.gbpusd.toFixed(3)} sub="+3.8% YoY · USD weakness" mat="indigo"/>
@@ -680,7 +720,7 @@ const P6=()=>(<div>
 // P7 — COMMODITIES & REAL ASSETS (Upgrade #13: CarbonCredits.com uranium)
 // =========================================================================
 const P7=()=>(<div>
-<Hd t="COMMODITIES & REAL ASSETS" s="Commodity leadership, gold, copper, energy, uranium, carbon, listed real assets" tag="REAL ASSETS"/>
+<Hd t="COMMODITIES & REAL ASSETS" s="Commodity leadership, gold, copper, energy, uranium, carbon, listed real assets" tag="REAL ASSETS" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Gold" value="$5,280" sub="+80% 12M · ATH · HALO trade" mat="amber"/>
   <MatStat label="Brent Crude" value="$93.04" sub="+22% 12M · Iran escalation" mat="red"/>
@@ -708,7 +748,7 @@ const P7=()=>(<div>
 // P8 — HOUSING & PROPERTY
 // =========================================================================
 const P8=()=>(<div>
-<Hd t="HOUSING, PROPERTY & REAL ESTATE" s="Affordability, mortgage rates, segment split, REITs" tag="PROPERTY"/>
+<Hd t="HOUSING, PROPERTY & REAL ESTATE" s="Affordability, mortgage rates, segment split, REITs" tag="PROPERTY" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Mortgage Rate 5Y" value="~4.5%+" sub="Rising on gilt surge · caution" mat="red"/>
   <MatStat label="UK HPI Forecast" value="+1.5–3.5%" sub="Gilt shock threatens recovery" mat="amber"/>
@@ -728,14 +768,14 @@ const P8=()=>(<div>
 // P9 — CRYPTO INTELLIGENCE (Upgrades: #12 Dune, #15 HODL Waves + Reserve Risk)
 // =========================================================================
 const P9=()=>(<div>
-<Hd t="CRYPTO INTELLIGENCE ENGINE" s="On-chain cycle state, ETF flows, derivatives, HODL Waves, Reserve Risk" tag="EXTREME FEAR"/>
+<Hd t="CRYPTO INTELLIGENCE ENGINE" s="On-chain cycle state, ETF flows, derivatives, HODL Waves, Reserve Risk" tag="EXTREME FEAR" showFreshness/>
 
 {/* Crypto hero MAT tiles */}
 <Row style={{marginBottom:0}}>
   <MatStat label="Bitcoin" value={`$${M.btcPrice.toLocaleString()}`} sub={`ATH $${M.btcATH.toLocaleString()} · DD ${M.btcDD}%`} mat="amber"/>
-  <MatStat label="Fear & Greed" value={M.fearGreed.toString()} sub="EXTREME FEAR · RSI 27.5" mat="red"/>
-  <MatStat label="MVRV Z-Score" value={M.mvrvZ.toFixed(2)} sub="Near undervalued zone" mat="teal"/>
-  <MatStat label="ETF Flows" value={M.etfFlow} sub="6-week outflow streak broken" mat="indigo"/>
+  <MatStat label="Cycle Phase" value={MKTENG.btcCycle?.phase||'ACCUMULATION'} sub={`${MKTENG.btcCycle?.confidence||0}% conf · ${MKTENG.btcCycle?.posture||'DCA and hold'}`} mat={MKTENG.btcCycle?.bias>=2?"teal":"red"}/>
+  <MatStat label="On-Chain Health" value={MKTENG.cryptoOnChain?`${MKTENG.cryptoOnChain.healthScore}/100`:'—'} sub={`${MKTENG.cryptoOnChain?.healthLevel||'—'} · ${MKTENG.cryptoOnChain?.netPositioning||'—'}`} mat={MKTENG.cryptoOnChain?.healthScore>60?"teal":"amber"}/>
+  <MatStat label="Dominance" value={`${M.btcDom}%`} sub={MKTENG.btcDominance?.phase||'BTC SEASON'} mat="indigo"/>
 </Row>
 
 <Ins type="risk" text={`BTC -44% from ATH. ETH -60%. SOL -71%. Fear & Greed hit 10. Weekly RSI 27.5 — third time below 30 in history. Previous instances (Jan 2015, Dec 2018) preceded bull runs of 9,900% and 1,700%. Structural supply case extreme: exchange reserves ATL, illiquid supply 75%, whales accumulating $23B in 30 days.`}/>
@@ -782,7 +822,7 @@ const P9=()=>(<div>
 // P10 — FLOWS & POSITIONING
 // =========================================================================
 const P10=()=>(<div>
-<Hd t="CAPITAL FLOWS, POSITIONING & MARKET STRUCTURE" s="ETF flows, CFTC positioning, retail vs institutional, cross-asset alignment" tag="FLOW INTELLIGENCE"/>
+<Hd t="CAPITAL FLOWS, POSITIONING & MARKET STRUCTURE" s="ETF flows, CFTC positioning, retail vs institutional, cross-asset alignment" tag="FLOW INTELLIGENCE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="EM Inflows Jan" value="$4B+" sub="Strongest since 2015 · rotation real" mat="teal"/>
   <MatStat label="BTC ETF 5 Mar" value="+$500M" sub="6-week outflow streak snapped" mat="amber"/>
@@ -802,7 +842,7 @@ const P10=()=>(<div>
 // P11 — VALUATION & FACTORS
 // =========================================================================
 const P11=()=>(<div>
-<Hd t="VALUATION, FACTORS & MARKET QUALITY" s="Regional valuations, ERP, factor scorecard, crypto valuation, infra multiples" tag="VALUATION DISCIPLINE"/>
+<Hd t="VALUATION, FACTORS & MARKET QUALITY" s="Regional valuations, ERP, factor scorecard, crypto valuation, infra multiples" tag="VALUATION DISCIPLINE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="S&P 500 CAPE" value="40x" sub="Dot-com levels · avoid adding" mat="red"/>
   <MatStat label="FTSE 250 PE" value="~13x" sub="25-year discount to large cap" mat="teal"/>
@@ -822,7 +862,7 @@ const P11=()=>(<div>
 // P12 — VOLATILITY & STRESS (Upgrades: #10 Riskfolio-Lib, #11 skfolio)
 // =========================================================================
 const P12=()=>(<div>
-<Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT"/>
+<Hd t="VOLATILITY, SENTIMENT & CROSS-ASSET STRESS" s="Vol regime, correlations, drawdown clustering, gap risk" tag="MARKET HEARTBEAT" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="VIX" value={M.vix.toFixed(1)} sub="+19% on 5 Mar · elevated vol" mat="red"/>
   <MatStat label="MOVE Index" value={M.move.toString()} sub="Rate vol · 118 = crisis territory" mat="amber"/>
@@ -874,7 +914,7 @@ const P12=()=>(<div>
 // P13 — ALPHA FRONTIER (Upgrade #17: space, synbio, tokenisation watchlist)
 // =========================================================================
 const P13=()=>(<div>
-<Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE"/>
+<Hd t="ALPHA FRONTIER, NASCENT THEMES & OPPORTUNITY RADAR" s="Emerging themes, narrative velocity, execution feasibility, failure modes" tag="VENTURE SLEEVE" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Top Theme" value="AI Power Grid" sub="9/10 conviction · utilities/infra" mat="teal"/>
   <MatStat label="Defence Tech" value="8/10" sub="Babcock +147% · priced in at index" mat="indigo"/>
@@ -907,7 +947,7 @@ const P13=()=>(<div>
 // P14 — SCENARIO LAB
 // =========================================================================
 const P14=()=>(<div>
-<Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING"/>
+<Hd t="SCENARIO LAB & ALLOCATION PLAYBOOKS" s="Base/bull/bear/crisis, portfolio sensitivity, triggers, deployment rules" tag="FORWARD-LOOKING" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Base Case" value="50%" sub="Late-cycle grind · 2 rate cuts" mat="indigo"/>
   <MatStat label="Bull Case" value="20%" sub="Iran de-escalation · 4 cuts · S&P 7,600" mat="teal"/>
@@ -960,7 +1000,7 @@ const P14=()=>(<div>
 // P15 — CASH & DEFENCE
 // =========================================================================
 const P15=()=>(<div>
-<Hd t="CASH, DEFENCE & DEPLOYMENT STRATEGY" s="Cash ladder, real yield, buffer, drag, defensive assets, dry powder rules" tag="CAPITAL PRESERVATION"/>
+<Hd t="CASH, DEFENCE & DEPLOYMENT STRATEGY" s="Cash ladder, real yield, buffer, drag, defensive assets, dry powder rules" tag="CAPITAL PRESERVATION" showFreshness/>
 <Row style={{marginBottom:0}}>
   <MatStat label="Liquid Cash" value="£16.3K" sub="Monzo + other · 2.7 months buffer" mat="amber"/>
   <MatStat label="Fixed Deposit" value="£45.8K" sub="At 5% locked · competitive return" mat="teal"/>
@@ -990,58 +1030,109 @@ const P15=()=>(<div>
 // =========================================================================
 // P16 — WEEKLY SYNTHESIS (enhanced from v1)
 // =========================================================================
-const P16=()=>(<div>
-<Hd t="WEEKLY INTELLIGENCE SYNTHESIS" s={`Week of ${M.date}`} tag="SUNDAY SCARIES"/>
+const P16=()=>{
+const reg = MKTENG.regime;
+const stress = MKTENG.stress;
+const btc = MKTENG.btcCycle;
+const yc = MKTENG.yieldCurve;
+const credit = MKTENG.creditStress;
+const sl = MKTENG.sectorLeadership;
+const ef = MKTENG.etfFlows;
+const co = MKTENG.cryptoOnChain;
+const stressColor = stress?.compositeScore > 60 ? "red" : stress?.compositeScore > 30 ? "amber" : "teal";
+return (<div>
+<Hd t="WEEKLY INTELLIGENCE SYNTHESIS" s={`Week of ${M.date}`} tag="ENGINE-DRIVEN" showFreshness/>
 
-{/* Action hero MAT tiles */}
+{/* Hero tiles — engine-driven regime + stress + BTC cycle */}
 <Row style={{marginBottom:0}}>
-  <MatStat label="🎯 #1 Action" value="Deploy ISA £20K" sub="5 April deadline · 29 days" mat="teal"/>
-  <MatStat label="💳 #2 Action" value="Clear Amex" sub="£10,652 at 22% APR guaranteed" mat="red"/>
-  <MatStat label="₿ #3 Action" value="Continue DCA" sub="BTC extreme fear · MVRV 0.49" mat="amber"/>
-  <MatStat label="📊 Regime" value="LATE CYCLE" sub="Inflation scare · 68% conf" mat="indigo"/>
+  <MatStat label="Regime" value={reg?.regime || "LATE CYCLE"} sub={`${reg?.riskPosture || 'Cautious'} \u00B7 ${reg?.confidence || 68}% conf`} mat={reg?.riskPosture === 'Max Defensive' ? "red" : reg?.riskPosture === 'Defensive' ? "amber" : "indigo"}/>
+  <MatStat label="Market Stress" value={`${stress?.compositeScore || 0}/100`} sub={`${stress?.compositeLevel || 'Normal'} \u00B7 ${stress?.topStressors?.[0]?.asset || 'VIX'} elevated`} mat={stressColor}/>
+  <MatStat label="BTC Cycle" value={btc?.phase || "ACCUMULATION"} sub={`${btc?.posture || ''} \u00B7 Bias ${btc?.bias || 0}/5`} mat={btc?.bias >= 3 ? "teal" : "amber"}/>
+  <MatStat label="Credit" value={credit?.compositeLevel || "Normal"} sub={`Score ${credit?.compositeScore || 0}/100 \u00B7 ${credit?.trend || 'Stable'}`} mat={credit?.compositeScore > 50 ? "red" : "indigo"}/>
 </Row>
 
-<Glass glow><PH title="FIVE KEY SHIFTS"/>
-{[{s:"Iran reprices the entire rate path",d:"Brent $93, gilt 40bp surge. BoE cut <20%. Stagflation risk rising.",c:T.coral},
-{s:"Value rotation at 99.8th percentile intensity",d:"Value +7.8% YTD vs Growth -1.9%. Structural, not noise.",c:T.amber},
-{s:"BTC ETF inflows resume after 6-week drought",d:"$500M on 5 March. Whale accumulation $23B in 30 days.",c:T.teal},
-{s:"SaaSpocalypse: $1-2T destroyed",d:"IGV -30%. Software PE 35x to 20x. AI agents disrupting SaaS.",c:T.coral},
-{s:"Gold $5,280 — HALO trade dominates",d:"Hard Assets, Low Obsolescence. Defence + miners + energy.",c:T.amber}
-].map((x,i)=>(<div key={i} style={{padding:"9px 12px",marginBottom:6,background:"rgba(7,46,51,0.45)",borderRadius:10,borderLeft:`3px solid ${x.c}`}}><div style={{fontSize:12,fontWeight:700,color:T.t1}}><span style={{color:x.c,fontFamily:"'JetBrains Mono',monospace"}}>{i+1}.</span> {x.s}</div><div style={{fontSize:10.5,color:T.t3,marginTop:2,paddingLeft:20}}>{x.d}</div></div>))}</Glass>
+{/* Engine-derived market context grid */}
+<Glass glow><PH title="MARKET REGIME DASHBOARD"/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))",gap:8}}>
+{[
+  {l:"Yield Curve",v:yc?.shape || "NORMAL",c:yc?.shape==='INVERTED'?T.coral:T.teal},
+  {l:"Steepness",v:yc?.steepnessScore ? `${yc.steepnessScore.toFixed(1)}/10` : '\u2014',c:T.t2},
+  {l:"Duration Bias",v:yc?.durationBias || '\u2014',c:T.amber},
+  {l:"Sector Breadth",v:sl?.marketBreadth || '\u2014',c:T.t2},
+  {l:"Rotation",v:sl?.rotationSignal || '\u2014',c:sl?.rotationSignal==='EXTREME'?T.coral:T.t2},
+  {l:"ETF Flows",v:ef?.overallSignal || '\u2014',c:T.t2},
+  {l:"BTC Dominance",v:MKTENG.btcDominance?.phase || '\u2014',c:T.btc},
+  {l:"On-Chain Health",v:co?.healthLevel || '\u2014',c:co?.healthScore>60?T.teal:T.amber},
+  {l:"Contagion",v:stress?.contagionRisk || 'LOW',c:stress?.contagionRisk==='HIGH'?T.coral:T.t2},
+].map((m,i)=>(<div key={i} style={{padding:"8px 10px",background:"rgba(7,46,51,0.45)",borderRadius:8}}>
+  <div style={{fontSize:9,color:T.t4,fontWeight:700,letterSpacing:0.5}}>{m.l}</div>
+  <div style={{fontSize:13,color:m.c,fontWeight:700,marginTop:2}}>{m.v}</div>
+</div>))}
+</div></Glass>
+
+{/* Stress Asset Breakdown — from engine */}
+{stress?.topStressors?.length > 0 && (
+<Glass><PH title="CROSS-ASSET STRESS BREAKDOWN" ac={P.s4}/>
+{stress.topStressors.slice(0,6).map((s,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:`1px solid ${T.grid}`}}>
+  <span style={{fontSize:11,color:T.t2}}>{s.asset}</span>
+  <div style={{display:"flex",alignItems:"center",gap:8}}>
+    <div style={{width:80,height:6,borderRadius:3,background:"rgba(7,46,51,0.45)",overflow:"hidden"}}><div style={{width:`${Math.min(s.score,100)}%`,height:"100%",borderRadius:3,background:s.score>60?T.coral:s.score>30?T.amber:T.teal}}/></div>
+    <span style={{fontSize:11,fontWeight:700,color:s.score>60?T.coral:s.score>30?T.amber:T.teal,minWidth:30,textAlign:"right"}}>{s.score?.toFixed(0)}</span>
+  </div>
+</div>))}</Glass>
+)}
 
 <Grid cols="1fr 1fr">
-<Glass><PH title="THREE RISING RISKS" ac={P.s4}/>
-{["Iran forces BoE halt — gilt crisis, mortgage spike, FTSE 250 exposed",
-"AI capex $660-690B with 90% of firms seeing no productivity impact. Bubble risk real.",
-"Crypto-equity correlation rising. Zero diversification benefit from 13% crypto weight."
-].map((r,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.coral,fontWeight:700}}>{i+1}.</span> {r}</div>))}</Glass>
-<Glass><PH title="THREE OPPORTUNITIES" ac={P.cyan}/>
-{["BTC accumulation at extreme fear — MVRV 0.49, RSI 27.5, whale buying confirms. Continue DCA.",
-"European equities + value rotation — JERE +22%, structural defence/bank/rotation tailwinds.",
-"ISA deployment: 29 days, \u00A30 deployed. 80-120bps structural alpha. Highest certainty action."
-].map((o,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.teal,fontWeight:700}}>{i+1}.</span> {o}</div>))}</Glass></Grid>
+<Glass><PH title="KEY RISKS" ac={P.s4}/>
+{[
+  stress?.compositeScore > 40 && `Market stress elevated at ${stress.compositeScore}/100. ${stress.compositeAction || 'Monitor risk exposure.'}`,
+  credit?.compositeScore > 30 && `Credit spreads ${credit.compositeLevel}. HY OAS at ${M.hyOAS || '?'}bps.`,
+  yc?.shape === 'INVERTED' && `Yield curve inverted \u2014 recession signal active. Duration: short.`,
+  reg?.regime === 'STAGFLATION' && `Stagflation regime \u2014 high inflation + low growth. Defensive posture.`,
+  co?.healthScore < 50 && `On-chain health deteriorating (${co.healthScore}/100). Risk-off crypto.`,
+].filter(Boolean).concat(["Crypto-equity correlation rising. Zero diversification benefit from 13% crypto weight."]).slice(0,3)
+.map((r,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.coral,fontWeight:700}}>{i+1}.</span> {r}</div>))}</Glass>
+<Glass><PH title="KEY OPPORTUNITIES" ac={P.cyan}/>
+{[
+  btc?.bias >= 2 && `BTC in ${btc.phase} \u2014 accumulation bias ${btc.bias}/5. ${btc.posture || 'Continue DCA.'}`,
+  sl?.leaders?.length > 0 && `Sector leadership: ${sl.leaders.slice(0,2).join(', ')}. Breadth ${sl.breadth12m || '?'}%.`,
+  ef?.opportunities?.length > 0 && `ETF flow opportunity: ${ef.opportunities[0]?.theme || 'Contrarian signal detected'}.`,
+  reg?.regime === 'GOLDILOCKS' && `Goldilocks regime \u2014 risk-on. Lean into equities.`,
+  co?.healthScore > 70 && `On-chain health strong (${co.healthScore}/100). Crypto allocation supported.`,
+].filter(Boolean).concat(["ISA deployment: 80-120bps structural alpha. Highest certainty action."]).slice(0,3)
+.map((o,i)=>(<div key={i} style={{fontSize:11,color:T.t2,padding:"4px 0",borderBottom:`1px solid ${T.grid}`,lineHeight:1.5}}><span style={{color:T.teal,fontWeight:700}}>{i+1}.</span> {o}</div>))}</Glass></Grid>
 
 <Glass><PH title="PORTFOLIO IMPLICATION BOARD" ac={P.cyan}/>
-<Tbl h={["Sleeve","Signal","Action"]} r={[
-["JURE (US)","Growth-to-value headwind. Mag 7 all underperforming.","Hold. Do not add."],
-["JERE (Europe)","Defence + banks + rotation. +22% 12M.","ADD via ISA"],
-["JMRE (EM)","EM +34%. $4B inflows Jan. Dollar weak.","ADD via ISA"],
+<Tbl h={["Sleeve","Engine Signal","Action"]} r={[
+["JURE (US)",`${reg?.regime || 'Late Cycle'} regime. ${sl?.leaders?.includes('Info Tech') ? 'Tech leading.' : 'Value rotation headwind.'}`,reg?.riskPosture==='Defensive'?"Trim":"Hold"],
+["JERE (Europe)",`Europe 12M: +${M.msciEurope12m || 36}%. ${sl?.rotationSignal || 'Rotation'} signal.`,"ADD via ISA"],
+["JMRE (EM)",`EM strong. Dollar ${M.dxy < 100 ? 'weak \u2014 EM tailwind' : 'strong \u2014 EM headwind'}.`,"ADD via ISA"],
 ["JUKC (UK)","FTSE value tilt helps. Gilt shock headwind.","Hold"],
-["BTC","F&G 18, RSI 27.5, whale accumulation extreme.","Continue DCA"],
-["ETH / SOL","ETH -60%, SOL -71%. BTC dom rising.","Do NOT add"],
-["Cash / FD","Best 1Y at 4.30%. Real yield ~0.8%.","Deploy ISA. Cash above 3-mo buffer is drag."],
-["Amex Debt","\u00A310.6K at 22% APR.","CLEAR — guaranteed 22% return"]
+["BTC",`${btc?.phase || 'Accumulation'}. F&G ${M.fng || '?'}. On-chain: ${co?.healthLevel || '?'}.`,btc?.bias>=2?"Continue DCA":"Hold"],
+["ETH / SOL",`BTC dominance ${MKTENG.btcDominance?.phase || '?'}. Alt risk elevated.`,MKTENG.btcDominance?.phase==='BTC SEASON'?"Do NOT add":"Monitor"],
+["Cash / FD",`Best 1Y at ${M.savings1Y || 4.30}%. Real yield ~${((M.savings1Y||4.30)-(M.cpi||3.2)).toFixed(1)}%.`,"Deploy ISA. Cash above 3-mo buffer is drag."],
+["Amex Debt",`\u00A3${(M.amexDebt||10652).toLocaleString()} at 22% APR.`,"CLEAR \u2014 guaranteed 22% return"]
 ]} hl={2}/></Glass>
 
 <Glass style={{borderTop:`2px solid ${T.teal}`}}><PH title="ACTION SUMMARY" ac={P.cyan}/>
 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(190px, 1fr))",gap:10}}>
-{[{l:"DO THIS WEEK",items:["Deploy ISA \u00A320K: JERE + JMRE","Continue BTC DCA","Review Amex paydown (\u00A310.6K)"],c:T.teal},
-{l:"WATCH CLOSELY",items:["BoE MPC 19 March","US CPI release","Gilt 10Y (5.0% = crisis)","BTC ETF daily flows"],c:T.amber},
+{[{l:"DO THIS WEEK",items:[
+  "Deploy ISA \u00A320K: JERE + JMRE",
+  btc?.bias>=2 ? "Continue BTC DCA" : "Hold BTC position",
+  "Review Amex paydown (\u00A310.6K)"
+],c:T.teal},
+{l:"WATCH CLOSELY",items:[
+  "BoE MPC 19 March",
+  `Stress score (currently ${stress?.compositeScore || 0}/100)`,
+  `Gilt 10Y (${yc?.shape === 'INVERTED' ? 'INVERTED \u2014 crisis' : 'Normal'})`,
+  "BTC ETF daily flows"
+],c:T.amber},
 {l:"IGNORE",items:["Daily crypto price noise","Mag 7 earnings chatter","Housing headlines","Short-term FX"],c:T.neutral}
 ].map((b,i)=>(<div key={i} style={{padding:"10px 12px",background:"rgba(7,46,51,0.45)",borderRadius:10,borderTop:`2px solid ${b.c}`}}>
 <div style={{fontSize:10,fontWeight:700,color:b.c,letterSpacing:0.8,marginBottom:6}}>{b.l}</div>
 {b.items.map((x,j)=>(<div key={j} style={{fontSize:11,color:T.t2,padding:"2px 0"}}>{"\u2022"} {x}</div>))}</div>))}</div></Glass>
 </div>);
+};
 
 // =========================================================================
 // CAREER TABS C1-C8 (Enhanced with Upgrade #2: World Bank PPI)
@@ -1158,6 +1249,39 @@ items={[
 {l:"Digital Build-Out",v:"Fibre + DC",n:"TeleGeography free data",c:T.blue},{l:"Circular Economy",v:"Less crowded",n:"Waste/water still infra-like",c:T.neutral},{l:"Resilience Infra",v:"Emerging",n:"Energy security becoming investable",c:T.cyan},{l:"BNEF Transition",v:"$2.3T (2025)",n:"Record global energy transition investment",c:T.teal}
 ]} sources={["IEA World Energy Investment (free)","IRENA (free)","ENTSO-E (free)","SEC EDGAR (hyperscaler 10-Q)","Lazard LCOE (free)","CarbonCredits.com (uranium, free)","BP/Energy Institute (free)"]}
 verdict="AI POWER + GRID = HIGHEST-CONVICTION STRUCTURAL THEME" imp={["All energy transition data sources are FREE: IEA, IRENA, ENTSO-E, Lazard, CarbonCredits.","Grid bottlenecks are the binding constraint on AI scaling — creates multi-year capex cycle.","Nuclear/SMR revival (uranium $78.50) is the underappreciated sub-theme within AI power."]} mon={["Hyperscaler Q1 capex","IEA quarterly report","Grid investment announcements","Battery cost trajectory"]}/>;
+
+// =========================================================================
+// PHASE 3: MARKET INTELLIGENCE — ENGINE-COMPUTED STATE
+// All engines run at module load on static M data; will run on live data in Phase 4
+// =========================================================================
+const MKTENG = {
+  regime: computeRegimeState(M),
+  stress: computeCrossAssetStressState(M),
+  btcCycle: computeBTCCycleState(M),
+  yieldCurve: computeYieldCurveState(YIELD_CURVE),
+  creditStress: computeCreditStressState(M, CREDIT_TL),
+  sectorLeadership: computeSectorLeadershipState(SECTOR),
+  etfFlows: computeETFFlowState(SENT_DIV, M),
+  cryptoOnChain: computeCryptoOnChainState(M),
+  btcDominance: computeBTCDominanceState(M),
+  centralBank: computeCentralBankState(M),
+  inflationShock: computeInflationShockState(M),
+  liquidityDivergence: computeLiquidityDivergenceState(M),
+  narrativePulse: computeNarrativePulseState(M),
+  policySurprise: computePolicySurpriseState(M),
+  factorRotation: computeFactorRotationState(M),
+  earningsRevision: computeEarningsRevisionState(M),
+  cftcPositioning: computeCFTCPositioningState(M),
+  correlationDrift: computeCorrelationDriftState(M),
+  gapRisk: computeGapRiskState(M),
+  commodityShock: computeCommodityShockState(M),
+  fxRegime: computeFXRegimeState(M),
+  cryptoETFFlows: computeCryptoETFFlowState(M),
+  cryptoFunding: computeCryptoFundingState(M),
+  stablecoinLiquidity: computeStablecoinLiquidityState(M),
+  cryptoSentiment: computeCryptoSentimentState(M),
+  onchainStress: computeOnChainStressBoard(M),
+};
 
 // =========================================================================
 // NAVIGATION & SHELL
