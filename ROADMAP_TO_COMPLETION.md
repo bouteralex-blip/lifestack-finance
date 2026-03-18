@@ -1,48 +1,51 @@
 # LifeStack Finance — Roadmap to 100% Scope Completion
 
-Date: 17 March 2026
+Date: 18 March 2026
 Basis: `Claude_Code_LifeStack_Implementation_Brief.md` + `LifeStack_repo_module_analysis_and_agent_workflows.md`
 
 ---
 
-## Current State: ~30-35% Complete
+## Current State: ~90% Complete
 
 ### What's merged to main (live on Vercel)
 - UI shell with 17 Finance tabs + 24 Market tabs
 - Supabase data hook with freshness tracking
 - Premium teal-navy glass design system
-- No computation engines, no live data, no agent layer
+- **25 portfolio engines** (lib/engines/) — all built and wired
+- **25 market intelligence engines** (lib/engines/market/) — all built and wired
+- **36 agent engines** (lib/engines/agents/) — all built and wired
+- **5 high-value strategic agents** (lib/agents/) — portfolio-advisor, alpha-scanner, risk-guardian, capital-deployment, cio-memo-writer
+- **4 infrastructure modules** (lib/agents/) — orchestrator, state-store, auto-refresh, triggers
+- Live market data API (FRED, CoinGecko, Yahoo Finance)
+- Portfolio API with holdings ingestion
+- Daily + weekly cron jobs (Vercel scheduled)
+- Supabase persistence layer with 2 migrations
+- 70 test files covering all engines and agents
+- `vercel.json` cron configuration (daily 7 AM UTC, weekly Monday 8 AM UTC)
+- PortfolioVOS.jsx + MarketsModule.jsx fully wired to engine outputs
 
-### What's built but unmerged (`claude/review-finance-agent-plan-andJc`)
-- Phase 1: Truth Layer (freshness, defaults)
-- Phase 2: 8 Finance engines
-- Phase 3: 8 Market intelligence engines
-- Phase 4: 7 Agent engines
-- Phase 5 Tiers 1-3: UI wiring, persistence, live market API, test suite (328 tests, 5 failing)
-- 2 Supabase migrations
-- Blocker: 5 test failures (mapRange overflow + Jest compatibility)
-
----
-
-## Step 0 — Merge Existing Work ⬅ IMMEDIATE
-
-1. Fix 5 failing tests:
-   - `mapRange()` overflow in `macro-regime.js` and `btc-cycle.js` → replace `clamp(mapRange(...), 0, 100)` with `scoreInBand()` that tapers to 0 past range
-   - `fail()` in `weekly-synthesis.test.js` → `throw new Error()`
-2. Verify all 328 tests pass
-3. Merge branch to main
-4. Apply Supabase migrations (001 + 002)
-5. Verify Vercel deployment with engines active
-
-**Result: Jumps from ~10% live to ~35% live**
+### What's been merged (no longer blocked)
+- Previous branch work cherry-picked and integrated
+- 5 known test failures fixed
+- Merge conflicts in PortfolioVOS.jsx resolved
 
 ---
 
-## Step 1 — Complete Crypto-Specific Workflows
+## Step 0 — Merge Existing Work ✅ COMPLETE
 
-Blueprint specifies 10 crypto workflows. Currently built: 2 (btc-cycle, crypto-onchain + btc-dominance).
+1. ~~Fix 5 failing tests~~ → Fixed
+2. ~~Verify tests pass~~ → Done
+3. ~~Merge branch to main~~ → Merged (PR #11, 28 commits, 179 files, 32,377 lines)
+4. ~~Apply Supabase migrations (001 + 002)~~ → Included
+5. ~~Verify Vercel deployment with engines active~~ → Build passing, deployed
 
-### Build (8 remaining):
+---
+
+## Step 1 — Complete Crypto-Specific Workflows ✅ COMPLETE
+
+Blueprint specifies 10 crypto workflows. **All 10 built.**
+
+### Built:
 | # | Workflow | File | Priority |
 |---|---------|------|----------|
 | 1 | ETF flow monitor (spot BTC/ETH ETF flows) | `lib/engines/market/crypto-etf-flows.js` | High |
@@ -63,9 +66,9 @@ Blueprint specifies 10 crypto workflows. Currently built: 2 (btc-cycle, crypto-o
 
 ---
 
-## Step 2 — Complete Market Intelligence Workflows
+## Step 2 — Complete Market Intelligence Workflows ✅ COMPLETE
 
-Blueprint specifies 20 market workflows. Currently built: 8. Remaining: 12.
+Blueprint specifies 20 market workflows. **All 25 built** (exceeded spec with additional engines).
 
 ### Build:
 | # | Workflow | File | Priority |
@@ -92,9 +95,9 @@ Blueprint specifies 20 market workflows. Currently built: 8. Remaining: 12.
 
 ---
 
-## Step 3 — Complete Portfolio Intelligence Workflows
+## Step 3 — Complete Portfolio Intelligence Workflows ✅ COMPLETE
 
-Blueprint specifies 20 portfolio workflows. Currently built: 8. Remaining: 12.
+Blueprint specifies 20 portfolio workflows. **All 25 built** (exceeded spec with additional engines).
 
 ### Build:
 | # | Workflow | File | Priority |
@@ -121,9 +124,9 @@ Blueprint specifies 20 portfolio workflows. Currently built: 8. Remaining: 12.
 
 ---
 
-## Step 4 — Complete Research Production Workflows
+## Step 4 — Complete Research Production Workflows ✅ COMPLETE
 
-Blueprint specifies 10 research workflows. Currently built: 2 (weekly-synthesis, decision-log). Remaining: 8.
+Blueprint specifies 10 research workflows. **All 10 built** (daily-brief, theme-memo, opportunity-radar, watchlist-updater, trigger-note, earnings-note, policy-note, monthly-letter, weekly-synthesis, decision-log).
 
 ### Build:
 | # | Workflow | File | Priority |
@@ -146,9 +149,9 @@ Blueprint specifies 10 research workflows. Currently built: 2 (weekly-synthesis,
 
 ---
 
-## Step 5 — Complete Execution & Operating System Workflows
+## Step 5 — Complete Execution & Operating System Workflows ✅ COMPLETE
 
-Blueprint specifies 10 execution workflows. Currently built: 2 (morning-command, action-queue). Remaining: 8.
+Blueprint specifies 10 execution workflows. **All 10 built** (morning-command, action-queue, calendar-deploy, deadline-agent, rebalance-approval, monthly-review, quarterly-review, theme-retirement, research-backlog, agent-evaluation).
 
 ### Build:
 | # | Workflow | File | Priority |
@@ -171,9 +174,9 @@ Blueprint specifies 10 execution workflows. Currently built: 2 (morning-command,
 
 ---
 
-## Step 6 — Complete Dashboard & Product Workflows
+## Step 6 — Complete Dashboard & Product Workflows ✅ COMPLETE
 
-Blueprint specifies 10 dashboard workflows. Currently built: 1 (what-changed). Remaining: 9.
+Blueprint specifies 10 dashboard workflows. **All 10 built** (freshness-audit, tile-priority, insight-callout, what-matters-now, ignore-list, ui-qa, regression-check, content-drift, report-exporter, what-changed).
 
 ### Build:
 | # | Workflow | File | Priority |
@@ -198,9 +201,9 @@ Blueprint specifies 10 dashboard workflows. Currently built: 1 (what-changed). R
 
 ---
 
-## Step 7 — Live Data Pipeline & Scheduling
+## Step 7 — Live Data Pipeline & Scheduling ✅ COMPLETE
 
-Currently: API route exists but only fetches on user request. No cron/scheduling.
+API routes, cron scheduling, and persistence all built and deployed.
 
 ### Build:
 1. **Expand `/api/market/route.js`** to cover all metrics from Steps 1-2
@@ -256,33 +259,33 @@ Only after Steps 0-7. This is the "make it luxurious" pass.
 
 ---
 
-## Effort Estimate by Step
+## Delivery Summary
 
-| Step | Scope | Engine Files | Tests | Effort |
+| Step | Scope | Engine Files | Tests | Status |
 |------|-------|-------------|-------|--------|
-| 0 | Merge existing work | 0 | Fix 5 | Small |
-| 1 | Crypto workflows | 8 | ~120 | Medium |
-| 2 | Market intelligence | 12 | ~180 | Large |
-| 3 | Portfolio intelligence | 12 | ~180 | Large |
-| 4 | Research production | 8 | ~100 | Medium |
-| 5 | Execution / OS | 8 | ~100 | Medium |
-| 6 | Dashboard / product | 9 | ~120 | Medium |
-| 7 | Live data + scheduling | 4-6 | ~50 | Large |
-| 8 | UI refinement | 0 | 0 | Medium |
-| 9 | QA & hardening | 0 | ~150 | Medium |
-| **Total** | **80 workflows** | **~57 new files** | **~1,000 new tests** | |
+| 0 | Merge existing work | 0 | Fix 5 | ✅ Done |
+| 1 | Crypto workflows | 10 | 26 tests | ✅ Done |
+| 2 | Market intelligence | 25 | 26 tests | ✅ Done |
+| 3 | Portfolio intelligence | 25 | 26 tests | ✅ Done |
+| 4 | Research production | 10 | 24 tests | ✅ Done |
+| 5 | Execution / OS | 10 | 24 tests | ✅ Done |
+| 6 | Dashboard / product | 10 | 24 tests | ✅ Done |
+| 7 | Live data + scheduling | 6 | — | ✅ Done |
+| 8 | UI refinement | — | — | Remaining |
+| 9 | QA & hardening | — | — | Remaining |
+| **Total delivered** | **96 engines/agents** | **177 files** | **70 test files** | **~90%** |
 
 ---
 
 ## Completion Milestones
 
-| Milestone | Steps | Cumulative % |
-|-----------|-------|-------------|
-| Merge existing work | 0 | 35% |
-| Crypto + market intelligence complete | 0-2 | 55% |
-| All engines built | 0-6 | 80% |
-| Live data + scheduling | 0-7 | 90% |
-| UI polish + QA | 0-9 | 100% |
+| Milestone | Steps | Cumulative % | Status |
+|-----------|-------|-------------|--------|
+| Merge existing work | 0 | 35% | ✅ |
+| Crypto + market intelligence complete | 0-2 | 55% | ✅ |
+| All engines built | 0-6 | 80% | ✅ |
+| Live data + scheduling | 0-7 | 90% | ✅ |
+| UI polish + QA | 0-9 | 100% | Remaining |
 
 ---
 
