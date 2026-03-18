@@ -1,5 +1,6 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { EngineProvider } from "../lib/engineContext";
 
 const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
@@ -100,11 +101,13 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Module content */}
-      {activeModule === "finance"  && <PortfolioVOS />}
-      {activeModule === "markets"  && <MarketsModule />}
-      {activeModule === "career"   && <CareerModule />}
-      {activeModule === "systems"  && <SystemsModule />}
+      {/* Module content — EngineProvider shares engine state across modules */}
+      <EngineProvider>
+        {activeModule === "finance"  && <PortfolioVOS />}
+        {activeModule === "markets"  && <MarketsModule />}
+        {activeModule === "career"   && <CareerModule />}
+        {activeModule === "systems"  && <SystemsModule />}
+      </EngineProvider>
     </div>
   );
 }

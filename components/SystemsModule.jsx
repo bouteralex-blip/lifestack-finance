@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useSupabaseData } from '../lib/useData';
+import { useEngines } from '../lib/engineContext';
 import { ChevronDown, ChevronRight, Settings, Database, Cpu, Sliders } from "lucide-react";
 
 // ── PALETTE (copied from PortfolioVOS) ──
@@ -1329,7 +1330,15 @@ const[tab,setTab]=useState("sys");
 const[side,setSide]=useState(true);
 const[open,setOpen]=useState({A:true,B:true});
 const{data,loading,source,freshness}=useSupabaseData();
-useEffect(()=>{if(freshness) FRESHNESS=freshness;},[freshness]);
+// Read shared engine state from PortfolioVOS via context
+const { ENGINE: ctxENGINE, MKTENG: ctxMKTENG, AGENT: ctxAGENT } = useEngines();
+useEffect(()=>{
+  if(freshness) FRESHNESS=freshness;
+  // Sync context engines into module-scope globals for T18
+  if(ctxENGINE) ENGINE=ctxENGINE;
+  if(ctxMKTENG) MKTENG=ctxMKTENG;
+  if(ctxAGENT) AGENT=ctxAGENT;
+},[freshness,ctxENGINE,ctxMKTENG,ctxAGENT]);
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 
 const render=()=>{switch(tab){

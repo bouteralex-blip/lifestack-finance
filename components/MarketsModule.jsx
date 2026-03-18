@@ -1339,7 +1339,7 @@ const SECS={A:"PERSONAL MARKETS & PORTFOLIO"};
 export default function LifeStackMarkets(){
 const[tab,setTab]=useState("P1");
 const[side,setSide]=useState(true);
-const[open,setOpen]=useState({A:true,B:true});
+const[open,setOpen]=useState({A:true});
 const Act=TABS.find(t=>t.id===tab)?.C||P1;
 const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
 

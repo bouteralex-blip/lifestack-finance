@@ -30,6 +30,7 @@ import { generateMarkdownReport } from '../lib/engines/agents/report-exporter.js
 import { computeAltcoinRiskCap } from '../lib/engines/agents/altcoin-risk-cap.js';
 import { generatePerformanceBridge } from '../lib/engines/agents/performance-bridge.js';
 import { computeThesisMonitorState } from '../lib/engines/agents/thesis-monitor.js';
+import { useEngines } from '../lib/engineContext';
 import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Shield, Zap, DollarSign, Target, AlertTriangle, Layers, CircleDot, FileText, Activity, BookOpen } from "lucide-react";
 import dynamic from 'next/dynamic';
@@ -4151,7 +4152,7 @@ function recalcDerived(priorSnapshot, saveSnapshot) {
 }
 
 // =========================================================================
-// MAIN APP — 13 Tab Navigation
+// MAIN APP — 14 Tab Navigation
 
 const TABS=[
   {k:"exec",l:"Executive Summary",id:"T1",ic:BarChart3,s:"A"},
@@ -4177,6 +4178,7 @@ export default function PortfolioVOS(){
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
   const {data,loading,source,freshness}=useSupabaseData();
   const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
+  const { setEngines } = useEngines();
   useEffect(()=>{
     if(freshness) FRESHNESS=freshness;
     if(data){
@@ -4199,6 +4201,8 @@ export default function PortfolioVOS(){
         const sourceMeta = { source: source || 'fallback', lastUpdated: freshness?.lastUpdated || null, snapshotDate: PORT.date };
         setTruthLayer(buildEngineTruthLayer(data, sourceMeta, MKTENG, AGENT));
       } catch (e) { console.error('TruthLayer update:', e); }
+      // Publish engine state to shared context for SystemsModule T18
+      setEngines(ENGINE, MKTENG, AGENT);
       refresh(n=>n+1);
     }
   },[data,freshness,priorSnapshot,saveSnapshot]);
