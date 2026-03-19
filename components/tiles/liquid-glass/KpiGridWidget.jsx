@@ -15,6 +15,7 @@
 import { EmeraldGlassCard } from "./EmeraldGlassCard";
 
 export function KpiGridWidget({ data }) {
+  if (!data || data.length === 0) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:80,color:'rgba(15,150,156,0.5)',fontSize:12,fontStyle:'italic',letterSpacing:'0.05em'}}>Awaiting Data Sync...</div>;
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
       {data.map((kpi) => (

@@ -28,8 +28,9 @@ function correlationTextColor(value) {
 const MONO = "Geist Mono, monospace";
 
 export function CorrelationHeatmapWidget({ data }) {
-  const { labels, matrix } = data;
   const [hoveredCell, setHoveredCell] = useState(null);
+  if (!data || !data.labels || !data.matrix) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:80,color:'rgba(15,150,156,0.5)',fontSize:12,fontStyle:'italic',letterSpacing:'0.05em'}}>Awaiting Data Sync...</div>;
+  const { labels, matrix } = data;
 
   return (
     <div

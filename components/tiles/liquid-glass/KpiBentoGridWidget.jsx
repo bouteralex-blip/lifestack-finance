@@ -76,6 +76,7 @@ function GlassTile({ children, backlightColor = "255,255,255" }) {
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 export function KpiBentoGridWidget({ data, title, className = "" }) {
+  if (!data || data.length === 0) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:80,color:'rgba(15,150,156,0.5)',fontSize:12,fontStyle:'italic',letterSpacing:'0.05em'}}>Awaiting Data Sync...</div>;
   const BACKLIGHT = {
     positive: "0,212,170",
     negative: "255,92,122",

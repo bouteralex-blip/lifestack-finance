@@ -93,6 +93,7 @@ export function TrajectoryChartWidget({
   subtitle = "Historical performance with projected growth trajectory",
 }) {
   const [activeRange, setActiveRange] = useState("ALL");
+  if (!data || data.length === 0) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:200,color:'rgba(15,150,156,0.5)',fontSize:12,fontStyle:'italic',letterSpacing:'0.05em'}}>Awaiting Data Sync...</div>;
   const filteredData = filterByRange(data, activeRange);
 
   const lastHistoricalIndex = data.findIndex(

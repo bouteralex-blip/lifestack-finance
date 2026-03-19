@@ -18,8 +18,9 @@ import { useState } from "react";
  */
 
 export function LiquidGlassFilterWidget({ data }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  if (!data) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:80,color:'rgba(15,150,156,0.5)',fontSize:12,fontStyle:'italic',letterSpacing:'0.05em'}}>Awaiting Data Sync...</div>;
   const { options = [], defaultIndex = 0, onChange } = data;
-  const [activeIndex, setActiveIndex] = useState(defaultIndex);
 
   const handleClick = (index) => {
     setActiveIndex(index);
