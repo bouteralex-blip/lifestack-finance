@@ -36,6 +36,30 @@ import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Shield, Zap, DollarSi
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
+// ── AE Liquid Glass UI Library ────────────────────────────────────────────────
+import { EmeraldGlassCard, EmeraldInnerPlate } from './tiles/liquid-glass/EmeraldGlassCard';
+import { KpiGridWidget } from './tiles/liquid-glass/KpiGridWidget';
+import { KpiBentoGridWidget } from './tiles/liquid-glass/KpiBentoGridWidget';
+import { CIOInsightBannerWidget } from './tiles/liquid-glass/CIOInsightBannerWidget';
+import { AgentBannerWidget } from './tiles/liquid-glass/AgentBannerWidget';
+import { TrajectoryChartWidget } from './tiles/liquid-glass/TrajectoryChartWidget';
+import { AllocationChartWidget } from './tiles/liquid-glass/AllocationChartWidget';
+import { ConcentricProgressRingsWidget } from './tiles/liquid-glass/ConcentricProgressRingsWidget';
+import { LuminousStackedColumnWidget } from './tiles/liquid-glass/LuminousStackedColumnWidget';
+import { MirroredDivergingBarWidget } from './tiles/liquid-glass/MirroredDivergingBarWidget';
+import { ContributionHeatmapWidget } from './tiles/liquid-glass/ContributionHeatmapWidget';
+import {
+  mapPortfolioKpis,
+  mapCIOInsight,
+  mapAgentBanner,
+  mapTrajectoryData,
+  mapSleeveAllocation,
+  mapConcentrationRings,
+  mapHoldingsStackedColumn,
+  mapContributorsDetractors,
+  mapMonthlyHeatmap,
+} from '../lib/liquidGlassMappers';
+
 // =========================================================================
 // LIFESTACK OS vOS — ORION GLASS · LIGHT MODE · INSTITUTIONAL REVIEW
 // Pure visual reskin of v5.4 — zero data/analytics changes
@@ -1439,14 +1463,15 @@ const T1 = ({ truthLayer })=>{
       );
     })()}
 
-    {/* ROW 1: 12-col KPI grid — variable sizing: hero(3), standard(2), compact(1.5) */}
-    <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:14}}>
-      <div style={{gridColumn:"span 3"}}><KpiTile l="Net Worth" v={fK(PORT.netWorth)} c={P.cyan} delta={`Peak: ${fK(PORT.nwPeak)}`} deltaType={PORT.netWorth>=PORT.nwPeak?"up":"down"} bench={`Target: ${fK(PORT.fireTarget*0.25)}`}/></div>
-      <div style={{gridColumn:"span 3"}}><KpiTile l={`${activePeriod} Return`} v={pc(periodReturn)} c={periodReturn>0?P.positive:P.negative} delta={activePeriod==='6M'?'20 Sep → 7 Mar':activePeriod} deltaType={periodReturn>0?"up":"down"} bench={`MSCI: ${pc((PORT.benchReturn||-.028)*100)}`}/></div>
-      <div style={{gridColumn:"span 2"}}><KpiTile l="Total Assets" v={fK(PORT.assets)} c={P.indigo} delta={`Debts: ${fK(PORT.debts)}`} bench={`D/A: ${debtToAsset.toFixed(1)}%`}/></div>
-      <div style={{gridColumn:"span 2"}}><KpiTile l="Active Return" v={pc(activeReturn)} c={activeReturn>0?P.positive:P.negative} delta="vs MSCI World" deltaType={activeReturn>0?"up":"down"} bench="Target: +2%" sm/></div>
-      <div style={{gridColumn:"span 2"}}><KpiTile l="Real Return" v={pc(realReturn)} c={realReturn>0?P.positive:P.negative} delta="After inflation" deltaType={realReturn>0?"up":"down"} bench={`CPI: ${((PORT.inflation||0.032)*100).toFixed(1)}%`} sm/></div>
+    {/* ── ROW 1: AE Liquid Glass KPI Bento Grid ──────────────────────────── */}
+    <div style={{marginBottom:16}}>
+      <KpiBentoGridWidget
+        data={mapPortfolioKpis(PORT, RISK, runway, periodReturn, activePeriod)}
+        title="Portfolio Overview"
+      />
     </div>
+
+    {/* ── Secondary KPI Row (legacy tiles — detailed risk metrics) ─────── */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(12, 1fr)",gap:10,marginBottom:16}}>
       <div style={{gridColumn:"span 2"}}><KpiTile l="FIRE Progress" v={`${fire.toFixed(0)}%`} c={P.teal} delta={`of ${fK(PORT.fireTarget)}`} bench="Target age: 45"/></div>
       <div style={{gridColumn:"span 2"}}><KpiTile l="Peak Drawdown" v={`${RISK.maxDD}%`} c={P.negative} delta={`${RISK.ddDur}d duration`} deltaType="down" bench="MSCI DD: -8%"/></div>
@@ -1456,12 +1481,10 @@ const T1 = ({ truthLayer })=>{
       <div style={{gridColumn:"span 2"}}><KpiTile l="Cash Buffer" v={`${runway.toFixed(1)}mo`} c={runway>=3?P.positive:P.negative} delta="vs 3.0 target" deltaType={runway>=3?"up":"down"} bench="Rule: 3-6mo" sm/></div>
     </div>
 
-    {/* AGENT INSIGHT BANNER — synthesis + regime context */}
-    <CIOInsightBanner
-      regime={AGENT.synthesis?.sections?.marketContext?.regime || "Late Cycle"}
-      confidence={AGENT.synthesis?.sections?.marketContext?.regimeConfidence || 72}
-      text={AGENT.synthesis?.executiveSummary || `Crypto correction (-${fK(38400)}) dominated the ${pc(nwReturn)} 6-month drawdown. Underlying equity selection and pension revaluation added ${fK(30400)} — structural performance is sound. New compensation cycle (${fK(PORT.grossSalary+PORT.grossBonus)} gross) is the primary wealth engine. Three actions dominate ROI: ISA deployment, Amex clearance, salary sacrifice optimisation.`}
-    />
+    {/* ── AE Liquid Glass CIO Insight Banner ──────────────────────────── */}
+    <div style={{marginBottom:14}}>
+      <CIOInsightBannerWidget data={mapCIOInsight(PORT, AGENT, nwReturn)}/>
+    </div>
 
     {/* CONTROL BAR — time filter between Zone 1 and Zone 2 */}
     <ControlBar
@@ -1538,49 +1561,35 @@ const T1 = ({ truthLayer })=>{
       </PanelShell>
     </div>
 
-    {/* ROW 3: NW Trajectory + Forecast overlay (full width hero chart) */}
-    <PanelShell hover title="NET WORTH TRAJECTORY + FORECAST" subtitle="Historical 20 Sep 2025 → 7 Mar 2026 · 5-scenario forward projection to 2035" takeaway={`Current trajectory reaches £1M by 2031 (base case) with £340k comp. FIRE target of £${(PORT.fireTarget/1000).toFixed(0)}k achievable by 2033 at 7% real return. Bull case (10% real) accelerates to 2029.`}>
-      <div style={{display:"flex",justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-        <div style={{display:"flex",gap:10,flexWrap:'wrap'}}>
-          {[{c:P.cyan,l:"NW"},{c:P.indigo,l:"Assets"},{c:P.red,l:"Drawdown"},{c:P.green,l:"Bull"},{c:P.t1,l:"Base"},{c:P.amber,l:"Conserv."}].map((x,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:3,borderRadius:2,background:x.c}}/><span style={{fontSize:9,color:P.t4}}>{x.l}</span></div>
-          ))}
+    {/* ── ROW 3: AE Liquid Glass Trajectory Widget ─────────────────────── */}
+    {(()=>{
+      const { data: tData, footerStats: tFooter } = mapTrajectoryData(NW_WEEKLY, PORT, SC_BASE, SC_BULL, SC_CONSERV);
+      return (
+        <div style={{marginBottom:14}}>
+          <EmeraldGlassCard>
+            {/* Panel header — preserved per directive */}
+            <div style={HEADER_BANNER}>
+              <div>
+                <div style={HEADER_TITLE}>NET WORTH TRAJECTORY + FORECAST</div>
+                <div style={HEADER_SUB}>Historical 20 Sep 2025 → 7 Mar 2026 · forward projection to 2035</div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+                <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+              </div>
+            </div>
+            <div style={{padding:'12px 0 4px'}}>
+              <TrajectoryChartWidget
+                data={tData.length ? tData : [{date:'Loading',value:PORT.netWorth}]}
+                footerStats={tFooter}
+                title=""
+                subtitle=""
+              />
+            </div>
+          </EmeraldGlassCard>
         </div>
-        <PeriodSelector active={activePeriod} onChange={setActivePeriod}/>
-      </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={NW_FORECAST} margin={{left:10,right:10,top:5,bottom:5}}>
-          <defs>
-            <linearGradient id="nwFillT1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.28}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.03}/></linearGradient>
-            <linearGradient id="assetFillT1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.indigo} stopOpacity={0.18}/><stop offset="100%" stopColor={P.indigo} stopOpacity={0.02}/></linearGradient>
-          </defs>
-          <CartesianGrid stroke="rgba(0,0,0,0.05)" strokeDasharray="3 3"/>
-          <XAxis dataKey="d" tick={{fill:P.t3,fontSize:9,fontWeight:500}} interval={3}/>
-          <YAxis tick={{fill:P.t3,fontSize:9}} tickFormatter={v=>v>=1000000?`£${(v/1000000).toFixed(1)}m`:`£${(v/1000).toFixed(0)}k`} domain={['dataMin-5000','auto']}/>
-          <Tooltip content={<Tip/>}/>
-          <Area type="monotone" dataKey="a" name="Assets" stroke={P.indigo} fill="url(#assetFillT1)" strokeWidth={1.5} dot={false}/>
-          <Area type="monotone" dataKey="nw" name="Net Worth" stroke={P.cyan} fill="url(#nwFillT1)" strokeWidth={2.5} dot={{fill:P.cyan,r:2,strokeWidth:0}} style={{filter:'drop-shadow(0 2px 4px rgba(99,102,241,0.25))'}}/>
-          <Line type="monotone" dataKey="bull" name="Bull" stroke={P.green} strokeWidth={1.5} dot={false} strokeDasharray="4 2"/>
-          <Line type="monotone" dataKey="base" name="Base" stroke={P.t1} strokeWidth={2} dot={false}/>
-          <Line type="monotone" dataKey="conserv" name="Conservative" stroke={P.amber} strokeWidth={1} dot={false} strokeDasharray="6 3"/>
-          <ReferenceLine y={1000000} stroke={P.amber} strokeDasharray="8 4" label={{value:"£1M",fill:P.amber,fontSize:10,fontWeight:700}}/>
-          <ReferenceLine y={PORT.fireTarget} stroke={P.cyan} strokeDasharray="8 4" label={{value:"FIRE",fill:P.cyan,fontSize:10,fontWeight:700}}/>
-        </ComposedChart>
-      </ResponsiveContainer>
-      {/* Inline drawdown */}
-      <div style={{marginTop:6,borderTop:`1px solid ${P.b2}`,paddingTop:6}}>
-        <div style={{fontSize:10,fontWeight:700,color:P.t4,marginBottom:4}}>DRAWDOWN FROM PEAK</div>
-        <ResponsiveContainer width="100%" height={70}>
-          <AreaChart data={NW_DD} margin={{left:10,right:10}}>
-            <defs><linearGradient id="ddFillT1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.red} stopOpacity={0.25}/><stop offset="100%" stopColor={P.red} stopOpacity={0.03}/></linearGradient></defs>
-            <XAxis dataKey="d" tick={false} axisLine={false}/>
-            <YAxis tick={{fill:P.t4,fontSize:8}} tickFormatter={v=>`${v.toFixed(0)}%`} domain={['dataMin-2',0]} width={30}/>
-            <ReferenceLine y={0} stroke={P.t4}/>
-            <Area type="monotone" dataKey="dd" name="DD" stroke={P.red} fill="url(#ddFillT1)" strokeWidth={2} dot={false}/>
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </PanelShell>
+      );
+    })()}
 
     {/* ROW 4: 4-panel dense analysis row — variable widths */}
     <div style={{display:"grid",gridTemplateColumns:"4fr 3fr 3fr 2fr",gap:12,marginBottom:14}}>
@@ -1977,6 +1986,68 @@ const T2 = ({ truthLayer })=>{
       </PanelShell>
     </Grid>
 
+    {/* ── AE Liquid Glass: Allocation + Concentration ─────────────────── */}
+    <div style={{display:"grid",gridTemplateColumns:"5fr 7fr",gap:14,marginBottom:14}}>
+      {/* Allocation Donut */}
+      <EmeraldGlassCard>
+        <div style={HEADER_BANNER}>
+          <div>
+            <div style={HEADER_TITLE}>SLEEVE ALLOCATION</div>
+            <div style={HEADER_SUB}>Asset class distribution by value</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+            <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+          </div>
+        </div>
+        <AllocationChartWidget
+          data={mapSleeveAllocation(SLEEVES, totalAssets)}
+          totalLabel="Total Assets"
+          totalValue={`£${(totalAssets/1000).toFixed(0)}k`}
+        />
+      </EmeraldGlassCard>
+
+      {/* Concentration Rings */}
+      <EmeraldGlassCard>
+        <div style={HEADER_BANNER}>
+          <div>
+            <div style={HEADER_TITLE}>CONCENTRATION RINGS</div>
+            <div style={HEADER_SUB}>FIRE progress · Cash buffer · HHI score</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+            <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+          </div>
+        </div>
+        {(()=>{
+          const liqT2 = HOLDINGS.filter(h=>h.cls==="Cash"||h.cls==="Cash/FD").reduce((a,h)=>a+h.val,0);
+          const runT2 = liqT2 / (PORT.monthlyExpenses||6000);
+          return <ConcentricProgressRingsWidget data={mapConcentrationRings(PORT, RISK, liqT2, runT2)}/>;
+        })()}
+      </EmeraldGlassCard>
+    </div>
+
+    {/* ── AE Liquid Glass: Holdings Breakdown (Luminous Stacked Column) ─── */}
+    <div style={{marginBottom:14}}>
+      <EmeraldGlassCard>
+        <div style={HEADER_BANNER}>
+          <div>
+            <div style={HEADER_TITLE}>HOLDINGS BREAKDOWN</div>
+            <div style={HEADER_SUB}>Top sleeves by AUM · Luminous stack</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+            <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+          </div>
+        </div>
+        <LuminousStackedColumnWidget
+          data={mapHoldingsStackedColumn(SLEEVES, totalAssets)}
+          title=""
+          subtitle="Top 4 sleeves by AUM (£k)"
+        />
+      </EmeraldGlassCard>
+    </div>
+
     {/* ROW 3: Sankey (full width) */}
     <PanelShell hover title="NAV FLOW — ASSETS → CLASSES → WRAPPERS" subtitle={`Total ${fK(PORT.assets)} decomposed. 57% in taxable wrappers — biggest structural inefficiency.`} takeaway="Pension and ISA combined = 27% sheltered. GIA dominance creates 1.5-2% annual tax drag. Priority: max ISA allowance, salary sacrifice to pension.">
       <NavSankey/>
@@ -2286,6 +2357,47 @@ const T3 = ({ truthLayer })=>{
       <KpiTile l="Info Ratio" v={infoRatio} c={infoRatio>0?P.positive:P.negative} sm delta="Active/TE" bench="Good: >0.5"/>
       <KpiTile l="Max DD" v={`${maxDD}%`} c={P.negative} sm bench="MSCI DD: -8%"/>
       <KpiTile l="Recovery" v={`${recovery}w`} c={P.amber} sm bench="Target: <12w"/>
+    </div>
+
+    {/* ── AE Liquid Glass: Contributors / Detractors + Heatmap ─────────── */}
+    <div style={{display:"grid",gridTemplateColumns:"6fr 6fr",gap:14,marginBottom:14}}>
+      {/* Mirrored Diverging Bar — Contributors vs Detractors */}
+      <EmeraldGlassCard>
+        <div style={HEADER_BANNER}>
+          <div>
+            <div style={HEADER_TITLE}>TOP CONTRIBUTORS & DETRACTORS</div>
+            <div style={HEADER_SUB}>6-month P&amp;L attribution by position</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+            <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+          </div>
+        </div>
+        <MirroredDivergingBarWidget
+          data={mapContributorsDetractors(HOLDINGS, PORT.nw6moAgo)}
+          title=""
+          subtitle="NAV contribution % (6-month)"
+        />
+      </EmeraldGlassCard>
+
+      {/* Contribution Heatmap — monthly return calendar */}
+      <EmeraldGlassCard>
+        <div style={HEADER_BANNER}>
+          <div>
+            <div style={HEADER_TITLE}>RETURN CALENDAR HEATMAP</div>
+            <div style={HEADER_SUB}>6-month monthly return intensity</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+            <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+          </div>
+        </div>
+        <ContributionHeatmapWidget
+          data={mapMonthlyHeatmap(MONTHLY_DATA)}
+          title=""
+          subtitle="Return intensity · green=positive · red=negative"
+        />
+      </EmeraldGlassCard>
     </div>
 
     {/* ROW 2: NAV Bridge + Sleeve Return (7fr + 5fr) */}
