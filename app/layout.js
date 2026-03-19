@@ -1,4 +1,5 @@
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: 'LifeStack Finance — BadgerBrain Intelligence Engine',
@@ -15,7 +16,10 @@ export default function RootLayout({ children }) {
           body { background: #f0f2f8; min-height: 100vh; }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
