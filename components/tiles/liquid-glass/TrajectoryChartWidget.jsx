@@ -102,34 +102,8 @@ export function TrajectoryChartWidget({
   const lastHistoricalDate =
     lastHistoricalIndex >= 0 ? data[lastHistoricalIndex].date : null;
 
-  const NOISE_URI =
-    "data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E";
-
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-5"
-      style={{
-        boxShadow: [
-          "inset 0 1px 2px rgba(255,255,255,0.5)",
-          "inset 0 -1px 1px rgba(255,255,255,0.1)",
-          "0 20px 40px rgba(0,0,0,0.4)",
-          "0 0 80px rgba(0,0,0,0.15)",
-        ].join(", "),
-      }}
-    >
-      {/* AE specular shine */}
-      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.2] to-transparent" aria-hidden="true" />
-      {/* Primary glare */}
-      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(325deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 15%, rgba(255,255,255,0.01) 28%, transparent 45%)" }} aria-hidden="true" />
-      {/* Secondary glare */}
-      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(145deg, transparent 55%, rgba(255,255,255,0.03) 70%, rgba(255,255,255,0.06) 85%, rgba(255,255,255,0.03) 100%)" }} aria-hidden="true" />
-      {/* Corner hotspots */}
-      <div className="pointer-events-none absolute left-0 top-0 h-1/2 w-1/2" style={{ background: "radial-gradient(ellipse at 0% 0%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 25%, transparent 60%)" }} aria-hidden="true" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[35%] w-[35%]" style={{ background: "radial-gradient(ellipse at 100% 100%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 25%, transparent 55%)" }} aria-hidden="true" />
-      {/* Top edge highlight */}
-      <div className="pointer-events-none absolute left-[8%] right-[35%] top-0" style={{ height: "1px", background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 15%, rgba(255,255,255,0.9) 40%, rgba(255,255,255,0.4) 70%, transparent 100%)", filter: "blur(0.3px)" }} aria-hidden="true" />
-      {/* Noise */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.018]" style={{ backgroundImage: `url("${NOISE_URI}")`, backgroundSize: "256px 256px" }} aria-hidden="true" />
+    <div className="relative p-4">
 
       {/* Header */}
       <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

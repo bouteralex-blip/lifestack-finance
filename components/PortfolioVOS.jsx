@@ -1561,32 +1561,31 @@ const T1 = ({ truthLayer })=>{
       </PanelShell>
     </div>
 
-    {/* ── ROW 3: AE Liquid Glass Trajectory Widget ─────────────────────── */}
+    {/* ── ROW 3: Net Worth Trajectory — Russian Doll: G1 glass → HEADER_BANNER → widget content ── */}
     {(()=>{
       const { data: tData, footerStats: tFooter } = mapTrajectoryData(NW_WEEKLY, PORT, SC_BASE, SC_BULL, SC_CONSERV);
       return (
-        <div style={{marginBottom:14}}>
-          <EmeraldGlassCard>
-            {/* Panel header — preserved per directive */}
-            <div style={HEADER_BANNER}>
-              <div>
-                <div style={HEADER_TITLE}>NET WORTH TRAJECTORY + FORECAST</div>
-                <div style={HEADER_SUB}>Historical 20 Sep 2025 → 7 Mar 2026 · forward projection to 2035</div>
-              </div>
-              <div style={{display:'flex',gap:8}}>
-                <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
-                <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
-              </div>
+        <div style={{...G1, overflow:'hidden', marginBottom:14, position:'relative', padding:0}}>
+          {/* Panel header — original dark backing preserved */}
+          <div style={HEADER_BANNER}>
+            <div>
+              <div style={HEADER_TITLE}>NET WORTH TRAJECTORY + FORECAST</div>
+              <div style={HEADER_SUB}>Historical 20 Sep 2025 → 7 Mar 2026 · forward projection to 2035</div>
             </div>
-            <div style={{padding:'12px 0 4px'}}>
-              <TrajectoryChartWidget
-                data={tData.length ? tData : [{date:'Loading',value:PORT.netWorth}]}
-                footerStats={tFooter}
-                title=""
-                subtitle=""
-              />
+            <div style={{display:'flex',gap:8}}>
+              <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+              <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
             </div>
-          </EmeraldGlassCard>
+          </div>
+          {/* Inner stabilised plate — injects stripped widget content */}
+          <div style={{padding:'0 4px 4px', background:'rgba(0,0,0,0.30)', boxShadow:'inset 0 1px 4px rgba(0,0,0,0.6)'}}>
+            <TrajectoryChartWidget
+              data={tData.length ? tData : [{date:'Loading',value:PORT.netWorth}]}
+              footerStats={tFooter}
+              title=""
+              subtitle=""
+            />
+          </div>
         </div>
       );
     })()}
