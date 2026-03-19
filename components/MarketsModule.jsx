@@ -25,6 +25,23 @@ import {
   computePropertyCycleState,
 } from '../lib/engines/market/index.js';
 
+// ── AE Liquid Glass UI Library ────────────────────────────────────────────────
+import { EmeraldGlassCard } from './tiles/liquid-glass/EmeraldGlassCard';
+import { AgentBannerWidget } from './tiles/liquid-glass/AgentBannerWidget';
+import { GlowingStepLineWidget } from './tiles/liquid-glass/GlowingStepLineWidget';
+import { ConfidenceBandRangeWidget } from './tiles/liquid-glass/ConfidenceBandRangeWidget';
+import { OverlappingMountainAreaWidget } from './tiles/liquid-glass/OverlappingMountainAreaWidget';
+import { RoundedVolumePulseWidget } from './tiles/liquid-glass/RoundedVolumePulseWidget';
+import { AsymmetricFilledRadarWidget } from './tiles/liquid-glass/AsymmetricFilledRadarWidget';
+import {
+  mapMacroRegimeBanner,
+  mapPolicyRatePath,
+  mapNowcastBand,
+  mapGlobalLiquidityMountain,
+  mapCreditSpreadPulse,
+  mapCreditRadar,
+} from '../lib/liquidGlassMappers';
+
 // =========================================================================
 // LIFESTACK OS — MARKET & RESEARCH ANALYSIS MODULE v3.0
 // Horizon Glass · Liquid Refraction · Luxury Teal-Navy System
@@ -500,6 +517,53 @@ const MatStat=({label,value,sub,mat="teal",icon})=>(
 const P1=()=>(<div>
 <Hd t="GLOBAL MACRO REGIME DASHBOARD" s={`${M.date} | Regime classification, growth nowcast, inflation, rates, liquidity, dollar`} tag="MASTER STATE" showFreshness/>
 
+{/* ── AE Liquid Glass: Regime Verdict Banner ──────────────────────────── */}
+<div style={{marginBottom:14}}>
+  <AgentBannerWidget data={mapMacroRegimeBanner(M, MKTENG)}/>
+</div>
+
+{/* ── AE Liquid Glass: Policy Rate Path + Nowcast Bands ─────────────── */}
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+  {/* Glowing Step Line — BoE rate path */}
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>BoE POLICY RATE PATH</div>
+        <div style={HEADER_SUB}>Historical + forward rate expectations</div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+        <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+      </div>
+    </div>
+    <GlowingStepLineWidget
+      data={mapPolicyRatePath(M)}
+      title=""
+      subtitle="BoE bank rate (% p.a.)"
+      lineColor="#00D4AA"
+    />
+  </EmeraldGlassCard>
+
+  {/* Confidence Band — growth/liquidity nowcast */}
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>LIQUIDITY NOWCAST — 80% CONFIDENCE BAND</div>
+        <div style={HEADER_SUB}>M2 growth index with uncertainty bands</div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+        <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+      </div>
+    </div>
+    <ConfidenceBandRangeWidget
+      data={mapNowcastBand(M, LIQ_DIV).length ? mapNowcastBand(M, LIQ_DIV) : [{date:'Syncing',value:100,upper:108,lower:93}]}
+      title=""
+      subtitle="M2 liquidity index · 80% confidence band"
+    />
+  </EmeraldGlassCard>
+</div>
+
 {/* Regime hero — MAT tile */}
 <Row style={{marginBottom:0}}>
   <MatStat label="Macro Regime" value={MKTENG.regime?.regime||M.regime} sub={`${MKTENG.regime?.confidence||M.regimeConf}% confidence · ${MKTENG.regime?.riskPosture||'Defensive'}`} mat="amber"/>
@@ -552,6 +616,75 @@ const P1=()=>(<div>
 // =========================================================================
 const P2=()=>(<div>
 <Hd t="LIQUIDITY, RATES & CREDIT" s="Credit spreads, MOVE index, bank lending, money-market hurdle, plumbing stress" tag="FUNDING CONDITIONS" showFreshness/>
+
+{/* ── AE Liquid Glass: Global Liquidity Mountain + Credit Radar ───────── */}
+<div style={{display:"grid",gridTemplateColumns:"7fr 5fr",gap:14,marginBottom:14}}>
+  {/* Overlapping Mountain Area — M2 vs Equity vs Credit */}
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>GLOBAL LIQUIDITY DEPTH (M2)</div>
+        <div style={HEADER_SUB}>M2 growth · Equity index · IG credit — indexed to 100</div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+        <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+      </div>
+    </div>
+    {(()=>{
+      const { data: mData, series: mSeries } = mapGlobalLiquidityMountain(LIQ_DIV, CREDIT_TL);
+      return (
+        <OverlappingMountainAreaWidget
+          data={mData.length ? mData : [{date:'Syncing',m2:100,equity:100,credit:100}]}
+          series={mSeries}
+          title=""
+          subtitle="Indexed to 100 at Sep 2025"
+        />
+      );
+    })()}
+  </EmeraldGlassCard>
+
+  {/* Asymmetric Radar — credit conditions */}
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>CREDIT CONDITIONS RADAR</div>
+        <div style={HEADER_SUB}>Multi-axis funding stress profile</div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+        <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+      </div>
+    </div>
+    <AsymmetricFilledRadarWidget
+      data={mapCreditRadar(M, MKTENG)}
+      title=""
+      subtitle="Higher = healthier conditions"
+      fillColor="#00D4AA"
+    />
+  </EmeraldGlassCard>
+</div>
+
+{/* ── AE Liquid Glass: HY Spread Volume Pulse ─────────────────────────── */}
+<div style={{marginBottom:14}}>
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>CREDIT SPREAD STRESS — HY OAS (bp)</div>
+        <div style={HEADER_SUB}>High-yield OAS trajectory · 400bp = risk-off threshold</div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button title="Glossary" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>i</button>
+        <button title="Expand" style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:6,color:'rgba(255,255,255,0.5)',padding:'3px 8px',cursor:'pointer',fontSize:11}}>⤢</button>
+      </div>
+    </div>
+    <RoundedVolumePulseWidget
+      data={mapCreditSpreadPulse(CREDIT_TL).length ? mapCreditSpreadPulse(CREDIT_TL) : [{label:'Syncing',value:340}]}
+      title=""
+      subtitle="HY OAS in basis points · 7-month window"
+    />
+  </EmeraldGlassCard>
+</div>
 
 <Row style={{marginBottom:0}}>
   <MatStat label="Credit Stress" value={MKTENG.creditStress?`${MKTENG.creditStress.compositeScore.toFixed(0)}/100`:M.hyOAS+'bp'} sub={`${MKTENG.creditStress?.compositeLevel||'NORMAL'} · HY ${M.hyOAS}bp · Trend: ${MKTENG.creditStress?.trend||'stable'}`} mat={MKTENG.creditStress?.compositeScore>50?"red":"amber"}/>
