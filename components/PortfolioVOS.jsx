@@ -1565,7 +1565,7 @@ const T1 = ({ truthLayer })=>{
     {(()=>{
       const { data: tData, footerStats: tFooter } = mapTrajectoryData(NW_WEEKLY, PORT, SC_BASE, SC_BULL, SC_CONSERV);
       return (
-        <div style={{...G1, overflow:'hidden', marginBottom:14, position:'relative', padding:0}}>
+        <div style={{position:'relative',overflow:'hidden',marginBottom:14,padding:0,borderRadius:16,backdropFilter:'blur(40px) saturate(1.5)',WebkitBackdropFilter:'blur(40px) saturate(1.5)',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.10)',boxShadow:'inset 0 1px 1px rgba(255,255,255,0.2), 0 8px 32px rgba(0,0,0,0.3)'}}>
           {/* Panel header — original dark backing preserved */}
           <div style={HEADER_BANNER}>
             <div>
@@ -1578,7 +1578,7 @@ const T1 = ({ truthLayer })=>{
             </div>
           </div>
           {/* Inner stabilised plate — injects stripped widget content */}
-          <div style={{padding:'0 4px 4px', background:'rgba(0,0,0,0.30)', boxShadow:'inset 0 1px 4px rgba(0,0,0,0.6)'}}>
+          <div style={{padding:'0 4px 4px', background:'rgba(0,0,0,0.25)', boxShadow:'inset 0 1px 3px rgba(0,0,0,0.5)'}}>
             <TrajectoryChartWidget
               data={tData.length ? tData : [{date:'Loading',value:PORT.netWorth}]}
               footerStats={tFooter}

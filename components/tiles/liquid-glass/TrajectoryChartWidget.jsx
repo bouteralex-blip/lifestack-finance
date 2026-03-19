@@ -133,7 +133,7 @@ export function TrajectoryChartWidget({
       </div>
 
       {/* Chart inside inner plate */}
-      <div className="relative z-10 mt-6 rounded-xl border border-white/5 bg-black/30 p-3" style={{ boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 1px rgba(255,255,255,0.05)" }}>
+      <div className="relative z-10 mt-6 bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-3">
         <div className="h-[360px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -264,7 +264,7 @@ export function TrajectoryChartWidget({
         {footerStats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-xl border border-white/5 bg-black/30 p-2" style={{ boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 1px rgba(255,255,255,0.05)" }}
+            className="bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-2"
           >
             <span className="text-[11px] font-sans font-medium uppercase tracking-widest text-emerald-100/60">
               {stat.label}

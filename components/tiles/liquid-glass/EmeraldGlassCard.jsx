@@ -26,11 +26,7 @@ const NOISE_URI =
 export function EmeraldInnerPlate({ children, className = "" }) {
   return (
     <div
-      className={`rounded-xl border border-white/5 bg-black/30 p-3 ${className}`}
-      style={{
-        boxShadow:
-          "inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 1px rgba(255,255,255,0.05)",
-      }}
+      className={`bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-4 ${className}`}
     >
       {children}
     </div>
@@ -64,23 +60,7 @@ export function EmeraldValue({ children, className = "" }) {
 export function EmeraldGlassCard({ children, className = "", title }) {
   return (
     <div
-      className={`
-        relative overflow-hidden rounded-2xl p-5
-        bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0]
-        border border-white/[0.15]
-        ${className}
-      `}
-      style={{
-        boxShadow: [
-          /* AE rim light */
-          "inset 0 1px 2px rgba(255,255,255,0.5)",
-          "inset 0 -1px 1px rgba(255,255,255,0.1)",
-          /* AE deep drop shadow */
-          "0 20px 40px rgba(0,0,0,0.4)",
-          /* Subtle elevation halo */
-          "0 0 80px rgba(0,0,0,0.15)",
-        ].join(", "),
-      }}
+      className={`relative overflow-hidden bg-white/[0.04] backdrop-blur-[40px] saturate-[1.5] rounded-2xl border border-white/[0.10] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.3)] ${className}`}
     >
       {/* ── AE Specular Shine (studio-lit top-left highlight) ──────────── */}
       <div
