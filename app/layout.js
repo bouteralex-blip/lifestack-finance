@@ -1,3 +1,5 @@
+import './globals.css';
+
 export const metadata = {
   title: 'LifeStack Finance — BadgerBrain Intelligence Engine',
   description: 'Institutional-grade wealth analytics dashboard',
