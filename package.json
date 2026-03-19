@@ -10,7 +10,9 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@supabase/supabase-js": "^2.43.0",
+    "@vercel/otel": "^2.1.1",
     "echarts": "^5.5.0",
     "echarts-for-react": "^3.0.2",
     "lucide-react": "^0.383.0",
