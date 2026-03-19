@@ -1277,74 +1277,80 @@ const T1 = ({ truthLayer })=>{
     {l:'Cash Buffer',v:`${runway.toFixed(1)}mo`,c:runway>=3?P.positive:P.negative,s:'Liquidity runway'},
   ];
 
-  const renderIncomeExpenseChart = () => (
-    <div style={{minHeight:380,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={MONTHLY_DATA} margin={{top:10,right:12,left:10,bottom:20}}>
-          <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-          <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} />
-          <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`} />
-          <Tooltip content={<Tip />} />
-          <Bar dataKey="r" name="Return" radius={[8,8,0,0]} fill={P.cyan} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-
   return (
     <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
       <TruthLayerBanner scope="T1 Executive Summary" truthLayer={truthLayer} />
 
+      {/* ROW 1: TOP 5 KEY TAKEAWAYS BANNER (col-span-12) */}
       <HorizonTakeaways items={t1Takeaways} />
 
+      {/* ROW 2: MINI-STATISTICS (6 uniform KPIs, col-span-2 each) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
         {horizonKpis.map((k,i)=>(
-          <div key={i} style={{gridColumn:'span 2',minHeight:100}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+          <div key={i} style={{gridColumn:'span 2'}}>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:100}}>
               <KpiTile {...k}/>
             </EmeraldGlassCard>
           </div>
         ))}
       </div>
 
+      {/* ROW 3: HORIZON 8/4 SPLIT (Main Chart + Right Stack) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        <div className='col-span-12 lg:col-span-8'>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
-            <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>NET WORTH TRAJECTORY</div>
-            <div style={{minHeight:380}}>
-              <TrajectoryChartWidget data={NW_WEEKLY} title='' subtitle='' />
-            </div>
-          </EmeraldGlassCard>
-        </div>
-        <div className='col-span-12 lg:col-span-4' style={{display:'grid',gridTemplateRows:'1fr 1fr',gap:12}}>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
-            <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>PORTFOLIO QUALITY SCORECARD</div>
-            <div style={{minHeight:180}}>
-              <DecisionQualityMatrix scores={{timing:Math.round(5*10),wrapper:Math.round(6*10),debt:Math.round(7*10),disposition:42}} />
-            </div>
-          </EmeraldGlassCard>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
-            <div style={{fontSize:12,fontWeight:700,color:P.red,marginBottom:10}}>GOVERNANCE ALERTS</div>
-            <div style={{minHeight:180,overflowY:'auto'}}>
-              {alerts.slice(0,5).map((a,i)=>(<div key={i} style={{fontSize:11,color:P.t2,padding:'4px 0'}}>{a.msg}</div>))}
-            </div>
-          </EmeraldGlassCard>
+        {/* Left: Net Worth Trajectory (col-span-8) */}
+        <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'inherit'}}>
+          <div style={{gridColumn:'span 8'}}>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
+              <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>NET WORTH TRAJECTORY</div>
+              <div style={{height:380,display:'flex',justifyContent:'center'}}>
+                <TrajectoryChartWidget data={NW_WEEKLY} title='' subtitle='' />
+              </div>
+            </EmeraldGlassCard>
+          </div>
+          {/* Right: Scorecard + Alerts Stacked (col-span-4) */}
+          <div style={{gridColumn:'span 4',display:'grid',gridTemplateRows:'1fr 1fr',gap:20}}>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:180}}>
+              <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>PORTFOLIO QUALITY SCORECARD</div>
+              <div style={{flex:1,display:'flex',alignItems:'center'}}>
+                <DecisionQualityMatrix scores={{timing:Math.round(5*10),wrapper:Math.round(6*10),debt:Math.round(7*10),disposition:42}} />
+              </div>
+            </EmeraldGlassCard>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:180}}>
+              <div style={{fontSize:12,fontWeight:700,color:P.red,marginBottom:10}}>GOVERNANCE ALERTS</div>
+              <div style={{flex:1,overflowY:'auto',fontSize:11,color:P.t2,display:'flex',flexDirection:'column',gap:6}}>
+                {alerts.slice(0,5).map((a,i)=>(<div key={i}>{a.msg}</div>))}
+              </div>
+            </EmeraldGlassCard>
+          </div>
         </div>
       </div>
 
+      {/* ROW 4: HORIZON 4/8 SPLIT (Asset Allocation + Income/Expense) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        <div className='col-span-12 lg:col-span-4'>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:350}}>
+        {/* Left: Asset Allocation (col-span-4) */}
+        <div style={{gridColumn:'span 4'}}>
+          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>ASSET ALLOCATION</div>
-            <div style={{minHeight:350}}>
+            <div style={{height:380,display:'flex',justifyContent:'center'}}>
               <AllocationChartWidget data={mapSleeveAllocation(SLEEVES, PORT.assets)} />
             </div>
           </EmeraldGlassCard>
         </div>
-        <div className='col-span-12 lg:col-span-8'>
+        {/* Right: Income & Expense (col-span-8) */}
+        <div style={{gridColumn:'span 8'}}>
           <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>INCOME & EXPENSE BREAKDOWN</div>
-            {renderIncomeExpenseChart()}
+            <div style={{height:380}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={MONTHLY_DATA} margin={{top:10,right:12,left:10,bottom:20}}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                  <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} />
+                  <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`} />
+                  <Tooltip content={<Tip />} />
+                  <Bar dataKey="r" name="Return" radius={[8,8,0,0]} fill={P.cyan} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </EmeraldGlassCard>
         </div>
       </div>
@@ -1464,7 +1470,9 @@ const T2 = ({ truthLayer })=>{
   const top3 = sorted.slice(0,3).reduce((a,h)=>a+h.val,0);
   const top5 = sorted.slice(0,5).reduce((a,h)=>a+h.val,0);
   const hhi = RISK.hhi;
-  const activeShare = 52.0; // fallback
+  const activeShare = 52.0;
+  const liquidCash = 15752+406+94;
+  const runway = liquidCash / PORT.monthlyExpenses;
 
   const t2Takeaways = [
     `Top 5 holdings represent ${((top5/totalAssets)*100).toFixed(1)}% of NAV, top 3 at ${((top3/totalAssets)*100).toFixed(1)}%.`,
@@ -1484,38 +1492,49 @@ const T2 = ({ truthLayer })=>{
   return (
     <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
       <TruthLayerBanner scope="T2 Structure & Concentration" truthLayer={truthLayer} />
+
+      {/* ROW 1: TOP 5 KEY TAKEAWAYS BANNER (col-span-12) */}
       <HorizonTakeaways items={t2Takeaways} />
 
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
+      {/* ROW 2: MINI-STATISTICS (4 uniform KPIs, col-span-3 each) */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
         {t2Kpis.map((k,i)=>(
-          <div key={i} style={{gridColumn:'span 3',minHeight:90}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+          <div key={i} style={{gridColumn:'span 3'}}>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:100}}>
               <KpiTile {...k}/>
             </EmeraldGlassCard>
           </div>
         ))}
       </div>
 
+      {/* ROW 3: HOLDINGS BREAKDOWN FULL-WIDTH (col-span-12) */}
       <div style={{gridColumn:'span 12'}}>
-        <EmeraldGlassCard style={{minHeight:350,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:350}}>
           <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>HOLDINGS BREAKDOWN</div>
-          <div style={{minHeight:350}}>
+          <div style={{height:350,display:'flex',justifyContent:'center'}}>
             <LuminousStackedColumnWidget data={mapHoldingsStackedColumn(SLEEVES, totalAssets)} />
           </div>
         </EmeraldGlassCard>
       </div>
 
+      {/* ROW 4: HORIZON 6/6 SPLIT (Concentric Rings + Heatmap) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        <div className='col-span-12 lg:col-span-6'>
-          <EmeraldGlassCard style={{minHeight:330,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        {/* Left: Concentric Progress Rings (col-span-6) */}
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:330}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>CONCENTRIC PROGRESS RINGS</div>
-            <div style={{minHeight:280}}><ConcentricProgressRingsWidget data={mapConcentrationRings(PORT, RISK, 0, runway)} /></div>
+            <div style={{height:280,display:'flex',justifyContent:'center'}}>
+              <ConcentricProgressRingsWidget data={mapConcentrationRings(PORT, RISK, 0, runway)} />
+            </div>
           </EmeraldGlassCard>
         </div>
-        <div className='col-span-12 lg:col-span-6'>
-          <EmeraldGlassCard style={{minHeight:330,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        {/* Right: Factor Overlap Heatmap (col-span-6) */}
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:330}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>FACTOR OVERLAP HEATMAP</div>
-            <div style={{minHeight:280}}><FactorHeatmap data={FACTORS} /></div>
+            <div style={{height:280,display:'flex',justifyContent:'center'}}>
+              <FactorHeatmap data={FACTORS} />
+            </div>
           </EmeraldGlassCard>
         </div>
       </div>
@@ -1561,46 +1580,55 @@ const T3 = ({ truthLayer })=>{
   return (
     <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
       <TruthLayerBanner scope="T3 Performance & Attribution" truthLayer={truthLayer} />
+
+      {/* ROW 1: TOP 5 KEY TAKEAWAYS BANNER (col-span-12) */}
       <HorizonTakeaways items={t3Takeaways} />
 
+      {/* ROW 2: MINI-STATISTICS (8 uniform KPIs, col-span-1.5 each) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
         {t3Kpis.map((k,i)=>(
-          <div key={i} style={{gridColumn:'span 1.5',minHeight:90}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+          <div key={i} style={{gridColumn:'span 1.5'}}>
+            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:100}}>
               <KpiTile {...k}/>
             </EmeraldGlassCard>
           </div>
         ))}
       </div>
 
+      {/* ROW 3: NAV WATERFALL FULL-WIDTH (col-span-12) */}
       <div style={{gridColumn:'span 12'}}>
-        <EmeraldGlassCard style={{minHeight:380,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
           <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>NAV WATERFALL BRIDGE</div>
-          <div style={{minHeight:380}}>
-            <BarChart data={BRIDGE} margin={{left:20,right:20,bottom:20}}>
-              <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-              <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} />
-              <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`£${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<Tip />} />
-              <Bar dataKey="delta" fill={P.cyan} radius={[6,6,0,0]} />
-            </BarChart>
+          <div style={{height:380}}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={BRIDGE} margin={{left:20,right:20,bottom:20}}>
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} />
+                <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`£${(v/1000).toFixed(0)}k`} />
+                <Tooltip content={<Tip />} />
+                <Bar dataKey="delta" fill={P.cyan} radius={[6,6,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </EmeraldGlassCard>
       </div>
 
+      {/* ROW 4: HORIZON 7/5 SPLIT (Contributors/Detractors + Return Calendar) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        <div className='col-span-12 lg:col-span-7'>
-          <EmeraldGlassCard style={{minHeight:380,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        {/* Left: Top Contributors/Detractors (col-span-7) */}
+        <div style={{gridColumn:'span 7'}}>
+          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>TOP CONTRIBUTORS/DETRACTORS</div>
-            <div style={{minHeight:380}}>
+            <div style={{height:380,display:'flex',justifyContent:'center'}}>
               <MirroredDivergingBarWidget data={contributors} />
             </div>
           </EmeraldGlassCard>
         </div>
-        <div className='col-span-12 lg:col-span-5'>
-          <EmeraldGlassCard style={{minHeight:380,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        {/* Right: Return Calendar Heatmap (col-span-5) */}
+        <div style={{gridColumn:'span 5'}}>
+          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
             <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>RETURN CALENDAR HEATMAP</div>
-            <div style={{minHeight:380}}>
+            <div style={{height:380,display:'flex',justifyContent:'center'}}>
               <ContributionHeatmapWidget data={monthsHeat} />
             </div>
           </EmeraldGlassCard>
