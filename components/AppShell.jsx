@@ -6,6 +6,7 @@ const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
 const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false });
 const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false });
+const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false });
 
 const T = {
   bg: "#05161A",
@@ -21,10 +22,11 @@ const T = {
 };
 
 const modules = [
-  { id: "finance",  label: "WEALTH ENGINE",           accent: T.amber,  icon: "£" },
-  { id: "markets",  label: "MARKET & RESEARCH",       accent: T.teal,   icon: "≡" },
-  { id: "career",   label: "CAREER & INFRA",          accent: T.indigo, icon: "◆" },
-  { id: "systems",  label: "SYSTEMS & INFO",          accent: T.purple, icon: "⚙" },
+  { id: "dashboard", label: "INTELLIGENCE HUB",       accent: T.teal,   icon: "◉" },
+  { id: "finance",   label: "WEALTH ENGINE",          accent: T.amber,  icon: "£" },
+  { id: "markets",   label: "MARKET & RESEARCH",      accent: T.teal,   icon: "≡" },
+  { id: "career",    label: "CAREER & INFRA",         accent: T.indigo, icon: "◆" },
+  { id: "systems",   label: "SYSTEMS & INFO",         accent: T.purple, icon: "⚙" },
 ];
 
 export default function AppShell() {
@@ -103,6 +105,11 @@ export default function AppShell() {
 
       {/* Module content — EngineProvider shares engine state across modules */}
       <EngineProvider>
+        {activeModule === "dashboard" && (
+          <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
+            <DashboardIntelligenceHub />
+          </div>
+        )}
         {activeModule === "finance"  && <PortfolioVOS />}
         {activeModule === "markets"  && <MarketsModule />}
         {activeModule === "career"   && <CareerModule />}

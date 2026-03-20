@@ -1534,6 +1534,9 @@ const refreshMarketData = async () => {
   setRefreshing(false);
 };
 
+// Auto-refresh live market data on mount (runs once; keeps M fresh on first load)
+useEffect(()=>{ refreshMarketData(); },[]);// eslint-disable-line react-hooks/exhaustive-deps
+
 return(
 <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
   {/* Fixed wallpaper layer — separate GPU-composited layer eliminates scroll jitter */}
