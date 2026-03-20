@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "db:migrate": "node scripts/apply-migrations.mjs",
+    "db:seed": "node scripts/seed-holdings.mjs",
+    "db:setup": "node scripts/apply-migrations.mjs && node scripts/seed-holdings.mjs"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
