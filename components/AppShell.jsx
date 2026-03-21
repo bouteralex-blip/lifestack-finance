@@ -138,23 +138,27 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Module content — TEMPORARILY REMOVED EngineProvider to test if it's the culprit */}
-      <Suspense fallback={<LoadingSpinner />}>
-        {/* Dashboard temporarily disabled to test if orchestrator is the culprit */}
-        {activeModule === "dashboard" && (
-          <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFB800" }}>
-            <div style={{ fontSize: 16, textAlign: "center" }}>
-              Intelligence Hub currently disabled for diagnostics.
-              <br />
-              <span style={{ fontSize: 12, opacity: 0.7 }}>Please try another module.</span>
-            </div>
-          </div>
-        )}
-        {activeModule === "finance"  && <ErrorBoundary><PortfolioVOS /></ErrorBoundary>}
-        {activeModule === "markets"  && <ErrorBoundary><MarketsModule /></ErrorBoundary>}
-        {activeModule === "career"   && <ErrorBoundary><CareerModule /></ErrorBoundary>}
-        {activeModule === "systems"  && <ErrorBoundary><SystemsModule /></ErrorBoundary>}
-      </Suspense>
+      {/* Module content — EngineProvider with error boundaries */}
+      <ErrorBoundary>
+        <EngineProvider>
+          <Suspense fallback={<LoadingSpinner />}>
+            {/* Dashboard temporarily disabled to test if orchestrator is the culprit */}
+            {activeModule === "dashboard" && (
+              <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFB800" }}>
+                <div style={{ fontSize: 16, textAlign: "center" }}>
+                  Intelligence Hub currently disabled for diagnostics.
+                  <br />
+                  <span style={{ fontSize: 12, opacity: 0.7 }}>Please try another module.</span>
+                </div>
+              </div>
+            )}
+            {activeModule === "finance"  && <ErrorBoundary><PortfolioVOS /></ErrorBoundary>}
+            {activeModule === "markets"  && <ErrorBoundary><MarketsModule /></ErrorBoundary>}
+            {activeModule === "career"   && <ErrorBoundary><CareerModule /></ErrorBoundary>}
+            {activeModule === "systems"  && <ErrorBoundary><SystemsModule /></ErrorBoundary>}
+          </Suspense>
+        </EngineProvider>
+      </ErrorBoundary>
     </div>
   );
 }
