@@ -3405,7 +3405,6 @@ const SECS={A:"PORTFOLIO OVERVIEW",B:"STRATEGY & PLANNING",C:"ANALYSIS & GROWTH"
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   NAV.setTab = setTab; // expose to child components for HEDGE → Action Plan navigation
-  const [,refresh]=useState(0);
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
   const {data,loading,source,freshness}=useSupabaseData();
   const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
@@ -3434,9 +3433,8 @@ export default function PortfolioVOS(){
       } catch (e) { console.error('TruthLayer update:', e); }
       // Publish engine state to shared context for SystemsModule T18
       setEngines(ENGINE, MKTENG, AGENT);
-      refresh(n=>n+1);
     }
-  },[data,freshness,priorSnapshot,saveSnapshot]);
+  },[data]);
   const render=()=>{switch(tab){
     case "exec":return <T1 truthLayer={truthLayer}/>;
     case "struct":return <T2 truthLayer={truthLayer}/>;
