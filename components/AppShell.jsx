@@ -40,7 +40,7 @@ const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loadi
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
 const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
 const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
-const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
+const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub").then(mod => mod.DashboardIntelligenceHub), { ssr: false, loading: LoadingSpinner });
 
 const T = {
   bg: "#05161A",

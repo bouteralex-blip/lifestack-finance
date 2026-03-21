@@ -3414,16 +3414,16 @@ export default function PortfolioVOS(){
     if(freshness) FRESHNESS=freshness;
     if(data){
       if(data.PORT) PORT=data.PORT;
-      if(data.HOLDINGS) HOLDINGS=data.HOLDINGS;
-      if(data.NW_WEEKLY) NW_WEEKLY=data.NW_WEEKLY;
-      if(data.BRIDGE_ITEMS) BRIDGE_ITEMS=data.BRIDGE_ITEMS;
+      if(Array.isArray(data.HOLDINGS)&&data.HOLDINGS.length) HOLDINGS=data.HOLDINGS;
+      if(Array.isArray(data.NW_WEEKLY)&&data.NW_WEEKLY.length) NW_WEEKLY=data.NW_WEEKLY;
+      if(Array.isArray(data.BRIDGE_ITEMS)&&data.BRIDGE_ITEMS.length) BRIDGE_ITEMS=data.BRIDGE_ITEMS;
       if(data.RISK) RISK=data.RISK;
       if(data.CRYPTO) CRYPTO=data.CRYPTO;
-      if(data.OPPS) OPPS=data.OPPS;
-      if(data.FACTORS) FACTORS=data.FACTORS;
-      if(data.STRESS) STRESS=data.STRESS;
+      if(Array.isArray(data.OPPS)&&data.OPPS.length) OPPS=data.OPPS;
+      if(Array.isArray(data.FACTORS)&&data.FACTORS.length) FACTORS=data.FACTORS;
+      if(Array.isArray(data.STRESS)&&data.STRESS.length) STRESS=data.STRESS;
       if(data.BONUS) BONUS=data.BONUS;
-      if(data.MONTHLY) MONTHLY_DATA=data.MONTHLY;
+      if(Array.isArray(data.MONTHLY)&&data.MONTHLY.length) MONTHLY_DATA=data.MONTHLY;
       if(data.SCORECARD) SCORECARD=data.SCORECARD;
       if(data.REF_DATA) REF_DATA=data.REF_DATA;
       recalcDerived(priorSnapshot, saveSnapshot);
@@ -3437,7 +3437,15 @@ export default function PortfolioVOS(){
       refresh(n=>n+1);
     }
   },[data,freshness,priorSnapshot,saveSnapshot]);
-  const render=()=>{switch(tab){
+  if(loading) return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05161A"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#0F969C",marginBottom:8}}>Loading Wealth Engine...</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Hydrating portfolio data from Supabase</div>
+      </div>
+    </div>
+  );
+  const render=()=>{try{switch(tab){
     case "exec":return <T1 truthLayer={truthLayer}/>;
     case "struct":return <T2 truthLayer={truthLayer}/>;
     case "perf":return <T3 truthLayer={truthLayer}/>;
@@ -3452,8 +3460,8 @@ export default function PortfolioVOS(){
     case "act":return <T12/>;
     case "tax":return <T14/>;
     case "gloss":return <T13/>;
-    default:return <T1/>;
-  }};
+    default:return <T1 truthLayer={truthLayer}/>;
+  }}catch(e){console.error('LifeStack: Tab render error',e);return <div style={{padding:40,color:'#ff6b6b',textAlign:'center'}}><div style={{fontSize:16,fontWeight:700}}>Tab Render Error</div><div style={{fontSize:12,marginTop:8,opacity:0.7}}>{e?.message||'Unknown error'}</div></div>;}};
   const [side,setSide]=useState(true);
   const [open,setOpen]=useState({A:true,B:true,C:true,D:true});
   const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
