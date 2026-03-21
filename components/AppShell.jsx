@@ -36,10 +36,10 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loading: LoadingSpinner });
-const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
-const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
-const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
+const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { loading: LoadingSpinner });
+const MarketsModule = dynamic(() => import("./MarketsModule"), { loading: LoadingSpinner });
+const SystemsModule = dynamic(() => import("./SystemsModule"), { loading: LoadingSpinner });
+const CareerModule = dynamic(() => import("./CareerModule"), { loading: LoadingSpinner });
 // TEMPORARILY DISABLED: DashboardIntelligenceHub causes orchestrator crash
 // const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
 
