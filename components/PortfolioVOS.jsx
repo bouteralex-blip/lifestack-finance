@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSupabaseData, computeFreshness, useMarketData, useSnapshotPersistence, buildEngineTruthLayer } from '../lib/useData';
 import { DEFAULT_PORT, DEFAULT_HOLDINGS, DEFAULT_NW_WEEKLY, DEFAULT_BRIDGE_ITEMS, DEFAULT_RISK, DEFAULT_CRYPTO, DEFAULT_FACTORS, DEFAULT_STRESS, DEFAULT_BONUS, DEFAULT_OPPS, DEFAULT_MONTHLY, DEFAULT_SCORECARD, DEFAULT_MARKET, DEFAULT_YIELD_CURVE, DEFAULT_CREDIT_TL, DEFAULT_SECTOR } from '../lib/defaults';
 import { computeConcentrationState, computeDebtPriorityState, computeSleeveExposureState, computeWrapperExposureState, computeCurrencyExposureState, computeDriftMonitorState, computeISAPensionRoutingState, computeRebalanceProposalState } from '../lib/engines/index.js';
@@ -3405,14 +3405,15 @@ const SECS={A:"PORTFOLIO OVERVIEW",B:"STRATEGY & PLANNING",C:"ANALYSIS & GROWTH"
 export default function PortfolioVOS(){
   const [tab,setTab]=useState("exec");
   NAV.setTab = setTab; // expose to child components for HEDGE → Action Plan navigation
-  const [,refresh]=useState(0);
   const [truthLayer, setTruthLayer] = useState(EMPTY_TRUTH_LAYER);
   const {data,loading,source,freshness}=useSupabaseData();
   const { priorSnapshot, saveSnapshot } = useSnapshotPersistence();
   const { setEngines } = useEngines();
+  const dataRef = useRef(null);
   useEffect(()=>{
     if(freshness) FRESHNESS=freshness;
-    if(data){
+    if(data && data !== dataRef.current){
+      dataRef.current = data;
       if(data.PORT) PORT=data.PORT;
       if(Array.isArray(data.HOLDINGS)&&data.HOLDINGS.length) HOLDINGS=data.HOLDINGS;
       if(Array.isArray(data.NW_WEEKLY)&&data.NW_WEEKLY.length) NW_WEEKLY=data.NW_WEEKLY;
@@ -3427,16 +3428,13 @@ export default function PortfolioVOS(){
       if(data.SCORECARD) SCORECARD=data.SCORECARD;
       if(data.REF_DATA) REF_DATA=data.REF_DATA;
       recalcDerived(priorSnapshot, saveSnapshot);
-      // Update truth layer with engine/agent outputs (fills the 7 null state objects)
       try {
         const sourceMeta = { source: source || 'fallback', lastUpdated: freshness?.lastUpdated || null, snapshotDate: PORT.date };
         setTruthLayer(buildEngineTruthLayer(data, sourceMeta, MKTENG, AGENT));
       } catch (e) { console.error('TruthLayer update:', e); }
-      // Publish engine state to shared context for SystemsModule T18
       setEngines(ENGINE, MKTENG, AGENT);
-      refresh(n=>n+1);
     }
-  },[data,freshness]);
+  },[data]);
   if(loading) return (
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05161A"}}>
       <div style={{textAlign:"center"}}>
