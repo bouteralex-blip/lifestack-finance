@@ -1,46 +1,14 @@
 'use client';
 
-import React, { useState, Suspense } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { EngineProvider } from "../lib/engineContext";
 
-const LoadingSpinner = () => (
-  <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#0F969C" }}>
-    <div>Loading module...</div>
-  </div>
-);
-
-const ErrorFallback = ({ error }) => (
-  <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff6b6b", padding: "20px", textAlign: "center" }}>
-    <div>
-      <div style={{ fontSize: 18, fontWeight: "bold" }}>Module Error</div>
-      <div style={{ fontSize: 12, marginTop: 10, opacity: 0.7 }}>{error?.message || "Failed to load module"}</div>
-    </div>
-  </div>
-);
-
-// Error Boundary component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback error={this.state.error} />;
-    }
-    return this.props.children;
-  }
-}
-
-const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loading: LoadingSpinner });
-const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
-const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
-const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
-const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub").then(mod => mod.DashboardIntelligenceHub), { ssr: false, loading: LoadingSpinner });
+const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
+const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
+const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false });
+const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false });
+const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub").then(mod => mod.DashboardIntelligenceHub), { ssr: false });
 
 const T = {
   bg: "#05161A",
@@ -137,18 +105,18 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Module content — EngineProvider with error boundaries */}
-      <ErrorBoundary>
-        <EngineProvider>
-          <Suspense fallback={<LoadingSpinner />}>
-            {activeModule === "dashboard" && <ErrorBoundary><DashboardIntelligenceHub /></ErrorBoundary>}
-            {activeModule === "finance"  && <ErrorBoundary><PortfolioVOS /></ErrorBoundary>}
-            {activeModule === "markets"  && <ErrorBoundary><MarketsModule /></ErrorBoundary>}
-            {activeModule === "career"   && <ErrorBoundary><CareerModule /></ErrorBoundary>}
-            {activeModule === "systems"  && <ErrorBoundary><SystemsModule /></ErrorBoundary>}
-          </Suspense>
-        </EngineProvider>
-      </ErrorBoundary>
+      {/* Module content — EngineProvider shares engine state across modules */}
+      <EngineProvider>
+        {activeModule === "dashboard" && (
+          <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
+            <DashboardIntelligenceHub />
+          </div>
+        )}
+        {activeModule === "finance"  && <PortfolioVOS />}
+        {activeModule === "markets"  && <MarketsModule />}
+        {activeModule === "career"   && <CareerModule />}
+        {activeModule === "systems"  && <SystemsModule />}
+      </EngineProvider>
     </div>
   );
 }
