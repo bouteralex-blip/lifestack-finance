@@ -3435,14 +3435,9 @@ export default function PortfolioVOS(){
       setEngines(ENGINE, MKTENG, AGENT);
     }
   },[data]);
-  if(loading) return (
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05161A"}}>
-      <div style={{textAlign:"center"}}>
-        <div style={{fontSize:14,fontWeight:700,color:"#0F969C",marginBottom:8}}>Loading Wealth Engine...</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Hydrating portfolio data from Supabase</div>
-      </div>
-    </div>
-  );
+  const [side,setSide]=useState(true);
+  const [open,setOpen]=useState({A:true,B:true,C:true,D:true});
+  const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
   const render=()=>{try{switch(tab){
     case "exec":return <T1 truthLayer={truthLayer}/>;
     case "struct":return <T2 truthLayer={truthLayer}/>;
@@ -3460,9 +3455,14 @@ export default function PortfolioVOS(){
     case "gloss":return <T13/>;
     default:return <T1 truthLayer={truthLayer}/>;
   }}catch(e){console.error('LifeStack: Tab render error',e);return <div style={{padding:40,color:'#ff6b6b',textAlign:'center'}}><div style={{fontSize:16,fontWeight:700}}>Tab Render Error</div><div style={{fontSize:12,marginTop:8,opacity:0.7}}>{e?.message||'Unknown error'}</div></div>;}};
-  const [side,setSide]=useState(true);
-  const [open,setOpen]=useState({A:true,B:true,C:true,D:true});
-  const tog=s=>setOpen(p=>({...p,[s]:!p[s]}));
+  if(loading) return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05161A"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#0F969C",marginBottom:8}}>Loading Wealth Engine...</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Hydrating portfolio data from Supabase</div>
+      </div>
+    </div>
+  );
   return (
     <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",display:"flex",position:"relative"}}>
       {/* Fixed wallpaper — separate GPU layer, eliminates scroll jitter */}
