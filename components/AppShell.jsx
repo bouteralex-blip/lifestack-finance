@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { EngineProvider } from "../lib/engineContext";
 
@@ -10,11 +10,38 @@ const LoadingSpinner = () => (
   </div>
 );
 
+const ErrorFallback = ({ error }) => (
+  <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff6b6b", padding: "20px", textAlign: "center" }}>
+    <div>
+      <div style={{ fontSize: 18, fontWeight: "bold" }}>Module Error</div>
+      <div style={{ fontSize: 12, marginTop: 10, opacity: 0.7 }}>{error?.message || "Failed to load module"}</div>
+    </div>
+  </div>
+);
+
+// Error Boundary component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback error={this.state.error} />;
+    }
+    return this.props.children;
+  }
+}
+
 const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loading: LoadingSpinner });
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
 const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
 const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
-const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
+// TEMPORARILY DISABLED: DashboardIntelligenceHub causes orchestrator crash
+// const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
 
 const T = {
   bg: "#05161A",
@@ -114,15 +141,20 @@ export default function AppShell() {
       {/* Module content — EngineProvider shares engine state across modules */}
       <EngineProvider>
         <Suspense fallback={<LoadingSpinner />}>
+          {/* Dashboard temporarily disabled to test if orchestrator is the culprit */}
           {activeModule === "dashboard" && (
-            <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
-              <DashboardIntelligenceHub />
+            <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFB800" }}>
+              <div style={{ fontSize: 16, textAlign: "center" }}>
+                Intelligence Hub currently disabled for diagnostics.
+                <br />
+                <span style={{ fontSize: 12, opacity: 0.7 }}>Please try another module.</span>
+              </div>
             </div>
           )}
-          {activeModule === "finance"  && <PortfolioVOS />}
-          {activeModule === "markets"  && <MarketsModule />}
-          {activeModule === "career"   && <CareerModule />}
-          {activeModule === "systems"  && <SystemsModule />}
+          {activeModule === "finance"  && <ErrorBoundary><PortfolioVOS /></ErrorBoundary>}
+          {activeModule === "markets"  && <ErrorBoundary><MarketsModule /></ErrorBoundary>}
+          {activeModule === "career"   && <ErrorBoundary><CareerModule /></ErrorBoundary>}
+          {activeModule === "systems"  && <ErrorBoundary><SystemsModule /></ErrorBoundary>}
         </Suspense>
       </EngineProvider>
     </div>
