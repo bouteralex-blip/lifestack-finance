@@ -3436,7 +3436,7 @@ export default function PortfolioVOS(){
       setEngines(ENGINE, MKTENG, AGENT);
       refresh(n=>n+1);
     }
-  },[data,freshness,priorSnapshot,saveSnapshot]);
+  },[data,freshness]);
   if(loading) return (
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05161A"}}>
       <div style={{textAlign:"center"}}>
