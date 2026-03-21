@@ -1259,6 +1259,7 @@ const T1 = ({ truthLayer })=>{
   const liquidCash = 15752+406+94;
   const runway = liquidCash / PORT.monthlyExpenses;
   const nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
+  const alerts = AGENT.triggerAlerts?.alerts || [];
 
   const t1Takeaways = [
     `Net Worth is £${PORT.netWorth.toLocaleString('en-GB')} with 6M return ${nwReturn.toFixed(1)}%.`,
