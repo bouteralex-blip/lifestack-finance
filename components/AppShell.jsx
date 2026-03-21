@@ -1,14 +1,20 @@
 'use client';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { EngineProvider } from "../lib/engineContext";
 
-const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
-const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
-const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false });
-const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false });
-const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false });
+const LoadingSpinner = () => (
+  <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#0F969C" }}>
+    <div>Loading module...</div>
+  </div>
+);
+
+const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loading: LoadingSpinner });
+const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
+const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
+const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
+const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
 
 const T = {
   bg: "#05161A",
@@ -107,15 +113,17 @@ export default function AppShell() {
 
       {/* Module content — EngineProvider shares engine state across modules */}
       <EngineProvider>
-        {activeModule === "dashboard" && (
-          <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
-            <DashboardIntelligenceHub />
-          </div>
-        )}
-        {activeModule === "finance"  && <PortfolioVOS />}
-        {activeModule === "markets"  && <MarketsModule />}
-        {activeModule === "career"   && <CareerModule />}
-        {activeModule === "systems"  && <SystemsModule />}
+        <Suspense fallback={<LoadingSpinner />}>
+          {activeModule === "dashboard" && (
+            <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
+              <DashboardIntelligenceHub />
+            </div>
+          )}
+          {activeModule === "finance"  && <PortfolioVOS />}
+          {activeModule === "markets"  && <MarketsModule />}
+          {activeModule === "career"   && <CareerModule />}
+          {activeModule === "systems"  && <SystemsModule />}
+        </Suspense>
       </EngineProvider>
     </div>
   );
