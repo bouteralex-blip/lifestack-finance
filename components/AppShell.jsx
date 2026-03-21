@@ -1,8 +1,24 @@
 'use client';
 
-import { useState } from "react";
+import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { EngineProvider } from "../lib/engineContext";
+
+class ModuleBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff6b6b", padding: "20px", textAlign: "center" }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: "bold" }}>Module Error</div>
+          <div style={{ fontSize: 12, marginTop: 10, opacity: 0.7 }}>{this.state.error?.message || "Failed to load module"}</div>
+        </div>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 
 const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false });
 const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false });
@@ -108,14 +124,16 @@ export default function AppShell() {
       {/* Module content — EngineProvider shares engine state across modules */}
       <EngineProvider>
         {activeModule === "dashboard" && (
-          <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
-            <DashboardIntelligenceHub />
-          </div>
+          <ModuleBoundary>
+            <div style={{ minHeight: "100vh", background: "#05161A", padding: "24px", color: "#e8f4f5" }}>
+              <DashboardIntelligenceHub />
+            </div>
+          </ModuleBoundary>
         )}
-        {activeModule === "finance"  && <PortfolioVOS />}
-        {activeModule === "markets"  && <MarketsModule />}
-        {activeModule === "career"   && <CareerModule />}
-        {activeModule === "systems"  && <SystemsModule />}
+        {activeModule === "finance"  && <ModuleBoundary><PortfolioVOS /></ModuleBoundary>}
+        {activeModule === "markets"  && <ModuleBoundary><MarketsModule /></ModuleBoundary>}
+        {activeModule === "career"   && <ModuleBoundary><CareerModule /></ModuleBoundary>}
+        {activeModule === "systems"  && <ModuleBoundary><SystemsModule /></ModuleBoundary>}
       </EngineProvider>
     </div>
   );
