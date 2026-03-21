@@ -48,6 +48,7 @@ import { ConcentricProgressRingsWidget } from './tiles/liquid-glass/ConcentricPr
 import { LuminousStackedColumnWidget } from './tiles/liquid-glass/LuminousStackedColumnWidget';
 import { MirroredDivergingBarWidget } from './tiles/liquid-glass/MirroredDivergingBarWidget';
 import { ContributionHeatmapWidget } from './tiles/liquid-glass/ContributionHeatmapWidget';
+import { CorrelationHeatmapWidget } from './tiles/liquid-glass/CorrelationHeatmapWidget';
 import {
   mapPortfolioKpis,
   mapCIOInsight,
@@ -1239,6 +1240,34 @@ const SankeyChart = () => {
     </svg>
   );
 };
+
+// =========================================================================
+// TOP 5 KEY TAKEAWAYS BANNER — Horizon UI Pro Component
+// Reusable data-driven insight banner for each tab
+// =========================================================================
+const TakeawaysBanner = ({ takeaways = [], title = "STRATEGIC SYNTHESIS & TOP 5 TAKEAWAYS" }) => (
+  <EmeraldGlassCard>
+    <div style={HEADER_BANNER}>
+      <div>
+        <div style={HEADER_TITLE}>{title}</div>
+        <div style={HEADER_SUB}>Data-driven insights · auto-generated from portfolio state</div>
+      </div>
+    </div>
+    <div style={{padding:'16px 20px',background:'rgba(0,0,0,0.25)',boxShadow:'inset 0 1px 3px rgba(0,0,0,0.5)'}}>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {takeaways.map((t,i) => (
+          <div key={i} style={{display:'flex',alignItems:'flex-start',gap:10}}>
+            <div style={{width:24,height:24,borderRadius:8,background:`rgba(15,150,156,${0.25-i*0.03})`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:'1px solid rgba(15,150,156,0.30)'}}>
+              <span style={{fontSize:12,fontWeight:900,color:P.cyan,fontFamily:P.mono}}>{i+1}</span>
+            </div>
+            <div style={{fontSize:12,color:P.t1,lineHeight:1.6,fontWeight:500}}>{t}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </EmeraldGlassCard>
+);
+
 const T1 = ({ truthLayer })=>{
   const [activePeriod, setActivePeriod] = useState('6M');
   const [exporting, setExporting] = useState(false);
