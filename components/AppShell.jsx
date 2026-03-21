@@ -36,12 +36,11 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { loading: LoadingSpinner });
-const MarketsModule = dynamic(() => import("./MarketsModule"), { loading: LoadingSpinner });
-const SystemsModule = dynamic(() => import("./SystemsModule"), { loading: LoadingSpinner });
-const CareerModule = dynamic(() => import("./CareerModule"), { loading: LoadingSpinner });
-// TEMPORARILY DISABLED: DashboardIntelligenceHub causes orchestrator crash
-// const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
+const PortfolioVOS = dynamic(() => import("./PortfolioVOS"), { ssr: false, loading: LoadingSpinner });
+const MarketsModule = dynamic(() => import("./MarketsModule"), { ssr: false, loading: LoadingSpinner });
+const SystemsModule = dynamic(() => import("./SystemsModule"), { ssr: false, loading: LoadingSpinner });
+const CareerModule = dynamic(() => import("./CareerModule"), { ssr: false, loading: LoadingSpinner });
+const DashboardIntelligenceHub = dynamic(() => import("./DashboardIntelligenceHub"), { ssr: false, loading: LoadingSpinner });
 
 const T = {
   bg: "#05161A",
@@ -142,16 +141,7 @@ export default function AppShell() {
       <ErrorBoundary>
         <EngineProvider>
           <Suspense fallback={<LoadingSpinner />}>
-            {/* Dashboard temporarily disabled to test if orchestrator is the culprit */}
-            {activeModule === "dashboard" && (
-              <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFB800" }}>
-                <div style={{ fontSize: 16, textAlign: "center" }}>
-                  Intelligence Hub currently disabled for diagnostics.
-                  <br />
-                  <span style={{ fontSize: 12, opacity: 0.7 }}>Please try another module.</span>
-                </div>
-              </div>
-            )}
+            {activeModule === "dashboard" && <ErrorBoundary><DashboardIntelligenceHub /></ErrorBoundary>}
             {activeModule === "finance"  && <ErrorBoundary><PortfolioVOS /></ErrorBoundary>}
             {activeModule === "markets"  && <ErrorBoundary><MarketsModule /></ErrorBoundary>}
             {activeModule === "career"   && <ErrorBoundary><CareerModule /></ErrorBoundary>}

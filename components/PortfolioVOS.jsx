@@ -1148,7 +1148,7 @@ const AlertPanel = ({items}) => (
       return (
         <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<items.length-1?'1px solid rgba(255,255,255,0.05)':"none"}}>
           <div style={{width:9,height:9,borderRadius:"50%",background:dc,flexShrink:0,boxShadow:`0 0 8px ${dc}50`}}/>
-          <div style={{fontSize:12,color:'#cbd5e1',flex:1,lineHeight:1.5}}>{a.msg}</div>
+          <div style={{fontSize:12,color:'#cbd5e1',flex:1,lineHeight:1.5}}>{a.message||a.title||a.msg||'Alert'}</div>
           <span style={{fontSize:9,color:'#fff',fontWeight:700,padding:"2px 8px",borderRadius:9999,background:dc,textTransform:"uppercase",letterSpacing:0.5}}>{a.sev}</span>
         </div>
       );
@@ -1347,7 +1347,7 @@ const T1 = ({ truthLayer })=>{
             <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:180}}>
               <div style={{fontSize:12,fontWeight:700,color:P.red,marginBottom:10}}>GOVERNANCE ALERTS</div>
               <div style={{flex:1,overflowY:'auto',fontSize:11,color:P.t2,display:'flex',flexDirection:'column',gap:6}}>
-                {alerts.slice(0,5).map((a,i)=>(<div key={i}>{a.msg}</div>))}
+                {(alerts||[]).slice(0,5).map((a,i)=>(<div key={i}>{a.message||a.title||a.msg||'Alert'}</div>))}
               </div>
             </EmeraldGlassCard>
           </div>
