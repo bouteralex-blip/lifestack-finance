@@ -1678,8 +1678,8 @@ const T3 = ({ truthLayer })=>{
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={BRIDGE} margin={{left:20,right:20,bottom:20}}>
                 <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-                <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} />
-                <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`£${(v/1000).toFixed(0)}k`} />
+                <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} stroke={P.b3} />
+                <YAxis tick={{fill:P.t3,fontSize:10}} stroke={P.b3} tickFormatter={v=>`£${(v/1000).toFixed(0)}k`} />
                 <Tooltip content={<Tip />} />
                 <Bar dataKey="delta" fill={P.cyan} radius={[6,6,0,0]} />
               </BarChart>
