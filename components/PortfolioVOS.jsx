@@ -2914,6 +2914,137 @@ const T12 = ()=>{
       </EmeraldGlassCard>
     )}
 
+    {/* AGENT APPROVALS PANEL — Rebalance approval status and CGT impact */}
+    {AGENT.rebalanceApproval && (
+      <EmeraldGlassCard style={{marginBottom:20,padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 12'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>🤖 AI Agent Rebalance Approvals</div>
+              <div style={{fontSize:11,color:P.t2}}>Automated rebalancing decisions with CGT impact analysis</div>
+            </div>
+            <div style={{background:AGENT.rebalanceApproval.approvalStatus === 'APPROVED' ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : AGENT.rebalanceApproval.approvalStatus === 'CONDITIONAL' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',color:'#000',padding:'6px 12px',borderRadius:8,fontSize:10,fontWeight:700}}>{AGENT.rebalanceApproval.approvalStatus}</div>
+          </div>
+        </div>
+        
+        {/* Approval Summary (4 cols) */}
+        <div style={{gridColumn:'span 4',display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:8}}>APPROVAL SUMMARY</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Max Drift</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{AGENT.rebalanceApproval.driftSummary?.maxDrift?.toFixed(1)}%</div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Net Benefit</div>
+              <div style={{fontSize:12,fontWeight:700,color:AGENT.rebalanceApproval.netBenefit > 0 ? P.green : P.red}}>
+                £{Math.abs(AGENT.rebalanceApproval.netBenefit).toFixed(0)}
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>CGT Cost</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.red}}>
+                £{AGENT.rebalanceApproval.totalCGT.toFixed(0)}
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Risk Reduction</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.green}}>
+                {AGENT.rebalanceApproval.riskReduction?.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Proposed Trades (8 cols) */}
+        <div style={{gridColumn:'span 8'}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:12}}>PROPOSED TRADES</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+            {(AGENT.rebalanceApproval.trades || []).slice(0, 6).map((trade, idx) => (
+              <div key={idx} style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:12,border:`1px solid rgba(255,255,255,0.08)`}}>
+                <div style={{fontSize:11,fontWeight:700,color:P.t1,marginBottom:6}}>{trade.action}</div>
+                <div style={{fontSize:10,color:P.t3,marginBottom:4}}>{trade.asset}</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{fontSize:9,color:P.t4}}>CGT Impact</div>
+                  <div style={{fontSize:10,fontWeight:700,color:trade.cgtCost > 0 ? P.red : P.green}}>
+                    £{trade.cgtCost?.toFixed(0) || 0}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </EmeraldGlassCard>
+    )}
+
+    {/* AGENT AUDIT TRAIL — Data freshness and health monitoring */}
+    {AGENT.freshnessAudit && (
+      <EmeraldGlassCard style={{marginBottom:20,padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 12'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>🔍 AI Agent Data Audit Trail</div>
+              <div style={{fontSize:11,color:P.t2}}>Real-time monitoring of data freshness and source health</div>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <div style={{background:'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',color:'#000',padding:'4px 8px',borderRadius:6,fontSize:9,fontWeight:700}}>
+                {AGENT.freshnessAudit.liveCount} LIVE
+              </div>
+              <div style={{background:'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',color:'#000',padding:'4px 8px',borderRadius:6,fontSize:9,fontWeight:700}}>
+                {AGENT.freshnessAudit.staleCount} STALE
+              </div>
+              <div style={{background:'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',color:'#000',padding:'4px 8px',borderRadius:6,fontSize:9,fontWeight:700}}>
+                {AGENT.freshnessAudit.fallbackCount} FALLBACK
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Audit Summary (4 cols) */}
+        <div style={{gridColumn:'span 4',display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:8}}>AUDIT SUMMARY</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Total Sources</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.t1}}>{AGENT.freshnessAudit.sources?.length || 0}</div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Live Data</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.green}}>{AGENT.freshnessAudit.liveCount || 0}</div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Stale Data</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.amber}}>{AGENT.freshnessAudit.staleCount || 0}</div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{fontSize:11,color:P.t3}}>Using Fallback</div>
+              <div style={{fontSize:12,fontWeight:700,color:P.red}}>{AGENT.freshnessAudit.fallbackCount || 0}</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Data Sources Status (8 cols) */}
+        <div style={{gridColumn:'span 8'}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:12}}>DATA SOURCE STATUS</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:8}}>
+            {(AGENT.freshnessAudit.sources || []).slice(0, 8).map((source, idx) => (
+              <div key={idx} style={{
+                background: source.isLive ? 'rgba(34,197,94,0.1)' : source.isStale ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${source.isLive ? 'rgba(34,197,94,0.3)' : source.isStale ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                borderRadius:8,padding:10
+              }}>
+                <div style={{fontSize:10,fontWeight:700,color:P.t1,marginBottom:4}}>{source.table}</div>
+                <div style={{fontSize:9,color:P.t3,marginBottom:6}}>{source.category}</div>
+                <div style={{fontSize:8,color:source.isLive ? P.green : source.isStale ? P.amber : P.red,fontWeight:600}}>
+                  {source.note}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </EmeraldGlassCard>
+    )}
+
     {/* KPI STRIP — Phase 4 agent-driven */}
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Total Actions" v={AGENT.actionQueue?.summary?.totalActions || blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={AGENT.actionQueue?.summary?.immediateActions || blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
