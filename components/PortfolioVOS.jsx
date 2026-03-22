@@ -2888,6 +2888,168 @@ const T12 = ()=>{
 };
 
 // =========================================================================
+// TAB 15 — MARKETS HUB
+// =========================================================================
+const T15 = ()=>{
+  const regime = MKTENG.regime || {};
+  const mktMetrics = [
+    // Macro Regime Metrics
+    {title:'Regime', value:regime.regime || 'Loading', unit:'', icon:'🌍', category:'MACRO'},
+    {title:'Confidence', value:regime.confidence >= 60 ? '●' : regime.confidence >= 40 ? '◐' : '○', unit:`${regime.confidence}%`, icon:'📊', category:'MACRO'},
+    {title:'Transition Risk', value:regime.transitionRisk || 'N/A', unit:'', icon:'⚠️', category:'MACRO'},
+    {title:'Risk Posture', value:regime.riskPosture || 'N/A', unit:'', icon:'🎯', category:'MACRO'},
+    
+    // Key Signals
+    {title:'CPI', value:((regime.scores?.signals||{}).cpi||3.0).toFixed(1), unit:'%', icon:'💰', category:'INFLATION',c:P.orange},
+    {title:'GDP Growth', value:((regime.scores?.signals||{}).gdpGrowth||0.1).toFixed(1), unit:'%', icon:'📈', category:'GROWTH',c:P.cyan},
+    {title:'Policy Rate', value:((regime.scores?.signals||{}).cbRate||3.75).toFixed(2), unit:'%', icon:'🏦', category:'RATES',c:P.indigo},
+    {title:'PMI', value:Math.round((regime.scores?.signals||{}).pmi||49), unit:'pts', icon:'🏭', category:'ACTIVITY',c:P.cyan},
+    
+    // Volatility & Positioning
+    {title:'VIX', value:Math.round((regime.scores?.signals||{}).vix||24.5), unit:'pts', icon:'📉', category:'VOLATILITY',c:P.red},
+    {title:'MOVE', value:Math.round((regime.scores?.signals||{}).move||118), unit:'pts', icon:'🔊', category:'VOLATILITY',c:P.red},
+    
+    // Crypto Signals
+    {title:'BTC Cycle', value:MKTENG.btcCycle?.phase || 'N/A', unit:'', icon:'₿', category:'CRYPTO'},
+    {title:'Stablecoin Liq', value:MKTENG.stablecoinLiquidity?.strength || 'N/A', unit:'', icon:'💵', category:'CRYPTO'},
+  ];
+  
+  const regimeScores = (regime.scores || {});
+  const scoreArray = Object.entries(regimeScores).filter(([k])=>!k.includes('signal')).slice(0,6).map(([name,score])=>({name:name.replace('_',' '),score:Math.min(score,100)}));
+  
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
+      <Hd t="MARKETS HUB" s="Global macro regime, key signals, and market intelligence for portfolio positioning" tag="REAL-TIME" ac={P.positive} freshness={FRESHNESS} tableKey="markets"/>
+      
+      {/* SECTION 1: REGIME SUMMARY (12 cols) */}
+      <div style={{gridColumn:'span 12'}}>
+        <EmeraldGlassCard style={{padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+          <div style={{gridColumn:'span 3'}}>
+            <div style={{fontSize:10,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Macro Regime</div>
+            <div style={{fontSize:28,fontWeight:700,color:P.cyan,marginBottom:8}}>{regime.regime || 'Loading'}</div>
+            <div style={{fontSize:11,color:P.t2,lineHeight:1.4,marginBottom:12}}>{regime.description || 'Classifying...'}</div>
+            <div style={{display:'flex',gap:12,fontSize:10}}>
+              <div>
+                <div style={{color:P.t4}}>Confidence</div>
+                <div style={{fontSize:14,fontWeight:700,color:P.cyan}}>{regime.confidence || 0}%</div>
+              </div>
+              <div>
+                <div style={{color:P.t4}}>Risk Posture</div>
+                <div style={{fontSize:12,fontWeight:700,color:P.cyan}}>{regime.riskPosture || 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Regime Scores Radar */}
+          <div style={{gridColumn:'span 4',display:'flex',justifyContent:'center'}}>
+            <ResponsiveContainer width="100%" height={200}>
+              <RadarChart data={scoreArray}>
+                <PolarGrid stroke="rgba(255,255,255,0.10)" />
+                <PolarAngleAxis dataKey="name" tick={{fill:P.t3,fontSize:9}} />
+                <PolarRadiusAxis tick={{fill:P.t3,fontSize:8}} />
+                <Radar name="Score" dataKey="score" stroke={P.cyan} fill={P.cyan} fillOpacity={0.2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* Top Signals */}
+          <div style={{gridColumn:'span 5',display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+            {[
+              {l:'CPI',v:`${((regime.scores?.signals||{}).cpi||3.0).toFixed(1)}%`,c:P.orange},
+              {l:'GDP',v:`${((regime.scores?.signals||{}).gdpGrowth||0.1).toFixed(1)}%`,c:P.cyan},
+              {l:'Rate',v:`${((regime.scores?.signals||{}).cbRate||3.75).toFixed(2)}%`,c:P.indigo},
+              {l:'PMI',v:Math.round((regime.scores?.signals||{}).pmi||49),c:P.cyan},
+            ].map((s,i)=>(
+              <div key={i} style={{padding:10,background:s.c+'15',borderRadius:12,border:`1px solid ${s.c}30`,textAlign:'center'}}>
+                <div style={{fontSize:9,color:P.t3,textTransform:'uppercase',marginBottom:4}}>{s.l}</div>
+                <div style={{fontSize:16,fontWeight:700,color:s.c}}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+        </EmeraldGlassCard>
+      </div>
+      
+      {/* SECTION 2: MARKET METRICS GRID (12 cols × 4 rows) */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:12}}>
+        {mktMetrics.map((m,i)=>(
+          <EmeraldGlassCard key={i} style={{padding:12,display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:100}}>
+            <div>
+              <div style={{fontSize:9,fontWeight:700,color:m.c||P.t4,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>{m.category}</div>
+              <div style={{fontSize:11,color:P.t2,marginBottom:8}}>{m.title}</div>
+            </div>
+            <div>
+              <div style={{fontSize:20,fontWeight:700,color:m.c||P.cyan,marginBottom:4}}>{m.value} {m.unit && <span style={{fontSize:12,color:P.t3}}>{m.unit}</span>}</div>
+              <div style={{fontSize:9,color:P.t4}}>{m.icon}</div>
+            </div>
+          </EmeraldGlassCard>
+        ))}
+      </div>
+      
+      {/* SECTION 3: MARKET DYNAMICS (12 cols) */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
+        {/* Left: Volatility Profile (col-span-6) */}
+        <EmeraldGlassCard style={{gridColumn:'span 6',padding:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:16}}>VOLATILITY PROFILE</div>
+          <ResponsiveContainer width="100%" height={250}>
+            <ComposedChart data={[
+              {name:'VIX',vix:Math.round((regime.scores?.signals||{}).vix||24.5),move:Math.round((regime.scores?.signals||{}).move||118)/10},
+              {name:'Hist',vix:22,move:11},
+              {name:'Peak',vix:28,move:15},
+            ]}>
+              <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="name" tick={{fill:P.t3,fontSize:10}} />
+              <YAxis tick={{fill:P.t3,fontSize:10}} />
+              <Tooltip content={<Tip/>} />
+              <Bar dataKey="vix" name="VIX" fill={P.red} />
+              <Line type="monotone" dataKey="move" name="MOVE÷10" stroke={P.orange} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </EmeraldGlassCard>
+        
+        {/* Right: Regime Transition (col-span-6) */}
+        <EmeraldGlassCard style={{gridColumn:'span 6',padding:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:16}}>REGIME TRANSITION RISK</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div>
+              <div style={{fontSize:11,color:P.t2,marginBottom:6}}>Current: <strong>{regime.regime || 'N/A'}</strong></div>
+              <div style={{width:'100%',height:24,background:'rgba(15,150,156,0.2)',borderRadius:8,overflow:'hidden'}}>
+                <div style={{width:`${regime.confidence || 0}%`,height:'100%',background:P.cyan,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:8,color:'white',fontSize:10,fontWeight:700}}>{regime.confidence}%</div>
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:11,color:P.t2,marginBottom:6}}>Secondary: <strong>{regime.secondaryRegime || 'N/A'}</strong></div>
+              <div style={{fontSize:10,color:P.t4}}>Transition Risk: <strong style={{color:regime.transitionRisk==='High'?P.red:regime.transitionRisk==='Medium'?P.amber:P.green}}>{regime.transitionRisk || 'Unknown'}</strong></div>
+            </div>
+            <div style={{fontSize:10,color:P.t2,marginTop:8,padding:8,background:'rgba(255,255,255,0.05)',borderRadius:6}}>
+              <strong>Implication:</strong> {regime.transitionRisk==='High'?'Monitor secondary regime closely; possible regime shift':regime.transitionRisk==='Medium'?'Track secondary indicators; prepare contingencies':'Current regime stable; low near-term transition risk'}
+            </div>
+          </div>
+        </EmeraldGlassCard>
+      </div>
+
+      {/* SECTION 4: ASSET BIAS POSITIONING (12 cols) */}
+      <EmeraldGlassCard style={{gridColumn:'span 12',padding:20}}>
+        <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:16}}>REGIME ASSET BIAS</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20}}>
+          {[
+            {type:'Equities',bias:regime.equityBias||0,icon:'📈'},
+            {type:'Bonds',bias:regime.bondBias||0,icon:'📊'},
+            {type:'Crypto',bias:regime.cryptoBias||0,icon:'₿'},
+          ].map((b,i)=>(
+            <div key={i} style={{textAlign:'center'}}>
+              <div style={{fontSize:10,color:P.t3,textTransform:'uppercase',marginBottom:8}}>{b.type}</div>
+              <div style={{fontSize:32,fontWeight:700,color:b.bias>0?P.green:b.bias<0?P.red:P.t4,marginBottom:8}}>{b.bias>0?'+':''}{b.bias}</div>
+              <div style={{fontSize:28}}>{b.icon}</div>
+              <div style={{fontSize:9,color:P.t4,marginTop:8}}>{b.bias>0?'Overweight':b.bias<0?'Underweight':'Neutral'}</div>
+            </div>
+          ))}
+        </div>
+      </EmeraldGlassCard>
+    </div>
+  );
+};
+
+// =========================================================================
 // TAB 14 — TAX ADVISOR
 // =========================================================================
 const T14 = ()=>{
@@ -3454,7 +3616,7 @@ function recalcDerived(priorSnapshot, saveSnapshot) {
 }
 
 // =========================================================================
-// MAIN APP — 14 Tab Navigation
+// MAIN APP — 15 Tab Navigation
 
 const TABS=[
   {k:"exec",l:"Executive Summary",id:"T1",ic:BarChart3,s:"A"},
@@ -3469,8 +3631,9 @@ const TABS=[
   {k:"long",l:"Long-Term Compounding",id:"T10",ic:TrendingUp,s:"C"},
   {k:"crypto",l:"Crypto Engine",id:"T11",ic:CircleDot,s:"C"},
   {k:"act",l:"Action Plan",id:"T12",ic:FileText,s:"C"},
+  {k:"mkts",l:"Markets Hub",id:"T14",ic:TrendingUp,s:"C"},
   {k:"tax",l:"Tax Advisor",id:"T13",ic:BookOpen,s:"D"},
-  {k:"gloss",l:"Glossary",id:"T14",ic:BookOpen,s:"D"},
+  {k:"gloss",l:"Glossary",id:"T15",ic:BookOpen,s:"D"},
 ];
 const SECS={A:"PORTFOLIO OVERVIEW",B:"STRATEGY & PLANNING",C:"ANALYSIS & GROWTH",D:"REFERENCE"};
 
@@ -3520,6 +3683,7 @@ export default function PortfolioVOS(){
     case "long":return <T10/>;
     case "crypto":return <T11/>;
     case "act":return <T12/>;
+    case "mkts":return <T15/>;
     case "tax":return <T14/>;
     case "gloss":return <T13/>;
     default:return <T1/>;
