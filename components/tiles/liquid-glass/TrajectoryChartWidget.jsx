@@ -261,7 +261,7 @@ export function TrajectoryChartWidget({
 
       {/* Footer stats */}
       <div className="relative z-10 mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {footerStats.map((stat) => (
+        {(footerStats || []).map((stat) => (
           <div
             key={stat.label}
             className="bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-2"
