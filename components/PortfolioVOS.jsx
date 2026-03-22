@@ -14,7 +14,16 @@ import { computeBonusAllocationState } from '../lib/engines/bonus-allocation.js'
 import { computeCapitalEfficiencyState } from '../lib/engines/capital-efficiency.js';
 import { computeCryptoRebalanceState } from '../lib/engines/crypto-rebalance.js';
 import { computeCryptoScenarioLab } from '../lib/engines/crypto-scenario.js';
-import { computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, computeCreditStressState, computeSectorLeadershipState, computeCryptoOnChainState } from '../lib/engines/market/index.js';
+import { 
+  computeRegimeState, computeCrossAssetStressState, computeBTCCycleState, computeYieldCurveState, 
+  computeCreditStressState, computeSectorLeadershipState, computeETFFlowState, computeCryptoOnChainState,
+  computeCryptoETFFlowState, computeCryptoFundingState, computeStablecoinLiquidityState,
+  computeCryptoSentimentState, computeOnChainStressBoard, computeCentralBankState,
+  computeInflationShockState, computeLiquidityDivergenceState, computeNarrativePulseState,
+  computePolicySurpriseState, computeFactorRotationState, computeEarningsRevisionState,
+  computeCFTCPositioningState, computeCorrelationDriftState, computeGapRiskState,
+  computeCommodityShockState, computeFXRegimeState, computePropertyCycleState
+} from '../lib/engines/market/index.js';
 import { generateWeeklySynthesis, rankOpportunities, computeWhatChanged, buildActionQueue, generateTriggerAlerts, generateMorningCommand, processDecisionLog, createDecisionEntry } from '../lib/engines/agents/index.js';
 import { generateDailyBrief } from '../lib/engines/agents/daily-brief.js';
 import { computeOpportunityRadar } from '../lib/engines/agents/opportunity-radar.js';
@@ -3338,13 +3347,39 @@ function recalcDerived(priorSnapshot, saveSnapshot) {
   // Phase 3 Market Intelligence — compute market engines for agent context
   try {
     const MKT = DEFAULT_MARKET;
+    // Core macro regime signals
     MKTENG.regime = computeRegimeState(MKT);
     MKTENG.stress = computeCrossAssetStressState(MKT);
     MKTENG.btcCycle = computeBTCCycleState(MKT);
     MKTENG.yieldCurve = computeYieldCurveState(DEFAULT_YIELD_CURVE);
     MKTENG.creditStress = computeCreditStressState(MKT, DEFAULT_CREDIT_TL);
     MKTENG.sectorLeadership = computeSectorLeadershipState(DEFAULT_SECTOR);
+    
+    // Traditional asset signals
+    MKTENG.etfFlows = computeETFFlowState(MKT);
+    MKTENG.liquidityDivergence = computeLiquidityDivergenceState(MKT);
+    MKTENG.narrativePulse = computeNarrativePulseState(MKT);
+    MKTENG.policySurprise = computePolicySurpriseState(MKT);
+    MKTENG.factorRotation = computeFactorRotationState(MKT);
+    MKTENG.earningsRevision = computeEarningsRevisionState(MKT);
+    MKTENG.cfmcPositioning = computeCFTCPositioningState(MKT);
+    MKTENG.correlationDrift = computeCorrelationDriftState(MKT);
+    MKTENG.gapRisk = computeGapRiskState(MKT);
+    MKTENG.commodityShock = computeCommodityShockState(MKT);
+    MKTENG.fxRegime = computeFXRegimeState(MKT);
+    MKTENG.propertyCycle = computePropertyCycleState(MKT);
+    
+    // Central bank & macro surprises
+    MKTENG.centralBankState = computeCentralBankState(MKT);
+    MKTENG.inflationShock = computeInflationShockState(MKT);
+    
+    // Crypto on-chain signals
     MKTENG.cryptoOnChain = computeCryptoOnChainState(MKT);
+    MKTENG.cryptoETFFlows = computeCryptoETFFlowState(MKT);
+    MKTENG.cryptoFunding = computeCryptoFundingState(MKT);
+    MKTENG.stablecoinLiquidity = computeStablecoinLiquidityState(MKT);
+    MKTENG.cryptoSentiment = computeCryptoSentimentState(MKT);
+    MKTENG.onChainStressBoard = computeOnChainStressBoard(MKT);
   } catch (e) {
     console.error('LifeStack: Market engine computation error', e);
   }
