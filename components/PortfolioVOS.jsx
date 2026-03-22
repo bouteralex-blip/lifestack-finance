@@ -2795,6 +2795,65 @@ const T12 = ()=>{
   return(<div>
     <Hd t="INTEGRATED ACTION PLAN" s="Specific, quantified, time-bound, reason-linked" tag="EXECUTION" ac={P.cyan} freshness={FRESHNESS} tableKey="portfolio_scorecard"/>
 
+    {/* AGENT ACTION INSIGHTS — Top 5 engine-recommended actions */}
+    {AGENT.actionQueue?.queue && AGENT.actionQueue.queue.length > 0 && (
+      <EmeraldGlassCard style={{marginBottom:20,padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 12'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>🤖 AI Agent Action Insights</div>
+              <div style={{fontSize:11,color:P.t2}}>Top recommended actions ranked by impact × urgency</div>
+            </div>
+            <div style={{background:'linear-gradient(135deg, #0F969C 0%, #06b6d4 100%)',color:'#000',padding:'6px 12px',borderRadius:8,fontSize:10,fontWeight:700}}>APPROVED BY AGENT</div>
+          </div>
+        </div>
+        
+        {/* Top 5 Actions Grid (12 cols) */}
+        <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
+          {(AGENT.actionQueue.queue || []).slice(0, 5).map((action, idx) => {
+            const urgencyColor = action.urgency === 'immediate' ? P.red : action.urgency === 'this-week' ? P.orange : action.urgency === 'this-month' ? P.amber : P.cyan;
+            const impactScore = action.ev || 0;
+            const confScore = Math.round((action.confidence || 0.7) * 100);
+            return (
+              <div key={idx} style={{background:urgencyColor+'10',border:`1px solid ${urgencyColor}30`,borderRadius:12,padding:12,display:'flex',flexDirection:'column',gap:8}}>
+                {/* Rank Number */}
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                  <div style={{width:22,height:22,borderRadius:'50%',background:urgencyColor,color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}}>{idx+1}</div>
+                  <div style={{fontSize:9,fontWeight:700,color:urgencyColor,textTransform:'uppercase',letterSpacing:'0.05em'}}>
+                    {action.urgency === 'immediate' ? 'ASAP' : action.urgency === 'this-week' ? 'THIS WK' : action.urgency === 'this-month' ? 'THIS MO' : action.urgency === 'this-quarter' ? 'Q2' : 'LATER'}
+                  </div>
+                </div>
+                
+                {/* Action Title */}
+                <div style={{fontSize:11,fontWeight:700,color:P.t1,lineHeight:1.3}}>
+                  {(action.action || 'Action').split(' ').slice(0, 5).join(' ')}
+                </div>
+                
+                {/* Category + Expected Value */}
+                <div style={{fontSize:9,color:P.t3,borderTop:`1px solid ${urgencyColor}15`,paddingTop:8}}>
+                  <div style={{color:P.t4,marginBottom:2}}>Category</div>
+                  <div style={{fontWeight:600,marginBottom:6}}>{action.category ? action.category.charAt(0).toUpperCase() + action.category.slice(1) : 'General'}</div>
+                  
+                  <div style={{color:P.t4,marginBottom:2}}>Annual Value</div>
+                  <div style={{fontWeight:700,color:urgencyColor,fontSize:12}}>
+                    {impactScore > 0 ? `£${Math.round(impactScore).toLocaleString()}` : 'Structural'}
+                  </div>
+                </div>
+                
+                {/* Confidence Bar */}
+                <div style={{fontSize:8,color:P.t4,marginTop:6}}>
+                  <div style={{marginBottom:3}}>Confidence: <strong>{confScore}%</strong></div>
+                  <div style={{width:'100%',height:4,background:'rgba(255,255,255,0.1)',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{width:`${confScore}%`,height:'100%',background:urgencyColor,transition:'width 0.3s'}}/>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </EmeraldGlassCard>
+    )}
+
     {/* KPI STRIP — Phase 4 agent-driven */}
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Total Actions" v={AGENT.actionQueue?.summary?.totalActions || blocks.reduce((a,b)=>a+b.acts.length,0)} c={P.t2} sm/><K l="Immediate" v={AGENT.actionQueue?.summary?.immediateActions || blocks[0]?.acts.length||4} c={P.negative} sm delta={`${daysLeft} days`}/>
