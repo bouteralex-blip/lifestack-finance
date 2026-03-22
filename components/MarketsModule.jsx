@@ -130,10 +130,11 @@ const hx=h=>{h=h.replace("#","");return[parseInt(h.substring(0,2),16),parseInt(h
 const GW=(c=T.accent)=>`0 0 24px rgba(${hx(c)},0.15), 0 0 60px rgba(${hx(c)},0.06)`;
 
 // =========================================================================
-// MARKET DATA ENGINE — 7 MARCH 2026
+// MARKET DATA ENGINE — STATIC FALLBACK (7 MARCH 2026)
+// Live data fetched via /api/market overrides these values at runtime
 // Upgrade #1: GMD unified macro layer | #6: MacroMicro MOVE
 // =========================================================================
-const M={date:"7 March 2026",regime:"LATE CYCLE — INFLATION SCARE",regimeConf:68,
+const STATIC_M={date:"7 March 2026",regime:"LATE CYCLE — INFLATION SCARE",regimeConf:68,
 // Equities
 sp500:6831,sp500ATH:7008,sp500PE:29,sp500CAPE:40,sp50012m:18,sp500YTD:-0.01,
 ftse100:10414,ftse10012m:19,ftse100ATH:10935,ftse250:23727,ftse25012m:12,
@@ -158,6 +159,10 @@ fed:4.50,ecb:2.75,boj:0.5,
 bestSave:4.30,isaDeadlineDays:29,
 // Sector
 smh12m:70,igv12m:-30,mag7YTD:-6};
+
+// Mutable M — starts as static, gets overwritten by live API data at runtime
+// eslint-disable-next-line prefer-const
+let M = {...STATIC_M};
 
 // Upgrade #14: Liquidity Divergence Metric (M2 growth % minus S&P growth %)
 const LIQ_DIV=[{m:"Sep 25",m2g:3.2,spg:12.1,div:-8.9},{m:"Oct",m2g:3.8,spg:8.4,div:-4.6},{m:"Nov",m2g:4.1,spg:5.2,div:-1.1},{m:"Dec",m2g:4.3,spg:3.8,div:0.5},{m:"Jan 26",m2g:4.6,spg:2.1,div:2.5},{m:"Feb",m2g:4.8,spg:0.5,div:4.3},{m:"Mar",m2g:5.0,spg:-0.01,div:5.0}];
@@ -311,20 +316,28 @@ const KPI=({label,value,delta,dt="up",sub,ac})=>{
 
 // Section header — 24px luxury title matching PortfolioVOS
 // ── FreshnessChip — Phase 1 Truth Layer: shows data source state ──
-const FreshnessChip = ({level='static', label}) => {
+// Now reads from _freshness module state set by live API refresh
+let _freshness = { level: 'fallback', label: `FALLBACK (${STATIC_M.date})`, liveCount: 0 };
+const FreshnessChip = ({level, label}) => {
+  // Use module-level freshness state unless explicitly overridden
+  const effectiveLevel = level || _freshness.level;
+  const effectiveLabel = label || _freshness.label;
   const config = {
     live:     { dot: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
     stale:    { dot: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#fbbf24' },
     fallback: { dot: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#f87171' },
     static:   { dot: '#6DA5C0', bg: 'rgba(109,165,192,0.12)', border: 'rgba(109,165,192,0.25)', text: '#6DA5C0' },
   };
-  const s = config[level] || config.static;
+  const s = config[effectiveLevel] || config.fallback;
   return (
     <div style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:6,
       background:s.bg,border:`1px solid ${s.border}`,fontSize:9,fontWeight:600,letterSpacing:0.3,
       color:s.text,userSelect:'none',flexShrink:0}}>
-      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,boxShadow:`0 0 6px ${s.dot}60`}}/>
-      {label || (level === 'static' ? `Static (${M.date})` : level)}
+      <div style={{width:5,height:5,borderRadius:'50%',background:s.dot,
+        boxShadow:`0 0 6px ${s.dot}60`,
+        ...(effectiveLevel==='live'?{animation:'pulse-dot 2s ease-in-out infinite'}:{})
+      }}/>
+      {effectiveLabel}
     </div>
   );
 };
@@ -334,7 +347,7 @@ const Hd=({t,s,tag,ac=P.cyan,showFreshness=false})=>(
     <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
       <h2 style={{fontSize:24,fontWeight:800,color:P.t1,margin:0,letterSpacing:-0.4,textShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>{t}</h2>
       {tag&&<span style={{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:`${ac}20`,color:ac,textTransform:"uppercase",letterSpacing:1.2,border:`1px solid ${ac}30`}}>{tag}</span>}
-      {showFreshness&&<FreshnessChip level="static"/>}
+      {showFreshness&&<FreshnessChip/>}
     </div>
     {s&&<p style={{fontSize:12,color:P.t3,margin:"5px 0 0",lineHeight:1.5}}>{s}</p>}
   </div>
@@ -1492,50 +1505,121 @@ useEffect(()=>{
 // Publish current M prices to context on mount so other modules can read them
 useEffect(()=>{ setPrices({...M}); },[]);// eslint-disable-line react-hooks/exhaustive-deps
 
-// Refresh live market data from /api/market
-const refreshMarketData = async () => {
+// Refresh live market data from /api/market — fetches ALL available metrics
+const refreshMarketData = async (force=false) => {
   if(refreshing) return;
   setRefreshing(true);
   try {
-    const metrics = ['btc_price','eth_price','vix','fear_greed','gilt_10y','gilt_2y','fed_funds','brent','gold','dxy','gbpusd','ig_oas','hy_oas','sp500'];
-    const url = `/api/market?metrics=${metrics.join(',')}&refresh=true`;
+    const url = `/api/market${force?'?refresh=true':''}`;
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
       const r = data.results || {};
-      // Update M with fresh values where available
-      if(r.btc_price?.value) M.btcPrice = r.btc_price.value;
-      if(r.eth_price?.value) M.ethPrice = r.eth_price.value;
-      if(r.vix?.value) M.vix = r.vix.value;
-      if(r.fear_greed?.value) M.fearGreed = r.fear_greed.value;
-      if(r.gilt_10y?.value) M.gilt10y = r.gilt_10y.value;
-      if(r.gilt_2y?.value) M.gilt2y = r.gilt_2y.value;
-      if(r.brent?.value) M.brent = r.brent.value;
-      if(r.gold?.value) M.gold = r.gold.value;
-      if(r.dxy?.value) M.dxy = r.dxy.value;
-      if(r.gbpusd?.value) M.gbpusd = r.gbpusd.value;
-      if(r.ig_oas?.value) M.igOAS = r.ig_oas.value;
-      if(r.hy_oas?.value) M.hyOAS = r.hy_oas.value;
-      // Re-compute MKTENG with fresh data
+      let liveCount = 0;
+      const apply = (field, key, transform) => {
+        const val = r[key]?.value;
+        if(val != null){ M[field] = transform ? transform(val) : val; liveCount++; }
+      };
+      // Equities
+      apply('sp500','sp500',x=>Math.round(x));
+      apply('sp500','sp500_yahoo',x=>Math.round(x));
+      apply('ftse100','ftse100',x=>Math.round(x));
+      apply('ftse250','ftse250',x=>Math.round(x));
+      apply('nikkei','nikkei',x=>Math.round(x));
+      // Volatility & Stress
+      apply('vix','vix',x=>+x.toFixed(1));
+      apply('move','move_index',x=>Math.round(x));
+      apply('stlfsi','stlfsi',x=>+x.toFixed(2));
+      apply('nfci','nfci',x=>+x.toFixed(2));
+      // Crypto
+      apply('btcPrice','btc_price',x=>Math.round(x));
+      apply('ethPrice','eth_price',x=>Math.round(x));
+      apply('solPrice','sol_price',x=>+x.toFixed(2));
+      apply('fearGreed','fear_greed',x=>Math.round(x));
+      apply('btcDom','btc_dominance',x=>+x.toFixed(1));
+      // FX
+      apply('gbpusd','gbpusd',x=>+x.toFixed(4));
+      apply('gbpzar','gbpzar',x=>+x.toFixed(2));
+      apply('dxy','dxy',x=>+x.toFixed(1));
+      // Commodities
+      apply('gold','gold_price',x=>Math.round(x));
+      apply('brent','oil_brent',x=>+x.toFixed(2));
+      apply('wti','oil_wti',x=>+x.toFixed(2));
+      apply('copper','copper_price',x=>Math.round(x));
+      // Credit
+      apply('igOAS','ig_oas',x=>Math.round(x));
+      apply('hyOAS','hy_oas',x=>Math.round(x));
+      apply('bbbOAS','bbb_oas',x=>Math.round(x));
+      // Rates
+      apply('fed','fed_funds',x=>+x.toFixed(2));
+      apply('gilt10y','gilt_10y',x=>+x.toFixed(2));
+      // UK
+      apply('ukUnemp','uk_unemp',x=>+x.toFixed(1));
+
+      // Update date and freshness
+      if(liveCount > 0){
+        M.date = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+        // Compute age from oldest fetch timestamp
+        const timestamps = Object.values(r).map(v=>v?.fetchedAt).filter(Boolean).map(t=>new Date(t).getTime());
+        const oldest = timestamps.length ? Math.min(...timestamps) : Date.now();
+        const ageMin = Math.round((Date.now()-oldest)/60000);
+        const ageLabel = ageMin<60?`${ageMin}m ago`:ageMin<1440?`${Math.round(ageMin/60)}h ago`:`${Math.round(ageMin/1440)}d ago`;
+        _freshness = {
+          level: ageMin < 1440 ? 'live' : 'stale',
+          label: `LIVE · ${liveCount} metrics (${ageLabel})`,
+          liveCount,
+        };
+      } else {
+        _freshness = { level: 'fallback', label: `FALLBACK (${STATIC_M.date})`, liveCount: 0 };
+      }
+
+      // Re-compute ALL MKTENG states with fresh data
       Object.assign(MKTENG, {
         regime: computeRegimeState(M),
         stress: computeCrossAssetStressState(M),
         btcCycle: computeBTCCycleState(M),
+        yieldCurve: computeYieldCurveState(YIELD_CURVE),
         creditStress: computeCreditStressState(M, CREDIT_TL),
-        fxRegime: computeFXRegimeState(M),
-        commodityShock: computeCommodityShockState(M),
+        sectorLeadership: computeSectorLeadershipState(SECTOR),
+        etfFlows: computeETFFlowState(SENT_DIV, M),
+        cryptoOnChain: computeCryptoOnChainState(M),
+        btcDominance: computeBTCDominanceState(M),
+        centralBank: computeCentralBankState(M),
         inflationShock: computeInflationShockState(M),
+        liquidityDivergence: computeLiquidityDivergenceState(M),
+        narrativePulse: computeNarrativePulseState(M),
+        policySurprise: computePolicySurpriseState(M),
+        factorRotation: computeFactorRotationState(M),
+        earningsRevision: computeEarningsRevisionState(M),
+        cftcPositioning: computeCFTCPositioningState(M),
+        correlationDrift: computeCorrelationDriftState(M),
+        gapRisk: computeGapRiskState(M),
+        commodityShock: computeCommodityShockState(M),
+        fxRegime: computeFXRegimeState(M),
+        cryptoETFFlows: computeCryptoETFFlowState(M),
+        cryptoFunding: computeCryptoFundingState(M),
+        stablecoinLiquidity: computeStablecoinLiquidityState(M),
+        cryptoSentiment: computeCryptoSentimentState(M),
+        onchainStress: computeOnChainStressBoard(M),
+        propertyCycle: computePropertyCycleState(M),
       });
       setLiveM(n => n+1);
       setPrices({...M});
       setLastRefresh(new Date());
     }
-  } catch(e) { /* silently fail, keep static data */ }
+  } catch(e) {
+    _freshness = { level: 'fallback', label: `FALLBACK — ${e.message}`, liveCount: 0 };
+    setLiveM(n => n+1);
+  }
   setRefreshing(false);
 };
 
-// Auto-refresh live market data on mount (runs once; keeps M fresh on first load)
-useEffect(()=>{ refreshMarketData(); },[]);// eslint-disable-line react-hooks/exhaustive-deps
+// Auto-refresh: on mount + every 5 minutes
+useEffect(()=>{
+  refreshMarketData();
+  const interval = setInterval(()=>refreshMarketData(), 5*60*1000);
+  return ()=>clearInterval(interval);
+},[]);// eslint-disable-line react-hooks/exhaustive-deps
 
 return(
 <div style={{minHeight:"100vh",background:"#05161A",color:P.t1,fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",display:"flex",position:"relative"}}>
@@ -1545,6 +1629,8 @@ return(
   <div style={{position:"fixed",inset:0,background:"rgba(5,22,26,0.62)",zIndex:-1,pointerEvents:"none"}}/>
   {/* SVG glass refraction defs */}
   <GlassDefs/>
+  {/* Pulse animation for live FreshnessChip dot */}
+  <style>{`@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}`}</style>
   {/* Ambient teal glow orbs */}
   <div style={{position:"fixed",top:"-15%",right:"-8%",width:"55vw",height:"55vw",background:`radial-gradient(circle,${P.cyan}08 0%,transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
   <div style={{position:"fixed",bottom:"-15%",left:"-8%",width:"45vw",height:"45vw",background:`radial-gradient(circle,${P.indigo}06 0%,transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
@@ -1612,18 +1698,18 @@ return(
       <div style={{fontSize:9,color:P.t3,fontWeight:600,letterSpacing:0.8}}>
         SECTION {TABS.find(t=>t.id===tab)?.s} · TAB {tab}
       </div>
-      {/* Live data refresh */}
-      <button onClick={refreshMarketData} disabled={refreshing} style={{
+      {/* Live data refresh + freshness indicator */}
+      <FreshnessChip/>
+      <button onClick={()=>refreshMarketData(true)} disabled={refreshing} style={{
         display:'flex',alignItems:'center',gap:5,
         background:refreshing?'rgba(7,46,51,0.55)':`${P.cyan}18`,border:`1px solid ${refreshing?P.b2:P.cyan+'35'}`,borderRadius:8,
         padding:"5px 12px",color:refreshing?P.t3:P.cyan,cursor:refreshing?'not-allowed':'pointer',fontSize:10,fontWeight:700,
         backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',transition:'all 0.15s',letterSpacing:0.5,
       }}>
         <span style={{display:'inline-block',animation:refreshing?'spin 1s linear infinite':'none'}}>↺</span>
-        {refreshing?'Refreshing...':'Refresh Data'}
+        {refreshing?'Fetching live data...':'Force Refresh'}
       </button>
       {lastRefresh && <div style={{fontSize:8,color:P.t4,letterSpacing:0.5}}>Updated {lastRefresh.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>}
-      {ctxMKTENG && Object.values(ctxMKTENG).some(v=>v!=null) && <div style={{display:'flex',alignItems:'center',gap:3,fontSize:8,color:P.positive,fontWeight:600,letterSpacing:0.5}}><div style={{width:5,height:5,borderRadius:'50%',background:P.positive,boxShadow:`0 0 6px ${P.positive}60`}}/>LIVE</div>}
       {/* Quick-jump pills */}
       <div style={{marginLeft:"auto",display:"flex",gap:5}}>
         {["P1","P4","P9","P16"].map(q=>(

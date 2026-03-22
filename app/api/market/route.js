@@ -16,36 +16,57 @@ const YAHOO_PROXY = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
 // Metric definitions: source → fetch function
 const METRICS = {
-  // CoinGecko (free, no key)
+  // ── CoinGecko (free, no key) ──────────────────────────────────────────
   'btc_price': { source: 'coingecko', ttl: 1, fetch: () => fetchJSON(`${COINGECKO_BASE}/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true`).then(d => ({ value: d?.bitcoin?.usd, change24h: d?.bitcoin?.usd_24h_change })) },
   'eth_price': { source: 'coingecko', ttl: 1, fetch: () => fetchJSON(`${COINGECKO_BASE}/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true`).then(d => ({ value: d?.ethereum?.usd, change24h: d?.ethereum?.usd_24h_change })) },
+  'sol_price': { source: 'coingecko', ttl: 1, fetch: () => fetchJSON(`${COINGECKO_BASE}/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true`).then(d => ({ value: d?.solana?.usd, change24h: d?.solana?.usd_24h_change })) },
   'fear_greed': { source: 'coingecko', ttl: 6, fetch: () => fetchJSON('https://api.alternative.me/fng/?limit=1').then(d => ({ value: Number(d?.data?.[0]?.value), label: d?.data?.[0]?.value_classification })) },
   'btc_dominance': { source: 'coingecko', ttl: 6, fetch: () => fetchJSON(`${COINGECKO_BASE}/global`).then(d => ({ value: d?.data?.market_cap_percentage?.btc })) },
 
-  // FRED (free with API key)
+  // ── FRED (free with API key) ──────────────────────────────────────────
   'vix': { source: 'fred', ttl: 6, fetch: () => fetchFRED('VIXCLS') },
   'dxy': { source: 'fred', ttl: 6, fetch: () => fetchFRED('DTWEXBGS') },
   'us_10y': { source: 'fred', ttl: 6, fetch: () => fetchFRED('DGS10') },
   'us_2y': { source: 'fred', ttl: 6, fetch: () => fetchFRED('DGS2') },
+  'us_30y': { source: 'fred', ttl: 6, fetch: () => fetchFRED('DGS30') },
+  'us_3m': { source: 'fred', ttl: 6, fetch: () => fetchFRED('DGS3MO') },
   'us_cpi': { source: 'fred', ttl: 24, fetch: () => fetchFRED('CPIAUCSL') },
   'gdp_growth': { source: 'fred', ttl: 24, fetch: () => fetchFRED('A191RL1Q225SBEA') },
   'ig_oas': { source: 'fred', ttl: 6, fetch: () => fetchFRED('BAMLC0A0CM') },
   'hy_oas': { source: 'fred', ttl: 6, fetch: () => fetchFRED('BAMLH0A0HYM2') },
+  'bbb_oas': { source: 'fred', ttl: 6, fetch: () => fetchFRED('BAMLC0A4CBBB') },
   'move_index': { source: 'fred', ttl: 6, fetch: () => fetchFRED('MOVE') },
   'breakeven_5y': { source: 'fred', ttl: 12, fetch: () => fetchFRED('T5YIE') },
   'fed_funds': { source: 'fred', ttl: 24, fetch: () => fetchFRED('DFF') },
   'sp500': { source: 'fred', ttl: 6, fetch: () => fetchFRED('SP500') },
   'm2_supply': { source: 'fred', ttl: 24, fetch: () => fetchFRED('M2SL') },
+  'stlfsi': { source: 'fred', ttl: 24, fetch: () => fetchFRED('STLFSI2') },
+  'nfci': { source: 'fred', ttl: 24, fetch: () => fetchFRED('NFCI') },
+  'uk_unemp': { source: 'fred', ttl: 24, fetch: () => fetchFRED('LMUNRRTTGBQ156S') },
 
-  // Commodity prices (Yahoo Finance proxy, 6h TTL)
+  // ── Equity indices (Yahoo Finance, 1h TTL) ────────────────────────────
+  'ftse100': { source: 'yahoo', ttl: 1, fetch: () => fetchYahoo('^FTSE') },
+  'ftse250': { source: 'yahoo', ttl: 1, fetch: () => fetchYahoo('^FTMC') },
+  'nikkei': { source: 'yahoo', ttl: 1, fetch: () => fetchYahoo('^N225') },
+  'sp500_yahoo': { source: 'yahoo', ttl: 1, fetch: () => fetchYahoo('^GSPC') },
+
+  // ── Commodity prices (Yahoo Finance, 6h TTL) ──────────────────────────
   'gold_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('GC=F') },
-  'oil_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('CL=F') },
+  'oil_brent': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('BZ=F') },
+  'oil_wti': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('CL=F') },
   'copper_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('HG=F') },
+  'silver_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('SI=F') },
+  'natgas_price': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('NG=F') },
+  'uranium_price': { source: 'yahoo', ttl: 24, fetch: () => fetchYahoo('URA') },
 
-  // FX rates (Yahoo Finance proxy, 6h TTL)
+  // ── FX rates (Yahoo Finance, 6h TTL) ──────────────────────────────────
   'gbpusd': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('GBPUSD=X') },
+  'gbpzar': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('GBPZAR=X') },
   'eurusd': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('EURUSD=X') },
   'usdjpy': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('JPY=X') },
+
+  // ── UK Gilts / Bonds (Yahoo Finance, 6h TTL) ─────────────────────────
+  'gilt_10y': { source: 'yahoo', ttl: 6, fetch: () => fetchYahoo('^TNX') }, // US 10Y as proxy, UK gilts not on Yahoo
 };
 
 async function fetchJSON(url) {
@@ -82,9 +103,10 @@ export async function GET(request) {
   const results = {};
   const errors = [];
 
-  for (const key of metrics) {
+  // Fetch all metrics in parallel for speed
+  const fetchOne = async (key) => {
     const def = METRICS[key];
-    if (!def) { errors.push(`Unknown metric: ${key}`); continue; }
+    if (!def) { errors.push(`Unknown metric: ${key}`); return; }
 
     // Check cache first
     if (!forceRefresh) {
@@ -99,7 +121,7 @@ export async function GET(request) {
 
         if (data) {
           results[key] = { value: data.value, rawData: data.raw_data, fetchedAt: data.fetched_at, cached: true };
-          continue;
+          return;
         }
       } catch {}
     }
@@ -125,7 +147,9 @@ export async function GET(request) {
     } catch (e) {
       errors.push(`${key}: ${e.message}`);
     }
-  }
+  };
+
+  await Promise.allSettled(metrics.map(fetchOne));
 
   return Response.json({ results, errors, timestamp: new Date().toISOString() });
 }
