@@ -2150,6 +2150,66 @@ const T8 = ()=>{
   return(<div>
     <Hd t="OPPORTUNITY RADAR" s={`${displayOpps.length} opportunities ranked by conviction, timing, and estimated annual value`} tag="IC BRIEF" ac={P.positive} freshness={FRESHNESS} tableKey="opportunities"/>
 
+    {/* AGENT OPPORTUNITY QUEUE — Top opportunities prioritized by agent system */}
+    {(AGENT.rankedOpps?.ranked || OPPS.length > 0) && (
+      <EmeraldGlassCard style={{marginBottom:20,padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 12'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>🔍 AI Agent Opportunity Queue</div>
+              <div style={{fontSize:11,color:P.t2}}>Top opportunities ranked by composite score (conviction × timing × value)</div>
+            </div>
+            <div style={{background:'linear-gradient(135deg, #0F969C 0%, #06b6d4 100%)',color:'#000',padding:'6px 12px',borderRadius:8,fontSize:10,fontWeight:700}}>RANKED BY AGENT</div>
+          </div>
+        </div>
+        
+        {/* Top 5 Opportunities Grid (12 cols) */}
+        <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
+          {((AGENT.rankedOpps?.ranked || OPPS).slice(0, 5)).map((opp, idx) => {
+            const tierColor = opp.tierColor || opp.col || P.cyan;
+            const compositeScore = opp.compositeScore || (opp.c * opp.tm) || 0;
+            const annualValue = opp.val || 0;
+            const tier = opp.tier || (compositeScore >= 70 ? 'High Priority' : compositeScore >= 50 ? 'Medium' : 'Consider');
+            return (
+              <div key={idx} style={{background:tierColor+'10',border:`1px solid ${tierColor}30`,borderRadius:12,padding:12,display:'flex',flexDirection:'column',gap:8}}>
+                {/* Rank Number */}
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                  <div style={{width:22,height:22,borderRadius:'50%',background:tierColor,color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}}>{idx+1}</div>
+                  <div style={{fontSize:9,fontWeight:700,color:tierColor,textTransform:'uppercase',letterSpacing:'0.05em'}}>
+                    {tier}
+                  </div>
+                </div>
+                
+                {/* Opportunity Title */}
+                <div style={{fontSize:11,fontWeight:700,color:P.t1,lineHeight:1.3}}>
+                  {(opp.t || 'Opportunity').split(' ').slice(0, 4).join(' ')}
+                </div>
+                
+                {/* Metrics */}
+                <div style={{fontSize:9,color:P.t3,borderTop:`1px solid ${tierColor}15`,paddingTop:8}}>
+                  <div style={{color:P.t4,marginBottom:2}}>Wrapper</div>
+                  <div style={{fontWeight:600,marginBottom:6}}>{opp.w || 'N/A'}</div>
+                  
+                  <div style={{color:P.t4,marginBottom:2}}>Annual Value</div>
+                  <div style={{fontWeight:700,color:tierColor,fontSize:12}}>
+                    {annualValue > 0 ? `£${Math.round(annualValue).toLocaleString()}` : 'Structural'}
+                  </div>
+                </div>
+                
+                {/* Composite Score Bar */}
+                <div style={{fontSize:8,color:P.t4,marginTop:6}}>
+                  <div style={{marginBottom:3}}>Score: <strong>{Math.round(compositeScore)}/100</strong></div>
+                  <div style={{width:'100%',height:4,background:'rgba(255,255,255,0.1)',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{width:`${Math.min(compositeScore, 100)}%`,height:'100%',background:tierColor,transition:'width 0.3s'}}/>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </EmeraldGlassCard>
+    )}
+
     {/* KPI STRIP — engine-enriched when AGENT.rankedOpps available */}
     <FlexRow gap={6} style={{marginBottom:14}}>
       <K l="Opportunities" v={displayOpps.length} c={P.t2} sm/><K l="Total Ann. Value" v={`\u00A3${(displayOpps.reduce((a,o)=>a+o.val,0)/1000).toFixed(1)}k`} c={P.positive} sm/>
