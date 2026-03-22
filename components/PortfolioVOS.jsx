@@ -1333,6 +1333,43 @@ const T1 = ({ truthLayer })=>{
         ))}
       </div>
 
+      {/* ROW 2b: MARKET REGIME INTELLIGENCE (col-span-12) */}
+      {MKTENG.regime && (
+        <EmeraldGlassCard style={{gridColumn:'span 12',padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+          <div style={{gridColumn:'span 4',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',textAlign:'center',gap:8}}>
+            <div style={{fontSize:10,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em'}}>Macro Regime</div>
+            <div style={{fontSize:20,fontWeight:700,color:P.cyan}}>{MKTENG.regime.regime}</div>
+            <div style={{fontSize:11,color:P.t2,maxWidth:180,lineHeight:1.4}}>{MKTENG.regime.description}</div>
+            <div style={{display:'flex',gap:12,marginTop:8}}>
+              <div style={{fontSize:9,color:P.t3}}>
+                <div style={{color:P.t4}}>Confidence</div>
+                <div style={{fontSize:13,fontWeight:700,color:P.cyan}}>{MKTENG.regime.confidence}%</div>
+              </div>
+              <div style={{fontSize:9,color:P.t3}}>
+                <div style={{color:P.t4}}>Transition Risk</div>
+                <div style={{fontSize:13,fontWeight:700,color:MKTENG.regime.transitionRisk==='High'?P.red:MKTENG.regime.transitionRisk==='Medium'?P.amber:P.green}}>{MKTENG.regime.transitionRisk}</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Top 5 Market Signals */}
+          <div style={{gridColumn:'span 8',display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
+            {[
+              {l:'CPI',v:`${(MKTENG.regime.scores.signals||{}).cpi||3.0}%`,c:P.orange},
+              {l:'GDP',v:`${((MKTENG.regime.scores.signals||{}).gdpGrowth||0.1).toFixed(1)}%`,c:P.cyan},
+              {l:'Rate',v:`${((MKTENG.regime.scores.signals||{}).cbRate||3.75).toFixed(2)}%`,c:P.indigo},
+              {l:'VIX',v:Math.round((MKTENG.regime.scores.signals||{}).vix||24.5),c:P.red},
+              {l:'PMI',v:Math.round((MKTENG.regime.scores.signals||{}).pmi||49),c:P.cyan},
+            ].map((sig,i)=>(
+              <div key={i} style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:12,background:sig.c+'15',borderRadius:12,border:`1px solid ${sig.c}30`}}>
+                <div style={{fontSize:9,color:P.t3,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6}}>{sig.l}</div>
+                <div style={{fontSize:16,fontWeight:700,color:sig.c}}>{sig.v}</div>
+              </div>
+            ))}
+          </div>
+        </EmeraldGlassCard>
+      )}
+
       {/* ROW 3: HORIZON 8/4 SPLIT (Main Chart + Right Stack) */}
       <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
         {/* Left: Net Worth Trajectory (col-span-8) */}
