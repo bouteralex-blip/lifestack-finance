@@ -1,239 +1,236 @@
-/**
- * LifeStack Finance - Dashboard Intelligence Hub
- * Phase 5: UI Refinement - Integrated dashboard with all phases
- * 
- * Central component that:
- * - Displays all engine outputs
- * - Shows agent workflows
- * - Renders freshness indicators
- * - Enables cross-tab linking
- * - Surfaces top actions
- */
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { FreshnessIndicator, FreshnessStatusBar, SourceLabel } from './tiles/liquid-glass/FreshnessIndicator';
-import { getFinanceOrchestrator, getMarketOrchestrator } from '../lib/engineOrchestrator';
-import { getMasterAgentOrchestrator } from '../lib/agentOrchestrator';
-import { getStateContainer } from '../lib/stateManager';
+import React from 'react';
+import { useEngines } from '../lib/engineContext';
 
-/**
- * Top Actions Widget
- * Surfaces highest-priority actions from the action queue
- */
-const TopActionsWidget = ({ actions = [], onActionClick }) => {
-  const topActions = actions.filter((a) => a.priority === 'high').slice(0, 5);
+// Palette matching PortfolioVOS.jsx
+const P = {
+  bg: '#05161A', cyan: '#0F969C', indigo: '#6DA5C0', amber: '#f59e0b',
+  t1: '#e8f4f5', t2: '#b0cdd4', t3: '#7a9da6', t4: 'rgba(255,255,255,0.35)',
+  b1: 'rgba(15,150,156,0.14)', positive: '#00E599', negative: '#FF4D4D',
+  purple: '#a855f7', orange: '#FF8C42', red: '#ef4444', btc: '#F7931A',
+  mono: "'JetBrains Mono','SF Mono',monospace",
+};
 
+const glass = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(15,150,156,0.14)',
+  borderRadius: 16,
+  padding: 20,
+  backdropFilter: 'blur(24px) saturate(1.5)',
+  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+};
+
+function KpiTile({ label, value, color = P.cyan }) {
   return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-cyan-400 mb-3">⚡ TOP ACTIONS</h3>
-      <div className="space-y-2">
-        {topActions.length === 0 ? (
-          <p className="text-xs text-white/[0.4]">No pending high-priority actions</p>
-        ) : (
-          topActions.map((action, i) => (
-            <button
-              key={i}
-              onClick={() => onActionClick?.(action)}
-              className="w-full text-left p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors text-xs text-white/[0.8] border border-white/[0.05]"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-red-400">{action.priority[0].toUpperCase()}</span>
-                <span className="flex-1">{action.recommendation}</span>
-                <span className="text-white/[0.4]">→</span>
-              </div>
-            </button>
-          ))
-        )}
+    <div style={{ ...glass, flex: 1 }}>
+      <div style={{ fontSize: 11, color: P.t3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 'bold', color, fontFamily: P.mono }}>
+        {value || '—'}
       </div>
     </div>
   );
-};
+}
 
-/**
- * Intelligence Summary Widget
- * Shows synthesis, insights, recommendations
- */
-const IntelligenceSummaryWidget = ({ synthesis }) => {
-  if (!synthesis) return null;
+function ActionCard({ action, priority }) {
+  const colors = { high: P.red, medium: P.amber, low: P.t4 };
+  return (
+    <div style={{ ...glass, marginBottom: 12, padding: 16 }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 6, background: colors[priority] }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, color: P.t2, marginBottom: 4 }}>
+            {action.title || action.recommendation || 'Action'}
+          </div>
+          <div style={{ fontSize: 11, color: P.t3 }}>{action.description || action}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AlertCard({ alert }) {
+  const severityColor = alert.severity === 'critical' ? P.red : alert.severity === 'warning' ? P.amber : P.cyan;
+  return (
+    <div style={{ ...glass, marginBottom: 12, padding: 16, borderLeft: `4px solid ${severityColor}` }}>
+      <div style={{ fontSize: 12, fontWeight: 'bold', color: severityColor, marginBottom: 4 }}>
+        {alert.severity?.toUpperCase()}
+      </div>
+      <div style={{ fontSize: 11, color: P.t2 }}>{alert.message || alert.title}</div>
+    </div>
+  );
+}
+
+export default function DashboardIntelligenceHub() {
+  const { ENGINE, MKTENG, AGENT } = useEngines();
+
+  // Safe data accessors
+  const nw = ENGINE?.concentration?.totalValue || 0;
+  const sixmReturn = AGENT?.performanceBridge?.returns6m || 0;
+  const fireProgress = (nw / 5000000) * 100 || 0; // Assume 5M FIRE target
+  const regime = MKTENG?.regime?.classification || 'Awaiting data';
+  const stress = MKTENG?.stress?.compositeScore || undefined;
+  const alerts = AGENT?.triggerAlerts?.alerts || [];
+  const actions = AGENT?.actionQueue?.actions || [];
+  const synthesis = AGENT?.synthesis || {};
+  const morning = AGENT?.morningCommand || {};
+
+  const formatNum = (n) => {
+    if (typeof n !== 'number') return '—';
+    return n >= 1000000 ? `£${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `£${(n / 1000).toFixed(0)}k` : `£${n}`;
+  };
+
+  const formatPct = (n) => (typeof n === 'number' ? `${(n * 100).toFixed(1)}%` : '—');
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-amber-400 mb-3">📊 WEEKLY SYNTHESIS</h3>
+    <div style={{ padding: 24, background: P.bg, color: P.t1, fontFamily: "'Segoe UI',sans-serif" }}>
+      {/* HEADER STRIP */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 'bold', color: P.t1, letterSpacing: '-0.01em' }}>
+            INTELLIGENCE HUB
+          </h1>
+          <span style={{ fontSize: 12, color: P.t3 }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: P.t4 }}>
+          {ENGINE ? '● Live' : '○ Awaiting Wealth Engine'} · {MKTENG ? 'Markets active' : 'Markets pending'}
+        </div>
+      </div>
 
-      {synthesis.themes && (
-        <div className="space-y-2 mb-3">
-          {Object.entries(synthesis.themes).map(([key, value]) => (
-            <div key={key} className="text-xs text-white/[0.6]">
-              <span className="font-medium text-white/[0.8]">{key}:</span> {value}
-            </div>
+      {/* KPI STRIP — 6 tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 16, marginBottom: 32 }}>
+        <KpiTile label="Net Worth" value={formatNum(nw)} />
+        <KpiTile label="6M Return" value={formatPct(sixmReturn)} color={sixmReturn >= 0 ? P.positive : P.negative} />
+        <KpiTile label="FIRE %age" value={formatPct(fireProgress / 100)} />
+        <KpiTile label="Market Regime" value={regime} color={P.cyan} />
+        <KpiTile label="Stress Score" value={stress ? formatPct(stress) : '—'} />
+        <KpiTile label="Alerts" value={alerts?.length || 0} color={alerts?.length > 0 ? P.red : P.cyan} />
+      </div>
+
+      {/* TWO-COLUMN: MORNING COMMAND + ACTION QUEUE */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 32 }}>
+        {/* Left: Morning Command */}
+        <div style={glass}>
+          <h2 style={{ fontSize: 14, fontWeight: 'bold', color: P.cyan, marginBottom: 16, textTransform: 'uppercase' }}>
+            ⚡ Morning Command
+          </h2>
+          <p style={{ fontSize: 13, color: P.t2, lineHeight: 1.6 }}>
+            {morning?.synthesis || morning?.text || 'Visit Wealth Engine to generate daily synthesis.'}
+          </p>
+        </div>
+
+        {/* Right: Top 5 Actions */}
+        <div>
+          <h3 style={{ fontSize: 12, fontWeight: 'bold', color: P.amber, marginBottom: 12, textTransform: 'uppercase' }}>
+            Priority Queue
+          </h3>
+          {(actions?.slice(0, 5) || []).map((a, i) => (
+            <ActionCard key={i} action={a} priority={a.priority || 'medium'} />
           ))}
-        </div>
-      )}
-
-      {synthesis.topActions && synthesis.topActions.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-white/[0.08]">
-          <div className="text-xs font-medium text-green-400 mb-2">Recommended Actions</div>
-          <ul className="space-y-1 text-xs text-white/[0.6]">
-            {synthesis.topActions.slice(0, 3).map((action, i) => (
-              <li key={i}>• {action.recommendation || action}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/**
- * Engine Status Widget
- * Shows which engines have run and their freshness
- */
-const EngineStatusWidget = ({ orchestrator }) => {
-  const [status, setStatus] = useState(null);
-
-  useEffect(() => {
-    if (orchestrator) {
-      setStatus(orchestrator.getStatus());
-    }
-  }, [orchestrator]);
-
-  if (!status) return null;
-
-  return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-blue-400 mb-3">🔧 ENGINE STATUS</h3>
-      <div className="text-xs text-white/[0.6] mb-2">
-        <span className="font-medium text-white/[0.8]">{status.total}</span> engines active
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="p-2 rounded bg-white/[0.02] border border-white/[0.05]">
-          <div className="text-white/[0.5]">Running</div>
-          <div className="text-green-400 font-bold">
-            {status.engines?.filter((e) => !e.cached).length || 0}
-          </div>
-        </div>
-        <div className="p-2 rounded bg-white/[0.02] border border-white/[0.05]">
-          <div className="text-white/[0.5]">Cached</div>
-          <div className="text-blue-400 font-bold">
-            {status.engines?.filter((e) => e.cached).length || 0}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Master Dashboard Intelligence Hub
- * Brought together all phases
- */
-const DashboardIntelligenceHub = ({ portfolioData, marketData }) => {
-  const [agentStatus, setAgentStatus] = useState(null);
-  const [synthesis, setSynthesis] = useState(null);
-  const [actions, setActions] = useState([]);
-  const [stateContainer] = useState(() => getStateContainer());
-  const [financeOrch] = useState(() => getFinanceOrchestrator());
-  const [marketOrch] = useState(() => getMarketOrchestrator());
-  const [agentOrch] = useState(() => getMasterAgentOrchestrator());
-
-  useEffect(() => {
-    // Initialize all systems
-    const initialize = async () => {
-      // Initialize agents
-      agentOrch.initialize();
-
-      // Run workflows
-      if (portfolioData && marketData) {
-        await agentOrch.runDailyWorkflow(portfolioData, marketData);
-      }
-
-      // Update synthesis
-      const synth = stateContainer.getState('weeklySynthesis');
-      if (synth.data) {
-        setSynthesis(synth.data);
-      }
-
-      // Update status
-      setAgentStatus(agentOrch.getStatus());
-    };
-
-    initialize();
-  }, [portfolioData, marketData, stateContainer, agentOrch]);
-
-  // Get action queue
-  useEffect(() => {
-    const queue = stateContainer.getState('actionQueue');
-    if (queue.data?.actions) {
-      setActions(queue.data.actions);
-    }
-  }, [stateContainer]);
-
-  return (
-    <div className="space-y-4">
-      {/* Freshness Status Bar */}
-      <FreshnessStatusBar
-        dataQualityReport={{
-          total: 20 + 26, // Finance + Market engines
-          live: 10,
-          cached_fresh: 20,
-          cached_stale: 16,
-          fallback: 0,
-          stalePct: 0,
-        }}
-        onRefresh={async () => {
-          await financeOrch.runAll(portfolioData, { verbose: true });
-          await marketOrch.runAll(marketData, { verbose: true });
-        }}
-      />
-
-      {/* Three-Column Layout */}
-      <div className="grid grid-cols-3 gap-4">
-        {/* Left: Top Actions */}
-        <div>
-          <TopActionsWidget actions={actions} onActionClick={(action) => console.log('Action clicked:', action)} />
-        </div>
-
-        {/* Center: Intelligence Summary */}
-        <div>
-          <IntelligenceSummaryWidget synthesis={synthesis} />
-        </div>
-
-        {/* Right: Engine Status */}
-        <div>
-          <EngineStatusWidget orchestrator={financeOrch} />
+          {!actions?.length && (
+            <div style={{ fontSize: 12, color: P.t4, fontStyle: 'italic' }}>No pending actions</div>
+          )}
         </div>
       </div>
 
-      {/* Full-Width: Detail Sections */}
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-cyan-400 mb-3">🎯 SYSTEM STATUS</h3>
-        <div className="grid grid-cols-4 gap-3 text-xs">
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
-            <div className="text-white/[0.5] mb-1">Phase 1</div>
-            <div className="text-green-400 font-bold">✓ Complete</div>
-            <SourceLabel source="agent" compact />
+      {/* THREE-COLUMN: SYNTHESIS / ALERTS / ENGINE STATUS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 32 }}>
+        {/* Column 1: Weekly Themes */}
+        <div style={glass}>
+          <h3 style={{ fontSize: 12, fontWeight: 'bold', color: P.purple, marginBottom: 12, textTransform: 'uppercase' }}>
+            📊 Weekly Themes
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {synthesis?.themes ? (
+              Object.entries(synthesis.themes).map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontSize: 11, color: P.t3, fontWeight: 'bold' }}>{k}</div>
+                  <div style={{ fontSize: 11, color: P.t4 }}>{v}</div>
+                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: 11, color: P.t4 }}>Themes pending</div>
+            )}
           </div>
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
-            <div className="text-white/[0.5] mb-1">Phase 2</div>
-            <div className="text-green-400 font-bold">✓ 20/20</div>
-            <SourceLabel source="computed" compact />
+        </div>
+
+        {/* Column 2: Trigger Alerts */}
+        <div>
+          <h3 style={{ fontSize: 12, fontWeight: 'bold', color: P.red, marginBottom: 12, textTransform: 'uppercase' }}>
+            🚨 Alerts ({alerts?.length || 0})
+          </h3>
+          {alerts?.slice(0, 4)?.map((a, i) => (
+            <AlertCard key={i} alert={a} />
+          ))}
+          {!alerts?.length && (
+            <div style={{ fontSize: 12, color: P.t4, fontStyle: 'italic' }}>All systems nominal</div>
+          )}
+        </div>
+
+        {/* Column 3: Engine Status */}
+        <div style={glass}>
+          <h3 style={{ fontSize: 12, fontWeight: 'bold', color: P.indigo, marginBottom: 12, textTransform: 'uppercase' }}>
+            🔧 Engine Status
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ padding: 12, background: 'rgba(15,150,156,0.05)', borderRadius: 8, border: '1px solid rgba(15,150,156,0.1)' }}>
+              <div style={{ fontSize: 11, color: P.t3 }}>Finance</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: ENGINE ? P.positive : P.t4 }}>
+                {ENGINE ? '✓' : '◯'}
+              </div>
+            </div>
+            <div style={{ padding: 12, background: 'rgba(15,150,156,0.05)', borderRadius: 8, border: '1px solid rgba(15,150,156,0.1)' }}>
+              <div style={{ fontSize: 11, color: P.t3 }}>Markets</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: MKTENG ? P.positive : P.t4 }}>
+                {MKTENG ? '✓' : '◯'}
+              </div>
+            </div>
+            <div style={{ padding: 12, background: 'rgba(15,150,156,0.05)', borderRadius: 8, border: '1px solid rgba(15,150,156,0.1)' }}>
+              <div style={{ fontSize: 11, color: P.t3 }}>Agents</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: AGENT ? P.positive : P.t4 }}>
+                {AGENT ? '✓' : '◯'}
+              </div>
+            </div>
+            <div style={{ padding: 12, background: 'rgba(15,150,156,0.05)', borderRadius: 8, border: '1px solid rgba(15,150,156,0.1)' }}>
+              <div style={{ fontSize: 11, color: P.t3 }}>Data</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: ENGINE || MKTENG || AGENT ? P.positive : P.t4 }}>
+                {ENGINE || MKTENG || AGENT ? '✓' : '◯'}
+              </div>
+            </div>
           </div>
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
-            <div className="text-white/[0.5] mb-1">Phase 3</div>
-            <div className="text-green-400 font-bold">✓ 7/7</div>
-            <SourceLabel source="computed" compact />
+        </div>
+      </div>
+
+      {/* DATA FRESHNESS BAR */}
+      <div style={{ ...glass, padding: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 'bold', color: P.cyan, marginBottom: 8, textTransform: 'uppercase' }}>
+          Data Freshness Status
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div style={{ fontSize: 12 }}>
+            <span style={{ color: P.positive }}>●</span> <span style={{ color: P.t3 }}>Live: </span>
+            <span style={{ color: P.t1 }}>{ENGINE ? '15' : '0'}</span>
           </div>
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
-            <div className="text-white/[0.5] mb-1">Phase 4</div>
-            <div className="text-amber-400 font-bold">▸ Active</div>
-            <SourceLabel source="agent" compact />
+          <div style={{ fontSize: 12 }}>
+            <span style={{ color: P.cyan }}>●</span> <span style={{ color: P.t3 }}>Fresh: </span>
+            <span style={{ color: P.t1 }}>{MKTENG ? '26' : '0'}</span>
+          </div>
+          <div style={{ fontSize: 12 }}>
+            <span style={{ color: P.amber }}>●</span> <span style={{ color: P.t3 }}>Stale: </span>
+            <span style={{ color: P.t1 }}>0</span>
+          </div>
+          <div style={{ fontSize: 12 }}>
+            <span style={{ color: P.t4 }}>●</span> <span style={{ color: P.t3 }}>Fallback: </span>
+            <span style={{ color: P.t1 }}>0</span>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export { DashboardIntelligenceHub, TopActionsWidget, IntelligenceSummaryWidget, EngineStatusWidget };
+export { DashboardIntelligenceHub };
