@@ -1486,6 +1486,81 @@ const T1 = ({ truthLayer })=>{
           </EmeraldGlassCard>))}
         </div>
 
+        {/* ═══ ZONE 2: QUALITY SCORECARD (8 gauges) ═══ */}
+        <EmeraldGlassCard style={{padding:20,boxShadow:T.shadow}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:10,color:T.t3,fontFamily:T.mono,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.06em'}}>PORTFOLIO QUALITY</div>
+              <HTitle t='Quality Scorecard'/>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <Tag t='DQS \u00B7 4.8/10' c={T.amber}/>
+              <Star size={14} color={T.amber}/>
+            </div>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-around',gap:8,flexWrap:'wrap'}}>
+            {[
+              {label:'Overall',score:5.2,max:10},{label:'Returns',score:3.8,max:10},{label:'Risk',score:5.4,max:10},
+              {label:'Process',score:4.2,max:10},{label:'Tax Eff.',score:6.0,max:10},{label:'Diversity',score:7.6,max:10},
+              {label:'Capital',score:4.4,max:10},{label:'Decisions',score:4.8,max:10}
+            ].map((g,i)=>{
+              const pct=(g.score/g.max)*100;
+              const c=pct>=70?T.teal:pct>=40?T.amber:T.coral;
+              const r=40;
+              return(
+                <div key={i} style={{textAlign:'center',minWidth:70}}>
+                  <div style={{position:'relative',width:r*2,height:r*2,margin:'0 auto'}}>
+                    <svg width={r*2} height={r*2} viewBox={`0 0 ${r*2} ${r*2}`}>
+                      <circle cx={r} cy={r} r={r-6} fill='none' stroke='rgba(255,255,255,0.06)' strokeWidth={5}/>
+                      <circle cx={r} cy={r} r={r-6} fill='none' stroke={c} strokeWidth={5}
+                        strokeDasharray={`${pct*(r-6)*0.0628} 200`} strokeLinecap='round'
+                        transform={`rotate(-90 ${r} ${r})`}
+                        style={{filter:`drop-shadow(0 0 6px ${c}55)`}}/>
+                    </svg>
+                    <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+                      fontSize:16,fontWeight:800,color:c,fontFamily:T.mono}}>{g.score}</div>
+                  </div>
+                  <div style={{fontSize:9,color:T.t3,marginTop:4,textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600}}>{g.label}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{marginTop:14,padding:'10px 14px',background:'rgba(0,0,0,0.18)',borderRadius:10,borderLeft:`3px solid ${T.amber}`}}>
+            <span style={{fontSize:10,color:T.t2}}>Overall 5.2/10 reflects strong diversification (7.6) offset by poor returns (3.8) driven by the crypto correction. Tax efficiency (6.0) improving but 47% GIA exposure remains a drag. Process (4.2) weak from missing rebalancing discipline.</span>
+          </div>
+        </EmeraldGlassCard>
+
+        {/* ═══ ZONE 3: ALERT PANEL ═══ */}
+        <EmeraldGlassCard style={{padding:18,boxShadow:T.shadow}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <HTitle t='Active Alerts'/>
+            <Tag t='5 SIGNALS' c={T.coral}/>
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {[
+              {label:'ISA deadline 5 Apr \u2014 29 days',sev:'red',age:'2d'},
+              {label:'Amex APR 22.4% \u2014 \u00A310,652 outstanding',sev:'red',age:'12h'},
+              {label:'Cash buffer 4.8% NAV \u2014 below 5% floor',sev:'amber',age:'1h'},
+              {label:'Crypto risk budget 88% consumed',sev:'amber',age:'4h'},
+              {label:'Pension contribution on track',sev:'green',age:'3h'},
+            ].map((a,i)=>{
+              const c=a.sev==='red'?T.coral:a.sev==='amber'?T.amber:T.teal;
+              return(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 10px',borderRadius:10,
+                  background:`${c}10`,border:`1px solid ${c}30`,flex:'1 1 auto',minWidth:200}}>
+                  <span style={{width:6,height:6,borderRadius:'50%',background:c,display:'inline-block',flexShrink:0,boxShadow:`0 0 6px ${c}`}}/>
+                  <span style={{fontSize:10,fontWeight:600,color:c,fontFamily:T.mono,flex:1}}>{a.label}</span>
+                  <span style={{fontSize:8,color:T.t3,flexShrink:0}}>{a.age}</span>
+                </div>
+              );
+            })}
+          </div>
+        </EmeraldGlassCard>
+
+        {/* ═══ ZONE 4: CIO INSIGHT NARRATIVE ═══ */}
+        <Ins type='risk' text='Crypto sleeve has lost \u00A338k (down 44%) from peak, now driving the bulk of portfolio drawdown. Equities have performed well \u2014 JPM Enhanced suite +8\u201316% across all holdings. Pension reval +26% is the single largest positive contributor (+\u00A316.8k). Priority: ISA max before 5 April, then clear Amex at 22.4% APR. Coast FIRE at 34% \u2014 new compensation package transforms the trajectory outlook.' />
+
+        {/* ═══ ZONE 5: NW GRADIENT EDGE HERO ═══ */}
         <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:T.glassGap}}>
           <EmeraldGlassCard style={{padding:20,boxShadow:T.shadow}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
@@ -1496,7 +1571,7 @@ const T1 = ({ truthLayer })=>{
               {dot:T.teal,label:'Weekly',value:'£262k',delta:'+£4k',deltaC:T.teal,sub:'Compared to £258k last week'},
               {dot:T.amber,label:'Monthly',value:'£262k',delta:'-£1k',deltaC:T.coral,sub:'Compared to £263k last month'},
               {dot:T.violet,label:'6M',value:'£262k',delta:'-£35k',deltaC:T.coral,sub:'Compared to £297k Sep 2025'}
-            ]}/>)
+            ]}/>
             <div style={{height:260}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <AreaChart data={edgeD}>
@@ -1592,7 +1667,7 @@ const T1 = ({ truthLayer })=>{
               {dot:T.coral,label:'Current',value:'-16.7%',delta:'Feb 2026',deltaC:T.coral,sub:'CDaR₈: -18.4%'},
               {label:'Recovery',value:'In Progress',sub:'0 of £35.4k recovered'},
               {dot:T.amber,label:'Max DD',value:'-16.7%',sub:'Peak £297k → £248k'}
-            ]}/>)
+            ]}/>
             <div style={{height:150}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <AreaChart data={ddS.map((d,i)=>({x:['Sep','Oct','Nov','Dec','Jan','Feb','Mar','', '','', ''][i]||`W${i}`,v:d.v}))}>
@@ -1615,7 +1690,7 @@ const T1 = ({ truthLayer })=>{
             <HKpi items={[
               {dot:T.blue,label:'Up Capture',value:'68%',delta:'+3pp',deltaC:T.teal,sub:'vs 60/40 benchmark'},
               {dot:T.coral,label:'Down Capture',value:'112%',delta:'+8pp',deltaC:T.coral,sub:'Excess down exposure'}
-            ]}/>)
+            ]}/>
             <div style={{height:155}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <AreaChart data={captureD}>
@@ -1640,7 +1715,7 @@ const T1 = ({ truthLayer })=>{
             <HKpi items={[
               {dot:T.teal,label:'Allocation',value:'+2.1%',delta:'Positive',deltaC:T.teal,sub:'Asset class positioning'},
               {dot:T.coral,label:'Selection',value:'-9.8%',delta:'Negative',deltaC:T.coral,sub:'Security-level drag (BTC)'}
-            ]}/>)
+            ]}/>
             <div style={{height:165}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <BarChart data={contribD} layout='vertical' barCategoryGap='16%'>
@@ -1664,7 +1739,7 @@ const T1 = ({ truthLayer })=>{
             <HKpi items={[
               {dot:T.teal,label:'Monthly',value:'£8,097',delta:'+19.6%',deltaC:T.teal,sub:'44,214 USD'},
               {dot:T.amber,label:'Yearly',value:'£312,134',delta:'+2.5%',deltaC:T.teal,sub:'301,002 USD'}
-            ]}/>)
+            ]}/>
             <div style={{height:175}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <ScatterChart>
@@ -1684,7 +1759,7 @@ const T1 = ({ truthLayer })=>{
             <HKpi items={[
               {dot:T.teal,label:'Monthly',value:'£8,097',delta:'+19.6%',deltaC:T.teal,sub:'44,214 USD'},
               {dot:T.amber,label:'Yearly',value:'£312,134',delta:'+2.5%',deltaC:T.teal,sub:'301,002 USD'}
-            ]}/>)
+            ]}/>
             <div style={{display:'grid',gridTemplateColumns:'55px repeat(6,1fr)',gap:2,fontSize:7,fontFamily:T.mono}}>
               <div />{thermalD.months.map((m,i)=>(<div key={i} style={{textAlign:'center',color:T.t3,padding:3}}>{m}</div>))}
               {thermalD.assets.map((asset,ri)=>(<Fragment key={ri}>
@@ -1705,7 +1780,7 @@ const T1 = ({ truthLayer })=>{
               {dot:T.teal,label:'Positive months',value:'3',sub:'50%'},
               {dot:T.coral,label:'Negative months',value:'3',sub:'50%'},
               {dot:T.violet,label:'Average',value:'-0.6%',sub:'6m'}
-            ]}/>)
+            ]}/>
             <div style={{height:200}}>
               <ResponsiveContainer width='100%' height='100%'>
                 <BarChart data={monthlyR} margin={{left:10,right:10,top:10,bottom:10}}>
@@ -1727,7 +1802,7 @@ const T1 = ({ truthLayer })=>{
               {dot:T.teal,label:'Liquid',value:'28%',sub:'£104k'},
               {dot:T.blue,label:'Semi-liquid',value:'38%',sub:'£142k'},
               {dot:T.coral,label:'Illiquid',value:'34%',sub:'£252k'}
-            ]}/>)
+            ]}/>
             <div style={{display:'grid',gap:8}}>
               {liqD.map((item,i)=>(<div key={i}><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:T.t3}}><span>{item.n}</span><span>{item.v}%</span></div><div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.v}%`,height:'100%',background:item.n==='Illiquid'?T.coral:(item.v>50?T.teal:T.blue),borderRadius:99}}/></div></div>))}
             </div>
@@ -1741,7 +1816,7 @@ const T1 = ({ truthLayer })=>{
             {dot:T.teal,label:'Bull 2030',value:'£510k',sub:'CAGR +9.5%'},
             {dot:T.blue,label:'Base 2030',value:'£398k',sub:'CAGR +6.8%'},
             {dot:T.coral,label:'Bear 2030',value:'£270k',sub:'CAGR +2.7%'}
-          ]}/>)
+          ]}/>
           <div style={{height:220}}>
             <ResponsiveContainer width='100%' height='100%'>
               <AreaChart data={scenD}>
@@ -1802,7 +1877,7 @@ const T1 = ({ truthLayer })=>{
             <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Capital Flow</div>
             <HKpi items={[
               {dot:T.teal,label:'Gross',value:'£160k',sub:'100%'},{dot:T.amber,label:'Tax',value:'£32k',sub:'20%'},{dot:T.blue,label:'Expenses',value:'£46k',sub:'29%'},{dot:T.violet,label:'Investable',value:'£82k',sub:'51%'}
-            ]}/>)
+            ]}/>
             <div style={{display:'grid',gap:8}}>
               {[
                 {l:'Gross',v:100},{l:'Tax',v:20},{l:'Expenses',v:29},{l:'Investable',v:51}
@@ -1816,7 +1891,7 @@ const T1 = ({ truthLayer })=>{
               {dot:T.teal,label:'ISA util',value:'87%',sub:'£18.1k'},
               {dot:T.violet,label:'Pension util',value:'92%',sub:'£82.1k'},
               {dot:T.blue,label:'GIA util',value:'76%',sub:'£45.7k'}
-            ]}/>)
+            ]}/>
             <div style={{display:'grid',gridTemplateColumns:'1fr',gap:8}}>
               {[
                 {l:'ISA',v:87,c:T.teal},{l:'Pension',v:92,c:T.violet},{l:'GIA',v:76,c:T.blue}
@@ -1826,18 +1901,37 @@ const T1 = ({ truthLayer })=>{
           </EmeraldGlassCard>
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:T.glassGap}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:T.glassGap}}>
           {[
-            {title:'Strengths',items:['High savings rate','Tax wrapper mix','Low net leverage','Multi-asset diversification'],icon:<TrendingUp size={14} color={T.teal} />,color:T.teal},
-            {title:'Weaknesses',items:['Crypto drawdown','Amex leverage','Home bias','Mid-cap concentration'],icon:<AlertTriangle size={14} color={T.coral} />,color:T.coral},
-            {title:'Priority Actions',items:['Deploy ISA allowance','Clear Amex by 30 Apr','Rebalance to targets','Execute top opps'],icon:<Zap size={14} color={T.amber} />,color:T.amber}
-          ].map((block,i)=>(
-            <div key={i} style={{gridColumn:'span 4'}}>
-              <EmeraldGlassCard style={{padding:16,minHeight:160,borderTop:`3px solid ${block.color}`}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>{block.icon}<div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase'}}>{block.title}</div></div>
-                <ul style={{paddingLeft:16,margin:0,fontSize:10,color:T.t2,lineHeight:1.5}}>{block.items.map((item,j)=>(<li key={j}>{item}</li>))}</ul>
-              </EmeraldGlassCard>
-            </div>))}
+            {title:'Strengths',icon:<TrendingUp size={13}/>,color:T.teal,items:[
+              'JPM Enhanced suite all positive: JUKC +16%, JURE +8%, JGEP +8%',
+              'Pension revalued +26% (+\u00A316.8k) \u2014 largest single contributor',
+              '15.4 effective positions with HHI 0.065 \u2014 genuinely diversified',
+              'New comp (\u00A3340k gross) transforms savings engine completely'
+            ]},
+            {title:'Weaknesses',icon:<AlertTriangle size={13}/>,color:T.coral,items:[
+              'Crypto lost \u00A338k \u2014 32% of risk from 13% of capital',
+              'Cash buffer halved from \u00A334k to \u00A316k. Now 2.6mo vs 3mo target',
+              'Amex debt \u00A310,652 at 22% APR \u2014 most expensive capital in portfolio',
+              '47% in taxable GIA wrapper \u2014 est. 1.5\u20132.0% annual tax drag'
+            ]},
+            {title:'Priority Actions',icon:<Zap size={13}/>,color:T.amber,items:[
+              'Max ISA (\u00A320k) before 5 April \u2014 29 days left. Non-negotiable',
+              'Clear Amex (\u00A310,652) from bonus \u2014 guaranteed 22% return on capital',
+              'Salary sacrifice \u00A31,250/mo into pension \u2014 60% effective rate band',
+              'Consolidate 18 micro-positions to \u226415. Every position must earn its place'
+            ]}
+          ].map((sec,i)=>(
+            <EmeraldGlassCard key={i} style={{padding:18,borderTop:`3px solid ${sec.color}`,boxShadow:`0 0 24px ${sec.color}12`}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
+                <div style={{color:sec.color}}>{sec.icon}</div>
+                <span style={{fontSize:11,fontWeight:700,color:sec.color,textTransform:'uppercase',fontFamily:T.mono,letterSpacing:'0.06em'}}>{sec.title}</span>
+              </div>
+              {sec.items.map((item,j)=>(<div key={j} style={{fontSize:10,color:T.t2,lineHeight:1.65,padding:'5px 0',borderBottom:`1px solid ${T.grid}`}}>
+                <span style={{color:sec.color,marginRight:6,fontWeight:700,fontFamily:T.mono}}>{j+1}.</span>{item}
+              </div>))}
+            </EmeraldGlassCard>
+          ))}
         </div>
 
         <Ins type='insight' text={`Data as at ${PORT.date}. Portfolio value £${PORT.netWorth.toLocaleString()}. Live state: ${truthLayer?.dashboard_freshness_state?.status || 'unknown'}. Not investment advice.`} />
