@@ -1291,144 +1291,347 @@ const TakeawaysBanner = ({ takeaways = [], title = "STRATEGIC SYNTHESIS & TOP 5 
 
 const T1 = ({ truthLayer })=>{
   const [activePeriod, setActivePeriod] = useState('6M');
-  const [exporting, setExporting] = useState(false);
-  const fire=(PORT.netWorth/PORT.fireTarget*100);
-  const liquidCash = 15752+406+94;
+  const fireProgress = (PORT.netWorth / PORT.fireTarget) * 100;
+  const liquidCash = 15752 + 406 + 94;
   const runway = liquidCash / PORT.monthlyExpenses;
   const nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
-  const alerts = AGENT.triggerAlerts?.alerts || [];
+  const activeReturn = nwReturn - (PORT.benchReturn * 100);
+  const realReturn = nwReturn - (PORT.inflation * 100);
+  const monthly = MONTHLY_DATA || [];
+  const weekly = NW_WEEKLY || [];
+  const forecast = NW_FORECAST?.length ? NW_FORECAST : weekly;
+  const opps = OPPS || [];
+  const bridge = BRIDGE_ITEMS || [];
+  const stress = STRESS || [];
+  const top5Opps = [...opps].sort((a,b)=> (b.val||0) - (a.val||0)).slice(0,5);
+  const contributionData = (HOLDINGS || [])
+    .map(h => ({...h, contrib: (h.v || 0) * ((h.ret6m||0)/100)}))
+    .sort((a,b)=>b.contrib-a.contrib)
+    .slice(0,10);
+  let peakNW = 0;
+  const drawdownData = weekly.map(p => {
+    peakNW = Math.max(peakNW, p.nw || 0);
+    return {...p, drawdown: peakNW ? ((p.nw-peakNW)/peakNW)*100 : 0};
+  });
 
-  const t1Takeaways = [
-    `Net Worth is £${PORT.netWorth.toLocaleString('en-GB')} with 6M return ${nwReturn.toFixed(1)}%.`,
-    `FIRE Progress at ${fire.toFixed(1)}%; runway is ${runway.toFixed(1)} months vs 3 month target.`,
-    `Concentration: HHI ${RISK.hhi}, effective positions ${RISK.effPos}, top 5 hold ${((HOLDINGS.slice(0,5).reduce((sum,h)=>sum+h.val,0)/PORT.assets)*100).toFixed(1)}% of NAV.`,
-    `Crypto risk remains high at ${SLEEVES.find(s=>s.name.toLowerCase().includes('crypto'))?.pct||0}%.`,
-    `Priority actions: maximize ISA, clear Amex, reduce micro positions and rebalance from overweights.`,
+  const scorecardArray = SCORECARD ? Object.entries(SCORECARD).filter(([k,v])=>typeof v==='number').map(([k,v])=>({d:k.charAt(0).toUpperCase()+k.slice(1),s:v})) : [{d:'Overall',s:5}];
+  const alertPills = [
+    {label:'Macro Regime', value:MKTENG?.regime?.regime || 'Neutral', color:P.cyan},
+    {label:'Risk Budget', value:`${(scorecardArray.reduce((acc,v)=>acc+(v.s||0),0)/(scorecardArray.length||1)).toFixed(1)}/10`, color:P.amber},
+    {label:'Cash Runway', value:`${runway.toFixed(1)} mo`, color: runway>=3 ? P.green : P.red},
+    {label:'FIRE Gap', value:`${(100-fireProgress).toFixed(1)}%`, color: fireProgress>=100 ? P.green : P.amber},
+    {label:'Debt', value:`£${fmt(PORT.debts)}`, color:P.red},
   ];
 
-  const horizonKpis = [
-    {l:'Net Worth',v:fmt(PORT.netWorth),c:P.cyan,s:'Current NAV'},
-    {l:'6M Return',v:`${nwReturn.toFixed(1)}%`,c:nwReturn>=0?P.positive:P.negative,s:'Trailing 6 months'},
-    {l:'Total Assets',v:fmt(PORT.assets),c:P.amber,s:'Total AUM'},
-    {l:'Active Return',v:`${(nwReturn - (PORT.benchReturn*100)).toFixed(1)}%`,c:(nwReturn - (PORT.benchReturn*100))>=0?P.positive:P.negative,s:'vs MSCI'},
-    {l:'FIRE Progress',v:`${fire.toFixed(1)}%`,c:fire>=25?P.positive:P.amber,s:'Target 100%'},
-    {l:'Cash Buffer',v:`${runway.toFixed(1)}mo`,c:runway>=3?P.positive:P.negative,s:'Liquidity runway'},
-  ];
+  const topStress = stress.sort((a,b)=>Math.abs(b.impact||0)-Math.abs(a.impact||0)).slice(0,4);
 
   return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-      <TruthLayerBanner scope="T1 Executive Summary" truthLayer={truthLayer} />
+    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
 
-      {/* ROW 1: TOP 5 KEY TAKEAWAYS BANNER (col-span-12) */}
-      <HorizonTakeaways items={t1Takeaways} />
-
-      {/* ROW 2: MINI-STATISTICS (6 uniform KPIs, col-span-2 each) */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
-        {horizonKpis.map((k,i)=>(
-          <div key={i} style={{gridColumn:'span 2'}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:100}}>
-              <KpiTile {...k}/>
-            </EmeraldGlassCard>
-          </div>
-        ))}
+      {/* Zone 1 */}
+      <div style={{gridColumn:'span 12'}}>
+        <Hd t="Executive Summary" s="CIO terminal \u2014 portfolio truth state, risk governance, and forward path" tag="COMMAND CENTER" ac={P.amber}/>
       </div>
 
-      {/* ROW 2b: MARKET REGIME INTELLIGENCE (col-span-12) */}
-      {MKTENG.regime && (
-        <EmeraldGlassCard style={{gridColumn:'span 12',padding:20,display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-          <div style={{gridColumn:'span 4',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',textAlign:'center',gap:8}}>
-            <div style={{fontSize:10,fontWeight:700,color:P.t3,textTransform:'uppercase',letterSpacing:'0.08em'}}>Macro Regime</div>
-            <div style={{fontSize:20,fontWeight:700,color:P.cyan}}>{MKTENG.regime.regime}</div>
-            <div style={{fontSize:11,color:P.t2,maxWidth:180,lineHeight:1.4}}>{MKTENG.regime.description}</div>
-            <div style={{display:'flex',gap:12,marginTop:8}}>
-              <div style={{fontSize:9,color:P.t3}}>
-                <div style={{color:P.t4}}>Confidence</div>
-                <div style={{fontSize:13,fontWeight:700,color:P.cyan}}>{MKTENG.regime.confidence}%</div>
-              </div>
-              <div style={{fontSize:9,color:P.t3}}>
-                <div style={{color:P.t4}}>Transition Risk</div>
-                <div style={{fontSize:13,fontWeight:700,color:MKTENG.regime.transitionRisk==='High'?P.red:MKTENG.regime.transitionRisk==='Medium'?P.amber:P.green}}>{MKTENG.regime.transitionRisk}</div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Top 5 Market Signals */}
-          <div style={{gridColumn:'span 8',display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
-            {[
-              {l:'CPI',v:`${(MKTENG.regime.scores.signals||{}).cpi||3.0}%`,c:P.orange},
-              {l:'GDP',v:`${((MKTENG.regime.scores.signals||{}).gdpGrowth||0.1).toFixed(1)}%`,c:P.cyan},
-              {l:'Rate',v:`${((MKTENG.regime.scores.signals||{}).cbRate||3.75).toFixed(2)}%`,c:P.indigo},
-              {l:'VIX',v:Math.round((MKTENG.regime.scores.signals||{}).vix||24.5),c:P.red},
-              {l:'PMI',v:Math.round((MKTENG.regime.scores.signals||{}).pmi||49),c:P.cyan},
-            ].map((sig,i)=>(
-              <div key={i} style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:12,background:sig.c+'15',borderRadius:12,border:`1px solid ${sig.c}30`}}>
-                <div style={{fontSize:9,color:P.t3,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6}}>{sig.l}</div>
-                <div style={{fontSize:16,fontWeight:700,color:sig.c}}>{sig.v}</div>
-              </div>
-            ))}
+      {/* Zone 2 */}
+      <div style={{gridColumn:'span 12'}}>
+        <Row gap={14}>
+          <EmeraldGlassCard style={{padding:14}}><K l="Net Worth" v={fmt(PORT.netWorth)} delta={pc(nwReturn)} deltaType={nwReturn>=0?'up':'down'} comparison={`Peak: ${fmt(PORT.nwPeak)}`} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:14}}><K l="6M Return (TWR)" v={pc(nwReturn)} deltaType={nwReturn>=0?'up':'down'} comparison={`Bench: ${pc(PORT.benchReturn*100)}`} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:14}}><K l="Peak Drawdown" v={pc(((PORT.netWorth-PORT.nwPeak)/PORT.nwPeak)*100)} deltaType="down" comparison={`From ${fmt(PORT.nwPeak)}`} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:14}}><K l="FIRE Progress" v={`${fireProgress.toFixed(1)}%`} deltaType="up" comparison={`Target: ${fK(PORT.fireTarget)}`} /></EmeraldGlassCard>
+        </Row>
+      </div>
+
+      {/* Zone 3 */}
+      <div style={{gridColumn:'span 12'}}>
+        <Row gap={14}>
+          <EmeraldGlassCard style={{padding:12}}><K sm l="Active Return" v={pc(activeReturn)} deltaType={activeReturn>=0?'up':'down'} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:12}}><K sm l="Real Return" v={pc(realReturn)} deltaType={realReturn>=0?'up':'down'} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:12}}><K sm l="Total Assets" v={fK(PORT.assets)} /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:12}}><K sm l="Total Debts" v={fK(PORT.debts)} deltaType="down" comparison="22% APR Amex" /></EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:12}}><K sm l="Effective Positions" v={`${((1/(RISK?.hhi||0.01))||0).toFixed(1)}`} comparison="1/HHI diversification" /></EmeraldGlassCard>
+        </Row>
+      </div>
+
+      {/* Zone 4 */}
+      <div style={{gridColumn:'span 12'}}>
+        <EmeraldGlassCard style={{padding:16}}>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {alertPills.map((a,i)=>(<div key={i} style={{padding:'6px 10px',borderRadius:999,background:`${a.color}20`,color:a.color,fontSize:10,fontWeight:700,textTransform:'uppercase'}}>{a.label}: {a.value}</div>))}
           </div>
         </EmeraldGlassCard>
-      )}
-
-      {/* ROW 3: HORIZON 8/4 SPLIT (Main Chart + Right Stack) */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        {/* Left: Net Worth Trajectory (col-span-8) */}
-        <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'inherit'}}>
-          <div style={{gridColumn:'span 8'}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
-              <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>NET WORTH TRAJECTORY</div>
-              <div style={{height:380,display:'flex',justifyContent:'center'}}>
-                <TrajectoryChartWidget data={NW_WEEKLY} title='' subtitle='' />
-              </div>
-            </EmeraldGlassCard>
-          </div>
-          {/* Right: Scorecard + Alerts Stacked (col-span-4) */}
-          <div style={{gridColumn:'span 4',display:'grid',gridTemplateRows:'1fr 1fr',gap:20}}>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:180}}>
-              <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>PORTFOLIO QUALITY SCORECARD</div>
-              <div style={{flex:1,display:'flex',alignItems:'center'}}>
-                <DecisionQualityMatrix scores={{timing:Math.round(5*10),wrapper:Math.round(6*10),debt:Math.round(7*10),disposition:42}} />
-              </div>
-            </EmeraldGlassCard>
-            <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:180}}>
-              <div style={{fontSize:12,fontWeight:700,color:P.red,marginBottom:10}}>GOVERNANCE ALERTS</div>
-              <div style={{flex:1,overflowY:'auto',fontSize:11,color:P.t2,display:'flex',flexDirection:'column',gap:6}}>
-                {(alerts||[]).slice(0,5).map((a,i)=>(<div key={i}>{a.message||a.title||a.msg||'Alert'}</div>))}
-              </div>
-            </EmeraldGlassCard>
-          </div>
-        </div>
       </div>
 
-      {/* ROW 4: HORIZON 4/8 SPLIT (Asset Allocation + Income/Expense) */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:20}}>
-        {/* Left: Asset Allocation (col-span-4) */}
-        <div style={{gridColumn:'span 4'}}>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
-            <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>ASSET ALLOCATION</div>
-            <div style={{height:380,display:'flex',justifyContent:'center'}}>
-              <AllocationChartWidget data={mapSleeveAllocation(SLEEVES, PORT.assets)} />
+      {/* Zone 5 */}
+      <div style={{gridColumn:'span 12'}}>
+        <Ins type="insight" text={`Portfolio at £${PORT.netWorth.toLocaleString()} (-${((PORT.netWorth/PORT.nwPeak-1)*100).toFixed(1)}% from £${PORT.nwPeak.toLocaleString()} peak). BTC drawdown (-44%) is primary drag. Structural positives: pension step-up (+£12k), wrapper migration on track, savings rate 38%. Actions: (1) Deploy £20k ISA by 5 Apr, (2) Salary sacrifice £1,250/mo, (3) Clear Amex £10.6k. Alpha ~£12.5k/yr.`} />
+      </div>
+
+      {/* Zones 6/7 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 8'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:400}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Net Worth Trajectory</div>
+            <div style={{height:300}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={forecast}>
+                  <defs>
+                    <linearGradient id="t1_nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.45}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.02}/></linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                  <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Area type="monotone" dataKey="nw" stroke={P.cyan} strokeWidth={2} fill="url(#t1_nwGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </EmeraldGlassCard>
         </div>
-        {/* Right: Income & Expense (col-span-8) */}
-        <div style={{gridColumn:'span 8'}}>
-          <EmeraldGlassCard style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:380}}>
-            <div style={{fontSize:12,fontWeight:700,color:P.cyan,marginBottom:10}}>INCOME & EXPENSE BREAKDOWN</div>
-            <div style={{height:380}}>
+
+        <div style={{gridColumn:'span 4',display:'grid',gridTemplateRows:'repeat(3,1fr)',gap:16}}>
+          <EmeraldGlassCard style={{padding:14,minHeight:124}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Portfolio Quality Radar</div>
+            <div style={{height:120}}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MONTHLY_DATA} margin={{top:10,right:12,left:10,bottom:20}}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-                  <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} />
-                  <YAxis tick={{fill:P.t3,fontSize:10}} tickFormatter={v=>`${v}%`} />
-                  <Tooltip content={<Tip />} />
-                  <Bar dataKey="r" name="Return" radius={[8,8,0,0]} fill={P.cyan} />
+                <RadarChart cx="50%" cy="50%" outerRadius="60%" data={scorecardArray}>
+                  <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                  <PolarAngleAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} />
+                  <PolarRadiusAxis angle={30} tick={false} axisLine={false} />
+                  <Radar dataKey="s" stroke={P.cyan} fill={P.cyan} fillOpacity={0.2} />
+                  <Tooltip content={<Tip/>}/>
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard style={{padding:14,minHeight:124}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Allocation Donut</div>
+            <div style={{height:120}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={mapSleeveAllocation(SLEEVES, PORT.assets)} dataKey="value" nameKey="name" innerRadius={30} outerRadius={54}>
+                    {mapSleeveAllocation(SLEEVES, PORT.assets).map((entry,index)=><Cell key={index} fill={[P.cyan,P.indigo,P.amber,P.btc,P.green][index%5]} />)}
+                  </Pie>
+                  <Tooltip content={<Tip/>}/>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard style={{padding:14,minHeight:124,textAlign:'center'}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>FIRE Progress</div>
+            <Gauge score={Math.min(100,fireProgress)} max={100} label="FIRE" size={110} />
+          </EmeraldGlassCard>
+        </div>
+      </div>
+
+      {/* Zone 8 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:320}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Holding Contribution (6M)</div>
+            <div style={{height:240}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={contributionData} layout="vertical" margin={{left:12,right:12}}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                  <XAxis type="number" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(0)}`} />
+                  <YAxis dataKey="n" type="category" width={120} tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} />
+                  <Tooltip content={<Tip/>}/>
+                  <Bar dataKey="contrib" radius={[4,4,4,4]} fill={P.cyan} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </EmeraldGlassCard>
+        </div>
+
+        <div style={{gridColumn:'span 6'}}>
+        <EmeraldGlassCard style={{padding:16,minHeight:320}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Monthly Return Pattern</div>
+            <div style={{height:240}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthly} margin={{left:12,right:12,top:6,bottom:16}}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                  <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Bar dataKey="p" fill={P.cyan} radius={[4,4,0,0]}/>
+                  <Bar dataKey="b" fill={P.indigo} radius={[4,4,0,0]}/>
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </EmeraldGlassCard>
         </div>
       </div>
+
+      {/* Zone 9 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:240}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Salary-to-Deployment Flow</div>
+              {[
+                {label:'Gross Income',val:PORT.grossSalary + PORT.grossBonus},
+                {label:'Tax+NI',val:(PORT.grossSalary + PORT.grossBonus)*(PORT.taxRate + PORT.niRate)},
+                {label:'Expenses',val:PORT.monthlyExpenses*12},
+                {label:'Investable Surplus',val:(PORT.grossSalary + PORT.grossBonus)*0.32},
+              ].map((item,i)=>(
+                <div key={i} style={{marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',color:P.t3,fontSize:10,marginBottom:4}}><span>{item.label}</span><span>{fmt(Math.round(item.val))}</span></div>
+                  <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:999}}>
+                    <div style={{width:`${Math.min(100, (item.val / (PORT.grossSalary+PORT.grossBonus))*100)}%`,height:'100%',background:P.cyan,borderRadius:999}}></div>
+                  </div>
+                </div>
+              ))}
+            <Ins type="insight" text="Savings rate ~32%, deployable surplus tracking on target for next quarter." />
+          </EmeraldGlassCard>
+        </div>
+
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:240}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Net Worth Bridge (6M)</div>
+            <div style={{height:210}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bridge.slice(0,8)} margin={{left:10,right:10,top:5,bottom:15}}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                  <XAxis dataKey="n" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`£${Math.round(v/1000)}k`}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Bar dataKey="v" fill={P.amber} radius={[4,4,0,0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </EmeraldGlassCard>
+        </div>
+      </div>
+
+      {/* Zone 10 */}
+      <div style={{gridColumn:'span 12'}}>
+        <EmeraldGlassCard style={{padding:16,minHeight:260}}>
+          <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>5-Year Wealth Scenarios</div>
+          <div style={{height:210}}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={WEALTH_5||[]}> 
+                <defs>
+                  <linearGradient id="t1_scenarioGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.35}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.06}/></linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                <XAxis dataKey="y" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
+                <Tooltip content={<Tip/>}/>
+                <Area type="monotone" dataKey="base" stroke={P.cyan} fill="url(#t1_scenarioGrad)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <Ins type="opp" text={`Base case to £${Math.round(WEALTH_5?.slice(-1)[0]?.base || 0).toLocaleString()} by 2035. Wrapper alpha adds £${Math.round(((WEALTH_5?.slice(-1)[0]?.wrapperAlpha||0)-((WEALTH_5?.slice(-1)[0]?.base||0)))||0).toLocaleString()} (est.).`} />
+        </EmeraldGlassCard>
+      </div>
+
+      {/* Zone 11 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 4'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Risk Budget Utilisation</div>
+            {(scorecardArray||[]).map((item,i)=>(
+              <div key={i} style={{marginBottom:8}}>
+                <div style={{fontSize:10,color:P.t2,marginBottom:4}}>{item.d}</div>
+                <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${Math.min(100,item.s)}%`,height:'100%',borderRadius:99,background:P.cyan}}/></div>
+              </div>
+            ))}
+          </EmeraldGlassCard>
+        </div>
+        <div style={{gridColumn:'span 4'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Key Portfolio Metrics</div>
+            <Tbl h={["Metric","Value"]} r={[["Net Worth",fmt(PORT.netWorth)],["6M Return",pc(nwReturn)],["Real Return",pc(realReturn)],["FIRE Progress",`${fireProgress.toFixed(1)}%`]]} />
+          </EmeraldGlassCard>
+        </div>
+        <div style={{gridColumn:'span 4'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Drawdown from Peak</div>
+            <div style={{height:170}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={drawdownData}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                  <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(1)}%`}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Area type="monotone" dataKey="drawdown" stroke={P.red} fill="rgba(255,92,122,0.2)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </EmeraldGlassCard>
+        </div>
+      </div>
+
+      {/* Zone 12 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 8'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Top 5 Opportunities</div>
+            <Tbl h={["Opportunity","Alpha","Status"]} r={top5Opps.map(o=>[o.t||o.name,o.alpha?`£${o.alpha}k`:'–',o.status||'n/a'])} />
+          </EmeraldGlassCard>
+        </div>
+        <div style={{gridColumn:'span 4'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Debt Snapshot</div>
+            <div><strong>Total debts:</strong> £{fmt(PORT.debts)}</div>
+            <div><strong>Amex:</strong> £{fmt(PORT.amexDebt)}</div>
+            <div><strong>Monzo:</strong> £{fmt(PORT.monzoFlex)}</div>
+            <div style={{marginTop:10,fontSize:10,color:P.t2}}>Priority: clear high-cost credit before next bonus cycle.</div>
+          </EmeraldGlassCard>
+        </div>
+      </div>
+
+      {/* Zone 13 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Stress Test Overview</div>
+            <Tbl h={["Scenario","Impact","Confidence"]} r={topStress.map(s=>[s.s||s.name,`${s.impact||0}%`,s.pr||'N/A'])} />
+          </EmeraldGlassCard>
+        </div>
+        <div style={{gridColumn:'span 6'}}>
+          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Liquidity Ladder</div>
+            <div style={{display:'grid',gap:8}}>
+              {[
+                {label:'Cash',pct:((HOLDINGS.filter(h=>h.cat==='Cash'||h.cat==='Cash/FD').reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
+                {label:'Short-term',pct:((HOLDINGS.filter(h=>h.w<=10).reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
+                {label:'Illiquid',pct:((HOLDINGS.filter(h=>h.w>10).reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
+              ].map((item,i)=>(
+                <div key={i}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:P.t3}}><span>{item.label}</span><span>{item.pct}%</span></div>
+                  <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.pct}%`,height:'100%',background:P.cyan,borderRadius:99}}/></div>
+                </div>
+              ))}
+            </div>
+            <Ins type="warning" text="Rainy day fund at 64% of target. Rebuild with bonus allocation." />
+          </EmeraldGlassCard>
+        </div>
+      </div>
+
+      {/* Zone 14 */}
+      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+        {[
+          {title:'Strengths',items:['High savings rate','Tax wrapper mix','Low net leverage','Multi-asset diversification']},
+          {title:'Weaknesses',items:['Crypto drawdown','Amex leverage','Home bias','Mid-cap concentration']},
+          {title:'Priority Actions',items:['Deploy ISA allowance','Clear Amex by 30 Apr','Rebalance to targets','Execute top opps']},
+        ].map((block,i)=>(
+          <div key={i} style={{gridColumn:'span 4'}}>
+            <EmeraldGlassCard style={{padding:16,minHeight:160}}>
+              <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>{block.title}</div>
+              <ul style={{paddingLeft:16,margin:0,fontSize:10,color:P.t2,lineHeight:1.5}}>{block.items.map((item,j)=><li key={j}>{item}</li>)}</ul>
+            </EmeraldGlassCard>
+          </div>
+        ))}
+      </div>
+
+      {/* Zone 15 */}
+      <div style={{gridColumn:'span 12'}}>
+        <Ins type="insight" text={`Data as at ${PORT.date}. Portfolio value £${PORT.netWorth.toLocaleString()}. Live state: ${truthLayer.dashboard_freshness_state?.status || 'unknown'}. Not investment advice.`} />
+      </div>
+
     </div>
   );
 };
