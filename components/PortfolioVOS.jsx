@@ -40,7 +40,7 @@ import { computeAltcoinRiskCap } from '../lib/engines/agents/altcoin-risk-cap.js
 import { generatePerformanceBridge } from '../lib/engines/agents/performance-bridge.js';
 import { computeThesisMonitorState } from '../lib/engines/agents/thesis-monitor.js';
 import { useEngines } from '../lib/engineContext';
-import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line, ScatterChart, Scatter } from "recharts";
+import { BarChart, Bar, AreaChart, Area, LineChart, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line, ScatterChart, Scatter } from "recharts";
 import { Fragment } from "react";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Shield, Zap, DollarSign, Target, AlertTriangle, Layers, CircleDot, FileText, Activity, BookOpen, TrendingDown, Download, Star } from "lucide-react";
 import dynamic from 'next/dynamic';
