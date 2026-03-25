@@ -1382,7 +1382,7 @@ const T1 = ({ truthLayer })=>{
                   <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                   <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Area type="monotone" dataKey="nw" stroke={P.cyan} strokeWidth={2} fill="url(#t1_nwGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1400,7 +1400,7 @@ const T1 = ({ truthLayer })=>{
                   <PolarAngleAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} />
                   <PolarRadiusAxis angle={30} tick={false} axisLine={false} />
                   <Radar dataKey="s" stroke={P.cyan} fill={P.cyan} fillOpacity={0.2} />
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                 </RadarChart>
               </ResponsiveContainer>
             </div>
@@ -1414,7 +1414,7 @@ const T1 = ({ truthLayer })=>{
                   <Pie data={mapSleeveAllocation(SLEEVES, PORT.assets)} dataKey="value" nameKey="name" innerRadius={30} outerRadius={54}>
                     {mapSleeveAllocation(SLEEVES, PORT.assets).map((entry,index)=><Cell key={index} fill={[P.cyan,P.indigo,P.amber,P.btc,P.green][index%5]} />)}
                   </Pie>
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1438,7 +1438,7 @@ const T1 = ({ truthLayer })=>{
                   <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                   <XAxis type="number" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(0)}`} />
                   <YAxis dataKey="n" type="category" width={120} tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} />
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Bar dataKey="contrib" radius={[4,4,4,4]} fill={P.cyan} />
                 </BarChart>
               </ResponsiveContainer>
@@ -1455,7 +1455,7 @@ const T1 = ({ truthLayer })=>{
                   <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                   <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`}/>
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Bar dataKey="p" fill={P.cyan} radius={[4,4,0,0]}/>
                   <Bar dataKey="b" fill={P.indigo} radius={[4,4,0,0]}/>
                 </BarChart>
@@ -1496,7 +1496,7 @@ const T1 = ({ truthLayer })=>{
                   <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                   <XAxis dataKey="n" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`£${Math.round(v/1000)}k`}/>
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Bar dataKey="v" fill={P.amber} radius={[4,4,0,0]}/>
                 </BarChart>
               </ResponsiveContainer>
@@ -1518,7 +1518,7 @@ const T1 = ({ truthLayer })=>{
                 <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                 <XAxis dataKey="y" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
-                <Tooltip content={<GlassTip/>}/>
+                <Tooltip content={<Tip/>}/>
                 <Area type="monotone" dataKey="base" stroke={P.cyan} fill="url(#t1_scenarioGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -1555,7 +1555,7 @@ const T1 = ({ truthLayer })=>{
                   <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
                   <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(1)}%`}/>
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Area type="monotone" dataKey="drawdown" stroke={P.red} fill="rgba(255,92,122,0.2)" />
                 </AreaChart>
               </ResponsiveContainer>
