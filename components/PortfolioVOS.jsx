@@ -1393,7 +1393,7 @@ const T1=()=>{
     </div>))}
   </div>);
 
-  const HTable=({rows,cols=1})=>(<div style={{marginTop:10,borderTop:"1px solid rgba(0,0,0,0.08)",paddingTop:8}}>
+  const HTable=({rows,cols=1})=>(<div style={{marginTop:10,borderTop:"1px solid "+L.grid,paddingTop:8}}>
     {rows.map((r,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderTop:i>0?"1px solid "+L.grid:"none"}}>
       <span style={{fontSize:12,color:L.t2}}>{r.city}</span>
       <div style={{display:"flex",gap:cols>1?16:0}}>{r.values.map((v,j)=>(<span key={j} style={{fontSize:12,color:L.t1,fontFamily:MONO,fontWeight:500,minWidth:cols>1?70:90,textAlign:"right"}}>{v}</span>))}</div>
@@ -1540,7 +1540,7 @@ const T1=()=>{
             <div style={{marginTop:8}}><HBadge icon={<Shield size={11} color={L.teal}/>} label="Risk quality" value="5.4/7" color={L.teal}/></div>
           </div>
           <ResponsiveContainer width={180} height={170}>
-            <RadarChart data={radarD}><PolarGrid stroke="rgba(255,255,255,0.08)"/><PolarAngleAxis dataKey="s" tick={{fontSize:7,fill:L.t3}}/><PolarRadiusAxis tick={false} axisLine={false} domain={[0,8]}/>
+            <RadarChart data={radarD}><PolarGrid stroke="rgba(0,0,0,0.08)"/><PolarAngleAxis dataKey="s" tick={{fontSize:7,fill:L.t3}}/><PolarRadiusAxis tick={false} axisLine={false} domain={[0,8]}/>
               <Radar dataKey="v" stroke={L.teal} fill={L.teal} fillOpacity={0.15} strokeWidth={2.5} style={{filter:"drop-shadow(0 0 4px rgba(0,212,170,0.35))"}}/>
               <Radar dataKey="t" stroke={L.accent} fill="none" strokeWidth={1} strokeDasharray="4 4"/>
             </RadarChart>
@@ -1605,7 +1605,7 @@ const T1=()=>{
             <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
             <XAxis type="number" tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>(v>0?"+":"")+v+"k"}/>
             <YAxis type="category" dataKey="n" tick={{fontSize:9,fill:L.t2}} axisLine={false} tickLine={false} width={50}/>
-            <ReferenceLine x={0} stroke="rgba(255,255,255,0.08)"/>
+            <ReferenceLine x={0} stroke="rgba(0,0,0,0.08)"/>
             <Bar dataKey="v" radius={[0,4,4,0]} label={{position:"right",fontSize:8,fill:L.t2,fontFamily:MONO,formatter:v=>(v>0?"+":"")+v+"k"}}>{contribD.map((d,i)=><Cell key={i} fill={d.v>=0?L.teal:L.coral} fillOpacity={0.8}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
