@@ -40,8 +40,9 @@ import { computeAltcoinRiskCap } from '../lib/engines/agents/altcoin-risk-cap.js
 import { generatePerformanceBridge } from '../lib/engines/agents/performance-bridge.js';
 import { computeThesisMonitorState } from '../lib/engines/agents/thesis-monitor.js';
 import { useEngines } from '../lib/engineContext';
-import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line } from "recharts";
-import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Shield, Zap, DollarSign, Target, AlertTriangle, Layers, CircleDot, FileText, Activity, BookOpen } from "lucide-react";
+import { BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, ReferenceLine, Line, ScatterChart, Scatter } from "recharts";
+import { Fragment } from "react";
+import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Shield, Zap, DollarSign, Target, AlertTriangle, Layers, CircleDot, FileText, Activity, BookOpen, TrendingDown, Download, Star } from "lucide-react";
 import dynamic from 'next/dynamic';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -104,6 +105,30 @@ const P = {
   s4:"#FF5C7A",  // Hot: coral (negative/loss indicator)
   s5:"#3B9EFF",  // Cool: blue (benchmark/informational)
   s6:"#FF3BBD",  // Energy: magenta (spot alerts only)
+};
+
+// --- HYPER CHARTS DESIGN TOKENS (T) ---
+const T = {
+  teal: "#00D4AA",
+  coral: "#FF5C7A", 
+  amber: "#F5A623",
+  violet: "#7C6FFF",
+  blue: "#3B9EFF",
+  sky: "#38BDF8",
+  emerald: "#34D399",
+  pink: "#EC4899",
+  t1: "#F8FAFC",
+  t2: "#94A3B8",
+  t3: "#64748B",
+  glass: "rgba(255,255,255,0.05)",
+  glassGap: 16,
+  glassRadius: 16,
+  grid: "rgba(255,255,255,0.04)",
+  bg: "#080810",
+  shadow: "0 8px 32px rgba(0,0,0,0.3),0 0 80px rgba(0,0,0,0.15)",
+  hShadow: "0 12px 44px rgba(0,0,0,0.4),0 0 100px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.12)",
+  mono: "'JetBrains Mono','SF Mono',monospace",
+  sans: "'Inter','SF Pro Display',system-ui,sans-serif"
 };
 
 // --- MATERIAL TILE STYLES: Solid gradient accent cards — teal-navy spectrum ---
@@ -1294,7 +1319,7 @@ const T1 = ({ truthLayer })=>{
   const fireProgress = (PORT.netWorth / PORT.fireTarget) * 100;
   const liquidCash = 15752 + 406 + 94;
   const runway = liquidCash / PORT.monthlyExpenses;
-  const nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / PORT.nw6moAgo * 100);
+  const nwReturn = ((PORT.netWorth - PORT.nw6moAgo) / (PORT.nw6moAgo || 1) * 100);
   const activeReturn = nwReturn - (PORT.benchReturn * 100);
   const realReturn = nwReturn - (PORT.inflation * 100);
   const monthly = MONTHLY_DATA || [];
@@ -1308,340 +1333,521 @@ const T1 = ({ truthLayer })=>{
     .map(h => ({...h, contrib: (h.v || 0) * ((h.ret6m||0)/100)}))
     .sort((a,b)=>b.contrib-a.contrib)
     .slice(0,10);
-  let peakNW = 0;
-  const drawdownData = weekly.map(p => {
-    peakNW = Math.max(peakNW, p.nw || 0);
-    return {...p, drawdown: peakNW ? ((p.nw-peakNW)/peakNW)*100 : 0};
-  });
 
-  const scorecardArray = SCORECARD ? Object.entries(SCORECARD).filter(([k,v])=>typeof v==='number').map(([k,v])=>({d:k.charAt(0).toUpperCase()+k.slice(1),s:v})) : [{d:'Overall',s:5}];
+  const nwS=[297,290,285,278,272,268,265,262,258,263,260,262].map(v=>({v}));
+  const retS=[0,-1.2,-2.8,-4.5,-6.1,-8.2,-9.5,-11.2,-10.8,-11.7,-11,-11.7].map(v=>({v}));
+  const ddS=[0,-2,-5,-8,-11,-14,-16.7,-15,-14,-16,-15.5,-16.7].map(v=>({v}));
+  const fireS=[18,19,20,21,22,23,24,26,28,30,32,34].map(v=>({v}));
+
+  const edgeD=["Sep","Oct","Nov","Dec","Jan","Feb","Mar"].map((m,i)=>({
+    m,
+    pension:[48,49,50,52,56,58,60][i],
+    equity:[41,41,40,39,37,36,41][i],
+    crypto:[39,35,28,27,23,22,24][i],
+    cash:[36,34,29,22,17,13,12][i],
+    zar:[20,20,20,20,20,20,20][i],
+  }));
+
+  const radarD=[
+    {s:'Overall',v:5.2,t:7},{s:'Returns',v:3.8,t:7},{s:'Risk',v:5.4,t:7},{s:'Process',v:4.2,t:7},
+    {s:'Tax Eff',v:6,t:7},{s:'Diversity',v:7.6,t:7},{s:'Capital',v:4.4,t:7}
+  ];
+
+  const contribD=[
+    {n:'Pension',v:16},{n:'ZAR',v:14},{n:'JURE',v:12},{n:'JGEP',v:8},{n:'JUKC',v:5},
+    {n:'Monzo',v:3},{n:'WLDS',v:-2},{n:'SOL',v:-8},{n:'EC10',v:-12},{n:'BTC',v:-19}
+  ];
+
+  const monthlyR=[{m:'Oct',v:-2.1},{m:'Nov',v:-4.5},{m:'Dec',v:-1.8},{m:'Jan',v:1.2},{m:'Feb',v:-3.2},{m:'Mar',v:0.8}];
+  const scenD=["2026","2027","2028","2029","2030"].map((y,i)=>({
+    y,
+    base:[262,290,322,358,398][i],
+    bull:[262,310,365,430,510][i],
+    bear:[262,250,245,255,270][i],
+  }));
+  const allocD=[
+    {name:'ETFs',value:27.9,color:T.teal},{name:'Pension',value:23,color:T.violet},{name:'Cash/FD',value:16.4,color:T.sky},
+    {name:'Crypto',value:13.6,color:T.amber},{name:'Investments',value:12.2,color:T.blue},{name:'Stocks',value:3.6,color:T.pink},{name:'Mixed',value:3.3,color:T.coral}
+  ];
+
+  const captureD=["Sep","Oct","Nov","Dec","Jan","Feb","Mar"].map((m,i)=>({m,up:[8,5,3,2,6,4,7][i],down:[-4,-8,-12,-6,-10,-14,-5][i]}));
+  const riskRetD=[
+    {x:4,y:8,z:60,n:'Pension',c:T.violet},{x:8,y:-12,z:22,n:'BTC',c:T.amber},{x:3,y:7,z:24,n:'JURE',c:T.teal},
+    {x:5,y:5,z:17,n:'JGEP',c:T.sky},{x:6,y:21,z:20,n:'ZAR',c:T.pink},{x:2,y:4,z:46,n:'FD',c:T.emerald}
+  ];
+
+  const thermalD={
+    assets:['BTC','JURE','JGEP','Pension','ISA','ZAR'],
+    months:['Oct','Nov','Dec','Jan','Feb','Mar'],
+    grid:[[ -10.8,-14.5,-11.0,-12.2,-6.3,5.9 ],[1.2,-1.8,-0.5,0.8,2.1,4.2],[0.8,-2.1,-1.2,-0.3,1.5,3.8],[0.2,0.4,-1.5,-1.5,4.8,3.2],[-0.5,-0.8,-0.6,-0.1,1.8,2.1],[-1.2,-0.5,0.8,-2.1,1.8,0.4]]
+  };
+
+  const liqD=[{n:'T+1',v:12},{n:'T+3',v:15},{n:'T+7',v:8},{n:'T+30',v:46},{n:'T+90',v:60},{n:'Illiquid',v:22}];
+  const holdingsAll=[
+    {n:'Daiwa Pension',v:'£60,275',w:'23.0%',r:'+28.6%',c:T.teal,cont:'+4.2%'},
+    {n:'Fixed Deposit',v:'£46,000',w:'17.5%',r:'+7.4%',c:T.teal,cont:'+0.6%'},
+    {n:'JURE.L',v:'£23,834',w:'9.1%',r:'+8.4%',c:T.teal,cont:'+0.7%'},
+    {n:'BTC',v:'£21,900',w:'8.3%',r:'-44.0%',c:T.coral,cont:'-3.5%'},
+    {n:'ZAR Invest',v:'£20,258',w:'7.7%',r:'+21.2%',c:T.teal,cont:'+1.5%'},
+    {n:'Monzo Cash',v:'£11,558',w:'4.4%',r:'+11.1%',c:T.teal,cont:'+0.3%'}
+  ];
+
   const alertPills = [
-    {label:'Macro Regime', value:MKTENG?.regime?.regime || 'Neutral', color:P.cyan},
-    {label:'Risk Budget', value:`${(scorecardArray.reduce((acc,v)=>acc+(v.s||0),0)/(scorecardArray.length||1)).toFixed(1)}/10`, color:P.amber},
-    {label:'Cash Runway', value:`${runway.toFixed(1)} mo`, color: runway>=3 ? P.green : P.red},
-    {label:'FIRE Gap', value:`${(100-fireProgress).toFixed(1)}%`, color: fireProgress>=100 ? P.green : P.amber},
-    {label:'Debt', value:`£${fmt(PORT.debts)}`, color:P.red},
+    {label:'ISA deadline 5 APR', color:T.coral, age:'2d'},
+    {label:'Amex APR 22.4%', color:T.coral, age:'12h'},
+    {label:'Cash buffer 4.8%', color:T.amber, age:'1h'},
+    {label:'Crypto risk budget 88%', color:T.emerald, age:'4h'}
   ];
 
   const topStress = stress.sort((a,b)=>Math.abs(b.impact||0)-Math.abs(a.impact||0)).slice(0,4);
 
-  return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
+  const PillLabel=({x,y,value,color=T.t1,bg='rgba(0,0,0,0.65)'})=>{ if(x==null||y==null)return null; const w=String(value).length*6.5+16; return(
+    <g>
+      <rect x={x-w/2} y={y-16} width={w} height={18} rx={9} fill={bg} stroke={color} strokeWidth={0.5} strokeOpacity={0.25}/>
+      <text x={x} y={y-4} textAnchor="middle" fill={color} fontSize={9} fontFamily={T.mono} fontWeight="600">{value}</text>
+    </g>
+  );};
 
-      {/* Zone 1 */}
-      <div style={{gridColumn:'span 12'}}>
-        <Hd t="Executive Summary" s="CIO terminal \u2014 portfolio truth state, risk governance, and forward path" tag="COMMAND CENTER" ac={P.amber}/>
+  const Dot=({c,sz=6})=>(<span style={{width:sz,height:sz,borderRadius:'50%',background:c,display:'inline-block',flexShrink:0}}/>);
+  const Tag=({t,c=T.amber})=>(<span style={{fontFamily:T.mono,fontSize:8,fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',color:c,background:`${c}15`,padding:'2px 7px',borderRadius:5}}>{t}</span>);
+  const HTitle=({t})=>(<div style={{fontSize:14,fontWeight:700,color:T.t1,letterSpacing:'-0.01em'}}>{t}</div>);
+
+  const HKpi=({items})=>(<div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,gap:8}}>
+    {items.map((k,i)=>(<div key={i} style={{flex:1,textAlign:i===0?'left':i===items.length-1?'right':'center'}}>
+      <div style={{display:'flex',alignItems:'center',gap:3,fontSize:10,color:T.t2,fontWeight:500,justifyContent:i===0?'flex-start':i===items.length-1?'flex-end':'center'}}>{k.dot&&<Dot c={k.dot}/>} {k.icon} {k.label}</div>
+      <div style={{display:'flex',alignItems:'baseline',gap:5,justifyContent:i===0?'flex-start':i===items.length-1?'flex-end':'center'}}>
+        <span style={{fontSize:24,fontWeight:700,color:T.t1,fontFamily:T.mono,letterSpacing:'-0.02em'}}>{k.value}</span>
+        {k.delta&&<span style={{fontSize:11,fontWeight:700,color:k.deltaC||T.teal,background:`${(k.deltaC||T.teal)}15`,padding:'1px 6px',borderRadius:4}}>{k.delta}</span>}
+      </div>
+      {k.sub&&<div style={{fontSize:9,color:T.t3,textAlign:i===0?'left':i===items.length-1?'right':'center',marginTop:2}}>{k.sub}</div>}
+    </div>))}
+  </div>);
+
+  const HTable=({rows,cols=1})=>(<div style={{marginTop:10,borderTop:`1px solid ${T.grid}`,paddingTop:8}}>
+    {rows.map((r,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderTop:i>0?`1px solid ${T.grid}`:'none'}}>
+      <span style={{fontSize:12,color:T.t2}}>{r.city}</span>
+      <div style={{display:'flex',gap:cols>1?16:0}}>{r.values.map((v,j)=>(<span key={j} style={{fontSize:12,color:T.t1,fontFamily:T.mono,fontWeight:500,minWidth:cols>1?70:90,textAlign:'right'}}>{v}</span>))}</div>
+    </div>))}
+  </div>);
+
+  const HBadge=({icon,label,value,color})=>(<div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+    <div style={{width:32,height:32,borderRadius:10,background:`${color}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>{icon}</div>
+    <div><div style={{fontSize:9,color:T.t3}}>{label}</div><div style={{fontSize:13,fontWeight:700,color:T.t1,fontFamily:T.mono}}>{value}</div></div>
+  </div>);
+
+  const HExport=()=>(<button style={{background:'rgba(255,255,255,0.04)',border:`1px solid rgba(255,255,255,0.12)`,borderRadius:8,padding:'4px 10px',color:T.t2,fontSize:9,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontFamily:T.mono}}><Download size={10}/>Export</button>);
+  const Spark=({data,color=T.teal,w=72,h=26})=>(<ResponsiveContainer width={w} height={h}><LineChart data={data}><Line type='monotone' dataKey='v' stroke={color} strokeWidth={1.8} dot={false} style={{filter:`drop-shadow(0 0 4px ${color}55)`}}/></LineChart></ResponsiveContainer>);
+  const Tog=({items,a=0})=>(<div style={{display:'flex',gap:2}}>{items.map((t,i)=>(<span key={i} style={{fontSize:8,fontFamily:T.mono,fontWeight:600,padding:'3px 8px',borderRadius:6,background:i===a?`${T.blue}30`:'rgba(255,255,255,0.04)',color:i===a?T.blue:T.t3,border:`1px solid ${i===a?T.blue+'55':'rgba(255,255,255,0.06)'}`}}>{t}</span>))}</div>);
+  const Pill=({text,sev})=>{const c=sev==='red'?T.coral:sev==='amber'?T.amber:T.teal;return(<span style={{fontSize:9,fontWeight:600,color:c,background:`${c}15`,padding:'3px 10px',borderRadius:16,borderLeft:`3px solid ${c}`,fontFamily:T.mono}}>{text}</span>);};
+  const SR=({l,v,c})=>(<div style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:`1px solid ${T.grid}`}}><span style={{fontSize:11,color:T.t2}}>{l}</span><span style={{fontSize:11,fontFamily:T.mono,fontWeight:600,color:c||T.t1}}>{v}</span></div>);
+
+  return(
+    <div style={{minHeight:'100vh',fontFamily:T.sans,WebkitFontSmoothing:'antialiased',background:`radial-gradient(ellipse at 20% 50%,rgba(56,89,160,0.08),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(120,50,160,0.06),transparent 50%),linear-gradient(180deg,${T.bg} 0%,${T.bg} 100%)`,position:'relative',overflow:'hidden'}}>
+
+      <div style={{position:'fixed',width:700,height:700,borderRadius:'50%',background:'radial-gradient(circle,rgba(245,166,35,0.06),transparent 70%)',top:'-10%',left:'65%',filter:'blur(80px)',pointerEvents:'none'}}/>
+      <div style={{position:'fixed',width:600,height:600,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,212,170,0.04),transparent 70%)',top:'60%',left:'-5%',filter:'blur(80px)',pointerEvents:'none'}}/>
+
+      <div style={{padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:`1px solid rgba(255,255,255,0.10)`,position:'sticky',top:0,zIndex:50,background:'rgba(8,8,16,0.85)',backdropFilter:'blur(20px) saturate(1.4)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <span style={{fontFamily:T.mono,fontSize:12,fontWeight:800,color:T.amber,letterSpacing:'0.08em'}}>LIFESTACK OS</span>
+          <span style={{fontSize:10,color:T.t3,fontFamily:T.mono}}>PORTFOLIO INTELLIGENCE v5.6</span>
+          <div style={{display:'flex',gap:0,marginLeft:8}}>{['Executive Summary','Structure','Performance','Risk','Stress','CashFlow','Bonus','Tax','Opps','Efficiency','Long-Term','Crypto','Actions','Decisions','System'].map((t,i)=>(<button key={i} style={{fontSize:9,fontFamily:T.sans,fontWeight:i===0?700:500,padding:'8px 12px',border:'none',cursor:'pointer',whiteSpace:'nowrap',background:i===0?`${T.amber}12`:'transparent',color:i===0?T.amber:T.t3,borderBottom:i===0?`2px solid ${T.amber}`:'2px solid transparent'}}>{t}</button>))}</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{display:'flex',gap:2,background:'rgba(255,255,255,0.04)',borderRadius:8,padding:2}}>{['1M','3M','6M','1Y','ALL'].map((r,i)=>(<span key={i} style={{fontSize:9,fontFamily:T.mono,fontWeight:600,padding:'4px 10px',borderRadius:6,background:i===2?T.amber:'transparent',color:i===2?T.bg:T.t3}}>{r}</span>))}</div>
+          <span style={{fontSize:10,color:T.t2,fontFamily:T.mono}}>A. Bouter</span>
+        </div>
       </div>
 
-      {/* Zone 2 */}
-      <div style={{gridColumn:'span 12'}}>
-        <Row gap={14}>
-          <EmeraldGlassCard style={{padding:14}}><K l="Net Worth" v={fmt(PORT.netWorth)} delta={pc(nwReturn)} deltaType={nwReturn>=0?'up':'down'} comparison={`Peak: ${fmt(PORT.nwPeak)}`} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:14}}><K l="6M Return (TWR)" v={pc(nwReturn)} deltaType={nwReturn>=0?'up':'down'} comparison={`Bench: ${pc(PORT.benchReturn*100)}`} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:14}}><K l="Peak Drawdown" v={pc(((PORT.netWorth-PORT.nwPeak)/PORT.nwPeak)*100)} deltaType="down" comparison={`From ${fmt(PORT.nwPeak)}`} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:14}}><K l="FIRE Progress" v={`${fireProgress.toFixed(1)}%`} deltaType="up" comparison={`Target: ${fK(PORT.fireTarget)}`} /></EmeraldGlassCard>
-        </Row>
-      </div>
+      <div style={{padding:'20px 20px 60px',maxWidth:1400,margin:'0 auto',display:'flex',flexDirection:'column',gap:T.glassGap,position:'relative',zIndex:1}}>
 
-      {/* Zone 3 */}
-      <div style={{gridColumn:'span 12'}}>
-        <Row gap={14}>
-          <EmeraldGlassCard style={{padding:12}}><K sm l="Active Return" v={pc(activeReturn)} deltaType={activeReturn>=0?'up':'down'} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:12}}><K sm l="Real Return" v={pc(realReturn)} deltaType={realReturn>=0?'up':'down'} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:12}}><K sm l="Total Assets" v={fK(PORT.assets)} /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:12}}><K sm l="Total Debts" v={fK(PORT.debts)} deltaType="down" comparison="22% APR Amex" /></EmeraldGlassCard>
-          <EmeraldGlassCard style={{padding:12}}><K sm l="Effective Positions" v={`${((1/(RISK?.hhi||0.01))||0).toFixed(1)}`} comparison="1/HHI diversification" /></EmeraldGlassCard>
-        </Row>
-      </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}><Tag t='COMMAND CENTER'/><span style={{fontSize:20,fontWeight:700,color:T.t1,letterSpacing:'-0.02em'}}>Executive Summary</span></div>
 
-      {/* Zone 4 */}
-      <div style={{gridColumn:'span 12'}}>
-        <EmeraldGlassCard style={{padding:16}}>
-          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-            {alertPills.map((a,i)=>(<div key={i} style={{padding:'6px 10px',borderRadius:999,background:`${a.color}20`,color:a.color,fontSize:10,fontWeight:700,textTransform:'uppercase'}}>{a.label}: {a.value}</div>))}
-          </div>
-        </EmeraldGlassCard>
-      </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:T.glassGap}}>
+          {[
+            {l:'Net Worth',v:'£262,622',d:'▼ 11.7%',dc:T.coral,sp:nwS,sc:T.coral,sub:'Peak: £297,457 · Sep 2025',avg:'Avg. score £278,340',ac:T.amber},
+            {l:'6M Return (TWR)',v:'-11.7%',d:'▼ 34.8k',dc:T.coral,sp:retS,sc:T.coral,sub:'XIRR: -13.2% · Bench: -4.1%',avg:'Avg. score -7.2%',ac:T.coral},
+            {l:'Peak Drawdown',v:'-16.7%',d:'Feb 2026',dc:T.coral,sp:ddS,sc:T.coral,sub:'CDaR₈: -18.4% · Recovery: In Progress',avg:'Avg. score -9.4%',ac:T.coral},
+            {l:'Coast FIRE',v:'34%',d:'+2.1pp',dc:T.teal,sp:fireS,sc:T.teal,sub:'Target: £750k · Gap: £487k',avg:'Avg. score 28%',ac:T.teal}
+          ].map((k,i)=>(<EmeraldGlassCard key={i} style={{padding:20,position:'relative',overflow:'hidden',borderTop:`3px solid ${k.ac}`,boxShadow:T.shadow}}>
+            <div style={{position:'absolute',top:0,left:'10%',right:'10%',height:1,background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)',pointerEvents:'none',zIndex:1}}/>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:10,color:T.t3,fontFamily:T.mono,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:6}}>{k.l}</div>
+                <div style={{background:'rgba(0,0,0,0.22)',borderRadius:10,padding:'8px 14px',display:'inline-block'}}>
+                  <span style={{fontSize:22,fontWeight:700,fontFamily:T.mono,color:T.t1}}>{k.v}</span>
+                </div>
+                <div style={{fontSize:11,fontWeight:700,color:k.dc,background:`${k.dc}15`,padding:'1px 6px',borderRadius:4,display:'inline-block',marginLeft:10}}>{k.d}</div>
+                <div style={{fontSize:9,color:T.t3,marginTop:4}}>{k.sub}</div>
+              </div>
+              <Spark data={k.sp} color={k.sc}/>
+            </div>
+            <div style={{fontSize:8,color:T.t3,marginTop:6,fontStyle:'italic'}}>{k.avg}</div>
+          </EmeraldGlassCard>))}
+        </div>
 
-      {/* Zone 5 */}
-      <div style={{gridColumn:'span 12'}}>
-        <Ins type="insight" text={`Portfolio at £${PORT.netWorth.toLocaleString()} (-${((PORT.netWorth/PORT.nwPeak-1)*100).toFixed(1)}% from £${PORT.nwPeak.toLocaleString()} peak). BTC drawdown (-44%) is primary drag. Structural positives: pension step-up (+£12k), wrapper migration on track, savings rate 38%. Actions: (1) Deploy £20k ISA by 5 Apr, (2) Salary sacrifice £1,250/mo, (3) Clear Amex £10.6k. Alpha ~£12.5k/yr.`} />
-      </div>
-
-      {/* Zones 6/7 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 8'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:400}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Net Worth Trajectory</div>
-            <div style={{height:300}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={forecast}>
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard style={{padding:20,boxShadow:T.shadow}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+              <HTitle t='Net Worth — Asset Flow Trajectory'/>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}><Tag t='GRADIENT EDGE' c={T.t3}/><Star size={16} color={T.teal}/></div>
+            </div>
+            <HKpi items={[
+              {dot:T.teal,label:'Weekly',value:'£262k',delta:'+£4k',deltaC:T.teal,sub:'Compared to £258k last week'},
+              {dot:T.amber,label:'Monthly',value:'£262k',delta:'-£1k',deltaC:T.coral,sub:'Compared to £263k last month'},
+              {dot:T.violet,label:'6M',value:'£262k',delta:'-£35k',deltaC:T.coral,sub:'Compared to £297k Sep 2025'}
+            ]}/>)
+            <div style={{height:260}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={edgeD}>
                   <defs>
-                    <linearGradient id="t1_nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.45}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.02}/></linearGradient>
+                    {[["t1_pen",T.violet,0.6],["t1_eq",T.teal,0.55],["t1_cr",T.amber,0.5],["t1_ca",T.emerald,0.45],["t1_zar",T.coral,0.4]].map(([id,c,o])=>(
+                      <linearGradient key={id} id={id} x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={c} stopOpacity={o}/><stop offset='100%' stopColor={c} stopOpacity={0.08}/></linearGradient>
+                    ))}
                   </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                  <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Area type="monotone" dataKey="nw" stroke={P.cyan} strokeWidth={2} fill="url(#t1_nwGrad)" />
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3' />
+                  <XAxis dataKey='m' tick={{fontSize:10,fill:T.t3,fontFamily:T.mono}} axisLine={false} tickLine={false} />
+                  <YAxis tick={{fontSize:10,fill:T.t3,fontFamily:T.mono}} axisLine={false} tickLine={false} tickFormatter={v=>`£${v}k`} domain={[0,70]} />
+                  <ReferenceLine x='Nov' stroke='rgba(255,255,255,0.12)' strokeWidth={6} />
+                  <ReferenceLine x='Jan' stroke='rgba(255,255,255,0.12)' strokeWidth={6} />
+                  <Area type='basis' dataKey='pension' stroke={T.violet} fill='url(#t1_pen)' strokeWidth={0} label={({x,y,value,index})=>index===0||index===6?<PillLabel x={x} y={y} value={`£${value}k`} color={T.violet}/> : null } />
+                  <Area type='basis' dataKey='equity' stroke={T.teal} fill='url(#t1_eq)' strokeWidth={0} label={({x,y,value,index})=>index===3?<PillLabel x={x} y={y} value={`£${value}k`} color={T.teal}/> : null } />
+                  <Area type='basis' dataKey='crypto' stroke={T.amber} fill='url(#t1_cr)' strokeWidth={0} label={({x,y,value,index})=>index===0||index===6?<PillLabel x={x} y={y} value={`£${value}k`} color={T.amber}/> : null } />
+                  <Area type='basis' dataKey='cash' stroke={T.emerald} fill='url(#t1_ca)' strokeWidth={0} label={({x,y,value,index})=>index===0||index===6?<PillLabel x={x} y={y} value={`£${value}k`} color={T.emerald}/> : null } />
+                  <Area type='basis' dataKey='zar' stroke={T.coral} fill='url(#t1_zar)' strokeWidth={0} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </EmeraldGlassCard>
-        </div>
-
-        <div style={{gridColumn:'span 4',display:'grid',gridTemplateRows:'repeat(3,1fr)',gap:16}}>
-          <EmeraldGlassCard style={{padding:14,minHeight:124}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Portfolio Quality Radar</div>
-            <div style={{height:120}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="60%" data={scorecardArray}>
-                  <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                  <PolarAngleAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} />
-                  <PolarRadiusAxis angle={30} tick={false} axisLine={false} />
-                  <Radar dataKey="s" stroke={P.cyan} fill={P.cyan} fillOpacity={0.2} />
-                  <Tooltip content={<Tip/>}/>
-                </RadarChart>
-              </ResponsiveContainer>
+            <div style={{display:'flex',gap:12,marginTop:6,flexWrap:'wrap'}}>
+              {[{n:'Pension',c:T.violet},{n:'Equities',c:T.teal},{n:'Crypto',c:T.amber},{n:'Cash',c:T.emerald},{n:'ZAR',c:T.coral}].map((l,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:4,fontSize:10,color:T.t2}}><Dot c={l.c} sz={5}/>{l.n}</div>))}
             </div>
-          </EmeraldGlassCard>
-
-          <EmeraldGlassCard style={{padding:14,minHeight:124}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Allocation Donut</div>
-            <div style={{height:120}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={mapSleeveAllocation(SLEEVES, PORT.assets)} dataKey="value" nameKey="name" innerRadius={30} outerRadius={54}>
-                    {mapSleeveAllocation(SLEEVES, PORT.assets).map((entry,index)=><Cell key={index} fill={[P.cyan,P.indigo,P.amber,P.btc,P.green][index%5]} />)}
-                  </Pie>
-                  <Tooltip content={<Tip/>}/>
-                </PieChart>
-              </ResponsiveContainer>
+            <div style={{display:'flex',gap:16,marginTop:6}}>
+              <HBadge icon={<BarChart3 size={14} color={T.teal}/>} label='Total assets' value='£375,670' color={T.teal}/>
+              <HBadge icon={<TrendingDown size={14} color={T.coral}/>} label='Total debts' value='£13,048' color={T.coral}/>
             </div>
+            <HTable rows={[{city:'Pension (SIPP)',values:['£60,275','£82,133','+28.6%']},{city:'Crypto Sleeve',values:['£21,900','£49,310','-44.0%']},{city:'Cash Buffer',values:['£11,558','£33,978','-66.0%']}]} cols={3} />
           </EmeraldGlassCard>
 
-          <EmeraldGlassCard style={{padding:14,minHeight:124,textAlign:'center'}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>FIRE Progress</div>
-            <Gauge score={Math.min(100,fireProgress)} max={100} label="FIRE" size={110} />
-          </EmeraldGlassCard>
-        </div>
-      </div>
-
-      {/* Zone 8 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 6'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:320}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Holding Contribution (6M)</div>
-            <div style={{height:240}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={contributionData} layout="vertical" margin={{left:12,right:12}}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                  <XAxis type="number" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(0)}`} />
-                  <YAxis dataKey="n" type="category" width={120} tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} />
-                  <Tooltip content={<Tip/>}/>
-                  <Bar dataKey="contrib" radius={[4,4,4,4]} fill={P.cyan} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </EmeraldGlassCard>
-        </div>
-
-        <div style={{gridColumn:'span 6'}}>
-        <EmeraldGlassCard style={{padding:16,minHeight:320}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Monthly Return Pattern</div>
-            <div style={{height:240}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthly} margin={{left:12,right:12,top:6,bottom:16}}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                  <XAxis dataKey="m" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Bar dataKey="p" fill={P.cyan} radius={[4,4,0,0]}/>
-                  <Bar dataKey="b" fill={P.indigo} radius={[4,4,0,0]}/>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </EmeraldGlassCard>
-        </div>
-      </div>
-
-      {/* Zone 9 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 6'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:240}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Salary-to-Deployment Flow</div>
-              {[
-                {label:'Gross Income',val:PORT.grossSalary + PORT.grossBonus},
-                {label:'Tax+NI',val:(PORT.grossSalary + PORT.grossBonus)*(PORT.taxRate + PORT.niRate)},
-                {label:'Expenses',val:PORT.monthlyExpenses*12},
-                {label:'Investable Surplus',val:(PORT.grossSalary + PORT.grossBonus)*0.32},
-              ].map((item,i)=>(
-                <div key={i} style={{marginBottom:10}}>
-                  <div style={{display:'flex',justifyContent:'space-between',color:P.t3,fontSize:10,marginBottom:4}}><span>{item.label}</span><span>{fmt(Math.round(item.val))}</span></div>
-                  <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:999}}>
-                    <div style={{width:`${Math.min(100, (item.val / (PORT.grossSalary+PORT.grossBonus))*100)}%`,height:'100%',background:P.cyan,borderRadius:999}}></div>
-                  </div>
+          <div style={{display:'flex',flexDirection:'column',gap:T.glassGap}}>
+            <EmeraldGlassCard style={{padding:18}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:'uppercase'}}>Module Control</span><Tag t='CMP-0034' c={T.t3}/></div>
+              {[['Return Mode',['TWR','XIRR','Real'],0],['Scenario',['Base','Bull','Bear'],0],['Benchmark',['60/40','MSCI','Custom'],0]].map(([l,opts,a],i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0'}}>
+                  <span style={{fontSize:9,color:T.t3}}>{l}</span>
+                  <Tog items={opts} a={a}/>
                 </div>
               ))}
-            <Ins type="insight" text="Savings rate ~32%, deployable surplus tracking on target for next quarter." />
+            </EmeraldGlassCard>
+            <EmeraldGlassCard style={{padding:18}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:'uppercase'}}>Risk Alerts</span><Tag t='CMP-0035' c={T.t3}/></div>
+              {alertPills.map((a,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}><Pill text={a.label} sev={a.color===T.coral?'red':a.color===T.amber?'amber':'green'}/><span style={{fontSize:8,color:T.t3}}>{a.age}</span></div>))}
+            </EmeraldGlassCard>
+            <EmeraldGlassCard style={{padding:18}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:'uppercase',marginBottom:6}}>Threshold Governance</div>
+              <div style={{display:'flex',justifyContent:'space-around'}}>
+                {[{l:'Liquidity',v:17,c:T.coral},{l:'Risk Budget',v:91,c:T.teal},{l:'FIRE',v:34,c:T.amber}].map((g,i)=>(
+                <div key={i} style={{textAlign:'center'}}>
+                  <div style={{width:44,height:44,borderRadius:'50%',border:`3px solid ${g.c}`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 4px',background:`${g.c}11`,boxShadow:`0 0 12px ${g.c}25`}}><span style={{fontSize:11,fontWeight:700,color:T.t1,fontFamily:T.mono}}>{g.v}%</span></div>
+                  <div style={{fontSize:8,color:T.t3,fontFamily:T.mono}}>{g.l}</div>
+                </div>))}
+              </div>
+            </EmeraldGlassCard>
+            <EmeraldGlassCard style={{padding:18}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:'uppercase',marginBottom:6}}>Asset Allocation</div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <PieChart width={95} height={95}><Pie data={allocD} cx={47} cy={47} innerRadius={28} outerRadius={44} dataKey='value' stroke='none' paddingAngle={2}>{allocD.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart>
+                <div style={{display:'flex',flexDirection:'column',gap:2}}>{allocD.map((d,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:4,fontSize:8}}><Dot c={d.color} sz={5}/><span style={{color:T.t2,minWidth:50}}>{d.name}</span><span style={{color:T.t1,fontFamily:T.mono,fontWeight:600}}>{d.value}%</span></div>))}</div>
+              </div>
+            </EmeraldGlassCard>
+          </div>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard style={{borderTop:`2px solid ${T.violet}`}}>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Quality Score'/><Star size={14} color={T.amber}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div style={{flex:'0 0 100px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:4,fontSize:10,color:T.t2}}><Dot c={T.teal}/>Current</div>
+                <div style={{background:'rgba(0,0,0,0.22)',borderRadius:10,padding:'6px 14px',display:'inline-block'}}><span style={{fontSize:24,fontWeight:700,color:T.t1,fontFamily:T.mono}}>5.2</span></div>
+                <div style={{fontSize:10,color:T.teal,fontWeight:700,marginTop:3}}>+0.3</div>
+                <div style={{fontSize:8,color:T.t3}}>vs 4.9 last quarter</div>
+                <div style={{marginTop:8}}><HBadge icon={<Shield size={11} color={T.teal}/>} label='Risk quality' value='5.4/7' color={T.teal}/></div>
+              </div>
+              <ResponsiveContainer width={180} height={170}>
+                <RadarChart data={radarD}><PolarGrid stroke='rgba(255,255,255,0.08)'/><PolarAngleAxis dataKey='s' tick={{fontSize:7,fill:T.t3}}/><PolarRadiusAxis tick={false} axisLine={false} domain={[0,8]}/><Radar dataKey='v' stroke={T.teal} fill={T.teal} fillOpacity={0.15} strokeWidth={2.5} style={{filter:'drop-shadow(0 0 4px rgba(0,212,170,0.35))'}}/><Radar dataKey='t' stroke={T.amber} fill='none' strokeWidth={1} strokeDasharray='4 4'/></RadarChart>
+              </ResponsiveContainer>
+              <div style={{flex:'0 0 100px',textAlign:'right'}}>
+                <div style={{display:'flex',alignItems:'center',gap:4,fontSize:10,color:T.t2,justifyContent:'flex-end'}}><Star size={10} color={T.amber}/>Target</div>
+                <div style={{background:'rgba(0,0,0,0.22)',borderRadius:10,padding:'6px 14px',display:'inline-block'}}><span style={{fontSize:24,fontWeight:700,color:T.t1,fontFamily:T.mono}}>7.0</span></div>
+                <div style={{fontSize:8,color:T.t3,marginTop:3}}>Institutional benchmark</div>
+                <div style={{marginTop:14}}><div style={{fontSize:10,color:T.coral}}>Weakest</div><div style={{fontSize:20,fontWeight:700,color:T.coral,fontFamily:T.mono}}>3.8</div><div style={{fontSize:8,color:T.t3}}>Returns axis</div></div>
+              </div>
+            </div>
+            <HTable rows={[{city:'Diversity',values:['7.6 / 7.0']},{city:'Tax Efficiency',values:['6.0 / 7.0']},{city:'Returns',values:['3.8 / 7.0']}]} />
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard style={{borderTop:`2px solid ${T.coral}`}}>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Drawdown Profile'/><div style={{display:'flex',gap:4}}><Tag t='CMP-0063' c={T.t3}/><HExport/></div></div>
+            <HKpi items={[
+              {dot:T.coral,label:'Current',value:'-16.7%',delta:'Feb 2026',deltaC:T.coral,sub:'CDaR₈: -18.4%'},
+              {label:'Recovery',value:'In Progress',sub:'0 of £35.4k recovered'},
+              {dot:T.amber,label:'Max DD',value:'-16.7%',sub:'Peak £297k → £248k'}
+            ]}/>)
+            <div style={{height:150}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={ddS.map((d,i)=>({x:['Sep','Oct','Nov','Dec','Jan','Feb','Mar','', '','', ''][i]||`W${i}`,v:d.v}))}>
+                  <defs><linearGradient id='t1_dd' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={T.coral} stopOpacity={0.45}/><stop offset='100%' stopColor={T.coral} stopOpacity={0.03}/></linearGradient></defs>
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3'/>
+                  <XAxis dataKey='x' tick={{fontSize:9,fill:T.t3}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:9,fill:T.t3}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`}/>
+                  <ReferenceLine y={-16.7} stroke={T.coral} strokeDasharray='6 4' strokeWidth={1} strokeOpacity={0.5}/>
+                  <Area type='monotone' dataKey='v' stroke={T.coral} fill='url(#t1_dd)' strokeWidth={2.5} dot={false} style={{filter:'drop-shadow(0 0 6px rgba(255,92,122,0.4))'}}/>
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <HTable rows={[{city:'Peak-to-Trough',values:['-£49,834']},{city:'Recovery Needed',values:['+£35,400']},{city:'Days in Drawdown',values:['142 days']}]} />
           </EmeraldGlassCard>
         </div>
 
-        <div style={{gridColumn:'span 6'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:240}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Net Worth Bridge (6M)</div>
-            <div style={{height:210}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bridge.slice(0,8)} margin={{left:10,right:10,top:5,bottom:15}}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                  <XAxis dataKey="n" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`£${Math.round(v/1000)}k`}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Bar dataKey="v" fill={P.amber} radius={[4,4,0,0]}/>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Up/Down Capture'/><Tag t='CMP-0043' c={T.t3}/></div>
+            <HKpi items={[
+              {dot:T.blue,label:'Up Capture',value:'68%',delta:'+3pp',deltaC:T.teal,sub:'vs 60/40 benchmark'},
+              {dot:T.coral,label:'Down Capture',value:'112%',delta:'+8pp',deltaC:T.coral,sub:'Excess down exposure'}
+            ]}/>)
+            <div style={{height:155}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={captureD}>
+                  <defs>
+                    <linearGradient id='t1_up' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={T.blue} stopOpacity={0.55}/><stop offset='100%' stopColor={T.blue} stopOpacity={0.05}/></linearGradient>
+                    <linearGradient id='t1_dn' x1='0' y1='1' x2='0' y2='0'><stop offset='0%' stopColor={T.coral} stopOpacity={0.55}/><stop offset='100%' stopColor={T.coral} stopOpacity={0.05}/></linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3'/>
+                  <XAxis dataKey='m' tick={{fontSize:9,fill:T.t3}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:9,fill:T.t3}} axisLine={false} tickLine={false}/>
+                  <ReferenceLine y={0} stroke='rgba(255,255,255,0.08)' />
+                  <Area type='monotone' dataKey='up' stroke={T.blue} fill='url(#t1_up)' strokeWidth={2.5} dot={false} style={{filter:'drop-shadow(0 0 4px rgba(59,158,255,0.35))'}}/>
+                  <Area type='monotone' dataKey='down' stroke={T.coral} fill='url(#t1_dn)' strokeWidth={2.5} dot={false} style={{filter:'drop-shadow(0 0 4px rgba(255,92,122,0.35))'}}/>
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <HTable rows={[{city:'Net Capture Ratio',values:['0.61x']},{city:'Asymmetry Score',values:['-0.44']},{city:'Batting Average',values:['42%']}]} />
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Brinson Attribution'/><Star size={14} color={T.amber}/></div>
+            <HKpi items={[
+              {dot:T.teal,label:'Allocation',value:'+2.1%',delta:'Positive',deltaC:T.teal,sub:'Asset class positioning'},
+              {dot:T.coral,label:'Selection',value:'-9.8%',delta:'Negative',deltaC:T.coral,sub:'Security-level drag (BTC)'}
+            ]}/>)
+            <div style={{height:165}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart data={contribD} layout='vertical' barCategoryGap='16%'>
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3' />
+                  <XAxis type='number' tick={{fontSize:8,fill:T.t3}} axisLine={false} tickLine={false} tickFormatter={v=>`${v>0?'+':''}${v}k`}/>
+                  <YAxis type='category' dataKey='n' tick={{fontSize:9,fill:T.t2}} axisLine={false} tickLine={false} width={50}/>
+                  <ReferenceLine x={0} stroke='rgba(255,255,255,0.08)' />
+                  <Bar dataKey='v' radius={[0,4,4,0]} label={{position:'right',fontSize:8,fill:T.t2,fontFamily:T.mono,formatter:v=>`${v>0?'+':''}${v}k`}}>
+                    {contribD.map((d,i)=><Cell key={i} fill={d.v>=0?T.teal:T.coral} fillOpacity={0.8}/>) }
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            <HBadge icon={<TrendingDown size={12} color={T.coral}/>} label='Total active return' value='-7.6%' color={T.coral}/>
           </EmeraldGlassCard>
         </div>
-      </div>
 
-      {/* Zone 10 */}
-      <div style={{gridColumn:'span 12'}}>
-        <EmeraldGlassCard style={{padding:16,minHeight:260}}>
-          <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>5-Year Wealth Scenarios</div>
-          <div style={{height:210}}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={WEALTH_5||[]}> 
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Risk / Return Map'/><Tag t='CMP-0053' c={T.t3}/></div>
+            <HKpi items={[
+              {dot:T.teal,label:'Monthly',value:'£8,097',delta:'+19.6%',deltaC:T.teal,sub:'44,214 USD'},
+              {dot:T.amber,label:'Yearly',value:'£312,134',delta:'+2.5%',deltaC:T.teal,sub:'301,002 USD'}
+            ]}/>)
+            <div style={{height:175}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <ScatterChart>
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3'/>
+                  <XAxis type='number' dataKey='x' tick={{fontSize:8,fill:T.t3}} axisLine={false} tickLine={false}/>
+                  <YAxis type='number' dataKey='y' tick={{fontSize:8,fill:T.t3}} axisLine={false} tickLine={false}/>
+                  <ReferenceLine y={0} stroke='rgba(255,255,255,0.06)' />
+                  {riskRetD.map((b,i)=>(<Scatter key={i} data={[b]} fill={b.c} fillOpacity={0.65}><Cell r={Math.sqrt(b.z)*1.8}/></Scatter>))}
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+            <HTable rows={riskRetD.map(b=>({city:b.n,values:[`Vol: ${b.x}%`,`Ret: ${b.y>0?'+':''}${b.y}%`]}))} cols={2} />
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Monthly Returns'/><Tag t='CMP-0018' c={T.t3}/></div>
+            <HKpi items={[
+              {dot:T.teal,label:'Monthly',value:'£8,097',delta:'+19.6%',deltaC:T.teal,sub:'44,214 USD'},
+              {dot:T.amber,label:'Yearly',value:'£312,134',delta:'+2.5%',deltaC:T.teal,sub:'301,002 USD'}
+            ]}/>)
+            <div style={{display:'grid',gridTemplateColumns:'55px repeat(6,1fr)',gap:2,fontSize:7,fontFamily:T.mono}}>
+              <div />{thermalD.months.map((m,i)=>(<div key={i} style={{textAlign:'center',color:T.t3,padding:3}}>{m}</div>))}
+              {thermalD.assets.map((asset,ri)=>(<Fragment key={ri}>
+                <div style={{color:T.t2,display:'flex',alignItems:'center',fontSize:8}}>{asset}</div>
+                {thermalD.grid[ri].map((v,ci)=>{const c=v>2?T.teal:v>0?T.emerald:v>-2?T.amber:v>-5?T.coral:'#EF4444';return(
+                  <div key={ci} style={{background:`${c}${Math.min(Math.round(Math.abs(v)*12+20),99)}`,borderRadius:4,padding:'5px 2px',textAlign:'center',color:T.t1,fontWeight:600}}>{v>0?'+':''}{v.toFixed(1)}</div>
+                );})}
+              </Fragment>))}
+            </div>
+            <HTable rows={[{city:'Best Month',values:['Jan +1.2%']},{city:'Worst Month',values:['Nov -4.5%']},{city:'Hit Rate',values:['33% positive']}]} />
+          </EmeraldGlassCard>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Monthly Return Distribution'/><Tag t='RAINFALL' c={T.t3}/></div>
+            <HKpi items={[
+              {dot:T.teal,label:'Positive months',value:'3',sub:'50%'},
+              {dot:T.coral,label:'Negative months',value:'3',sub:'50%'},
+              {dot:T.violet,label:'Average',value:'-0.6%',sub:'6m'}
+            ]}/>)
+            <div style={{height:200}}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart data={monthlyR} margin={{left:10,right:10,top:10,bottom:10}}>
+                  <CartesianGrid stroke={T.grid} strokeDasharray='3 3' />
+                  <XAxis dataKey='m' tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`} />
+                  <ReferenceLine y={0} stroke='rgba(255,255,255,0.08)' />
+                  <Tooltip content={<GlassTip/>}/>
+                  <Bar dataKey='v' radius={[4,4,0,0]} fill={T.blue} label={{position:'top',fontSize:8,fill:T.t1,fontFamily:T.mono,formatter:v=>`${v}%`}} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <HTable rows={[{city:'Sharpe',values:['0.82']},{city:'Sortino',values:['1.10']},{city:'Skewness',values:['-0.28']}]} />
+          </EmeraldGlassCard>
+
+          <EmeraldGlassCard>
+            <div style={{display:'flex',justifyContent:'space-between'}}><HTitle t='Liquidity Ladder'/><Tag t='LADDER' c={T.t3}/></div>
+            <HKpi items={[
+              {dot:T.teal,label:'Liquid',value:'28%',sub:'£104k'},
+              {dot:T.blue,label:'Semi-liquid',value:'38%',sub:'£142k'},
+              {dot:T.coral,label:'Illiquid',value:'34%',sub:'£252k'}
+            ]}/>)
+            <div style={{display:'grid',gap:8}}>
+              {liqD.map((item,i)=>(<div key={i}><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:T.t3}}><span>{item.n}</span><span>{item.v}%</span></div><div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.v}%`,height:'100%',background:item.n==='Illiquid'?T.coral:(item.v>50?T.teal:T.blue),borderRadius:99}}/></div></div>))}
+            </div>
+            <HTable rows={[{city:'Cash Buffer',values:['£11.6k']},{city:'Emergency Target',values:['£18.0k']},{city:'Buffer Gap',values:['-£6.4k']}]} />
+          </EmeraldGlassCard>
+        </div>
+
+        <EmeraldGlassCard style={{padding:18,minHeight:280}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><HTitle t='5-Year Scenarios'/><Tag t='SCENARIO' c={T.t3}/></div>
+          <HKpi items={[
+            {dot:T.teal,label:'Bull 2030',value:'£510k',sub:'CAGR +9.5%'},
+            {dot:T.blue,label:'Base 2030',value:'£398k',sub:'CAGR +6.8%'},
+            {dot:T.coral,label:'Bear 2030',value:'£270k',sub:'CAGR +2.7%'}
+          ]}/>)
+          <div style={{height:220}}>
+            <ResponsiveContainer width='100%' height='100%'>
+              <AreaChart data={scenD}>
                 <defs>
-                  <linearGradient id="t1_scenarioGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={P.cyan} stopOpacity={0.35}/><stop offset="100%" stopColor={P.cyan} stopOpacity={0.06}/></linearGradient>
+                  <linearGradient id='t1_scenarioBase' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={T.teal} stopOpacity={0.35}/><stop offset='100%' stopColor={T.teal} stopOpacity={0.06}/></linearGradient>
+                  <linearGradient id='t1_scenarioBull' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={T.violet} stopOpacity={0.30}/><stop offset='100%' stopColor={T.violet} stopOpacity={0.05}/></linearGradient>
+                  <linearGradient id='t1_scenarioBear' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor={T.coral} stopOpacity={0.30}/><stop offset='100%' stopColor={T.coral} stopOpacity={0.05}/></linearGradient>
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                <XAxis dataKey="y" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
-                <Tooltip content={<Tip/>}/>
-                <Area type="monotone" dataKey="base" stroke={P.cyan} fill="url(#t1_scenarioGrad)" strokeWidth={2} />
+                <CartesianGrid stroke={T.grid} strokeDasharray='3 3' />
+                <XAxis dataKey='y' tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
+                <Tooltip content={<GlassTip/>}/>
+                <Area type='monotone' dataKey='base' stroke={T.teal} fill='url(#t1_scenarioBase)' strokeWidth={2} />
+                <Area type='monotone' dataKey='bull' stroke={T.violet} fill='url(#t1_scenarioBull)' strokeWidth={2} />
+                <Area type='monotone' dataKey='bear' stroke={T.coral} fill='url(#t1_scenarioBear)' strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <Ins type="opp" text={`Base case to £${Math.round(WEALTH_5?.slice(-1)[0]?.base || 0).toLocaleString()} by 2035. Wrapper alpha adds £${Math.round(((WEALTH_5?.slice(-1)[0]?.wrapperAlpha||0)-((WEALTH_5?.slice(-1)[0]?.base||0)))||0).toLocaleString()} (est.).`} />
+          <HTable rows={[{city:'FIRE Target',values:['£750k']},{city:'Coast FIRE',values:['£346k']},{city:'Current Gap',values:['£404k']}]} cols={3} />
         </EmeraldGlassCard>
-      </div>
 
-      {/* Zone 11 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 4'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Risk Budget Utilisation</div>
-            {(scorecardArray||[]).map((item,i)=>(
-              <div key={i} style={{marginBottom:8}}>
-                <div style={{fontSize:10,color:P.t2,marginBottom:4}}>{item.d}</div>
-                <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${Math.min(100,item.s)}%`,height:'100%',borderRadius:99,background:P.cyan}}/></div>
-              </div>
-            ))}
-          </EmeraldGlassCard>
-        </div>
-        <div style={{gridColumn:'span 4'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Key Portfolio Metrics</div>
-            <Tbl h={["Metric","Value"]} r={[["Net Worth",fmt(PORT.netWorth)],["6M Return",pc(nwReturn)],["Real Return",pc(realReturn)],["FIRE Progress",`${fireProgress.toFixed(1)}%`]]} />
-          </EmeraldGlassCard>
-        </div>
-        <div style={{gridColumn:'span 4'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Drawdown from Peak</div>
-            <div style={{height:170}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={drawdownData}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                  <XAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fill:P.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v.toFixed(1)}%`}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Area type="monotone" dataKey="drawdown" stroke={P.red} fill="rgba(255,92,122,0.2)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </EmeraldGlassCard>
-        </div>
-      </div>
-
-      {/* Zone 12 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 8'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Top 5 Opportunities</div>
-            <Tbl h={["Opportunity","Alpha","Status"]} r={top5Opps.map(o=>[o.t||o.name,o.alpha?`£${o.alpha}k`:'–',o.status||'n/a'])} />
-          </EmeraldGlassCard>
-        </div>
-        <div style={{gridColumn:'span 4'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Debt Snapshot</div>
-            <div><strong>Total debts:</strong> £{fmt(PORT.debts)}</div>
-            <div><strong>Amex:</strong> £{fmt(PORT.amexDebt)}</div>
-            <div><strong>Monzo:</strong> £{fmt(PORT.monzoFlex)}</div>
-            <div style={{marginTop:10,fontSize:10,color:P.t2}}>Priority: clear high-cost credit before next bonus cycle.</div>
-          </EmeraldGlassCard>
-        </div>
-      </div>
-
-      {/* Zone 13 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        <div style={{gridColumn:'span 6'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Stress Test Overview</div>
-            <Tbl h={["Scenario","Impact","Confidence"]} r={topStress.map(s=>[s.s||s.name,`${s.impact||0}%`,s.pr||'N/A'])} />
-          </EmeraldGlassCard>
-        </div>
-        <div style={{gridColumn:'span 6'}}>
-          <EmeraldGlassCard style={{padding:16,minHeight:220}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Liquidity Ladder</div>
-            <div style={{display:'grid',gap:8}}>
-              {[
-                {label:'Cash',pct:((HOLDINGS.filter(h=>h.cat==='Cash'||h.cat==='Cash/FD').reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
-                {label:'Short-term',pct:((HOLDINGS.filter(h=>h.w<=10).reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
-                {label:'Illiquid',pct:((HOLDINGS.filter(h=>h.w>10).reduce((a,h)=>a+h.v,0)/PORT.assets)*100).toFixed(1)},
-              ].map((item,i)=>(
-                <div key={i}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:P.t3}}><span>{item.label}</span><span>{item.pct}%</span></div>
-                  <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.pct}%`,height:'100%',background:P.cyan,borderRadius:99}}/></div>
-                </div>
-              ))}
-            </div>
-            <Ins type="warning" text="Rainy day fund at 64% of target. Rebuild with bonus allocation." />
-          </EmeraldGlassCard>
-        </div>
-      </div>
-
-      {/* Zone 14 */}
-      <div style={{gridColumn:'span 12',display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:16}}>
-        {[
-          {title:'Strengths',items:['High savings rate','Tax wrapper mix','Low net leverage','Multi-asset diversification']},
-          {title:'Weaknesses',items:['Crypto drawdown','Amex leverage','Home bias','Mid-cap concentration']},
-          {title:'Priority Actions',items:['Deploy ISA allowance','Clear Amex by 30 Apr','Rebalance to targets','Execute top opps']},
-        ].map((block,i)=>(
-          <div key={i} style={{gridColumn:'span 4'}}>
-            <EmeraldGlassCard style={{padding:16,minHeight:160}}>
-              <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>{block.title}</div>
-              <ul style={{paddingLeft:16,margin:0,fontSize:10,color:P.t2,lineHeight:1.5}}>{block.items.map((item,j)=><li key={j}>{item}</li>)}</ul>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:T.glassGap}}>
+          <div style={{gridColumn:'span 4'}}>
+            <EmeraldGlassCard style={{padding:18,minHeight:220}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Holdings Table</div>
+              <Tbl h={['Holding','Value','Weight','Return','Contribution']} r={holdingsAll.map(h=>[h.n,h.v,h.w,h.r,h.cont])} />
             </EmeraldGlassCard>
           </div>
-        ))}
-      </div>
+          <div style={{gridColumn:'span 4'}}>
+            <EmeraldGlassCard style={{padding:18,minHeight:220}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Key Metrics</div>
+              <div style={{display:'grid',gap:6}}>
+                {[
+                  ['Sharpe','0.82'],['Sortino','1.12'],['Max DD','-16.7%'],['HHI','0.42'],['Entropy','2.9'],['Active Share','73%'],['Beta','0.98'],['Tracking Error','4.1%']
+                ].map(([l,v],i)=>(<SR key={i} l={l} v={v}/>))}
+              </div>
+            </EmeraldGlassCard>
+          </div>
+          <div style={{gridColumn:'span 4'}}>
+            <EmeraldGlassCard style={{padding:18,minHeight:220}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Small KPIs</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                {[
+                  {l:'Savings Rate',v:'38%',sub:'Avg 35%'},
+                  {l:'Runway',v:'12.1m',sub:'Target 18m'},
+                  {l:'Debt Ratio',v:'3.5%',sub:'Target <5%'},
+                  {l:'ISA Used',v:'87%',sub:'Target 100%'},
+                  {l:'Pension YTD',v:'+3.1%',sub:'Target +4.2%'},
+                  {l:'DQS',v:'4.8',sub:'Target 6.5'}
+                ].map((item,i)=>(<div key={i} style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${T.grid}`,borderRadius:12,padding:10,display:'flex',flexDirection:'column',gap:4}}><div style={{fontSize:10,color:T.t2}}>{item.l}</div><div style={{fontSize:18,fontWeight:700,color:T.t1,fontFamily:T.mono}}>{item.v}</div><div style={{fontSize:9,color:T.t3,fontStyle:'italic'}}>{item.sub}</div></div>))}
+              </div>
+            </EmeraldGlassCard>
+          </div>
+        </div>
 
-      {/* Zone 15 */}
-      <div style={{gridColumn:'span 12'}}>
-        <Ins type="insight" text={`Data as at ${PORT.date}. Portfolio value £${PORT.netWorth.toLocaleString()}. Live state: ${truthLayer.dashboard_freshness_state?.status || 'unknown'}. Not investment advice.`} />
-      </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:T.glassGap}}>
+          <EmeraldGlassCard style={{padding:18,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Capital Flow</div>
+            <HKpi items={[
+              {dot:T.teal,label:'Gross',value:'£160k',sub:'100%'},{dot:T.amber,label:'Tax',value:'£32k',sub:'20%'},{dot:T.blue,label:'Expenses',value:'£46k',sub:'29%'},{dot:T.violet,label:'Investable',value:'£82k',sub:'51%'}
+            ]}/>)
+            <div style={{display:'grid',gap:8}}>
+              {[
+                {l:'Gross',v:100},{l:'Tax',v:20},{l:'Expenses',v:29},{l:'Investable',v:51}
+              ].map((item,i)=>(<div key={i}><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:T.t2}}><span>{item.l}</span><span>{item.v}%</span></div><div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.v}%`,height:'100%',background:T.teal,borderRadius:99}}/></div></div>))}
+            </div>
+            <HTable rows={[{city:'Tax drag',values:['-5.1%']},{city:'Net deploy',values:['£76k']}]}/>
+          </EmeraldGlassCard>
+          <EmeraldGlassCard style={{padding:18,minHeight:220}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase',marginBottom:10}}>Wrapper Efficiency</div>
+            <HKpi items={[
+              {dot:T.teal,label:'ISA util',value:'87%',sub:'£18.1k'},
+              {dot:T.violet,label:'Pension util',value:'92%',sub:'£82.1k'},
+              {dot:T.blue,label:'GIA util',value:'76%',sub:'£45.7k'}
+            ]}/>)
+            <div style={{display:'grid',gridTemplateColumns:'1fr',gap:8}}>
+              {[
+                {l:'ISA',v:87,c:T.teal},{l:'Pension',v:92,c:T.violet},{l:'GIA',v:76,c:T.blue}
+              ].map((item,i)=>(<div key={i}><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:T.t2}}><span>{item.l}</span><span>{item.v}%</span></div><div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${item.v}%`,height:'100%',background:item.c,borderRadius:99}}/></div></div>))}
+            </div>
+            <HTable rows={[{city:'Efficiency',values:['89%']},{city:'Gap',values:['11%']}]} />
+          </EmeraldGlassCard>
+        </div>
 
+        <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:T.glassGap}}>
+          {[
+            {title:'Strengths',items:['High savings rate','Tax wrapper mix','Low net leverage','Multi-asset diversification'],icon:<TrendingUp size={14} color={T.teal} />,color:T.teal},
+            {title:'Weaknesses',items:['Crypto drawdown','Amex leverage','Home bias','Mid-cap concentration'],icon:<AlertTriangle size={14} color={T.coral} />,color:T.coral},
+            {title:'Priority Actions',items:['Deploy ISA allowance','Clear Amex by 30 Apr','Rebalance to targets','Execute top opps'],icon:<Zap size={14} color={T.amber} />,color:T.amber}
+          ].map((block,i)=>(
+            <div key={i} style={{gridColumn:'span 4'}}>
+              <EmeraldGlassCard style={{padding:16,minHeight:160,borderTop:`3px solid ${block.color}`}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>{block.icon}<div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:'uppercase'}}>{block.title}</div></div>
+                <ul style={{paddingLeft:16,margin:0,fontSize:10,color:T.t2,lineHeight:1.5}}>{block.items.map((item,j)=>(<li key={j}>{item}</li>))}</ul>
+              </EmeraldGlassCard>
+            </div>))}
+        </div>
+
+        <Ins type='insight' text={`Data as at ${PORT.date}. Portfolio value £${PORT.netWorth.toLocaleString()}. Live state: ${truthLayer?.dashboard_freshness_state?.status || 'unknown'}. Not investment advice.`} />
+
+      </div>
     </div>
   );
 };
 
-// =========================================================================
-// NAV STRUCTURE SANKEY — Assets → Classes → Wrappers
-// =========================================================================
-// =========================================================================
-// NAV STRUCTURE SANKEY — Assets → Classes → Wrappers
-// =========================================================================
+
 const NavSankey = ()=>{
   const W=750,H=480,nW=16;
   // Left: Total Assets
