@@ -1788,7 +1788,7 @@ const T1 = ({ truthLayer })=>{
                   <XAxis dataKey='m' tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}%`} />
                   <ReferenceLine y={0} stroke='rgba(255,255,255,0.08)' />
-                  <Tooltip content={<GlassTip/>}/>
+                  <Tooltip content={<Tip/>}/>
                   <Bar dataKey='v' radius={[4,4,0,0]} fill={T.blue} label={{position:'top',fontSize:8,fill:T.t1,fontFamily:T.mono,formatter:v=>`${v}%`}} />
                 </BarChart>
               </ResponsiveContainer>
@@ -1828,7 +1828,7 @@ const T1 = ({ truthLayer })=>{
                 <CartesianGrid stroke={T.grid} strokeDasharray='3 3' />
                 <XAxis dataKey='y' tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fill:T.t3,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fK}/>
-                <Tooltip content={<GlassTip/>}/>
+                <Tooltip content={<Tip/>}/>
                 <Area type='monotone' dataKey='base' stroke={T.teal} fill='url(#t1_scenarioBase)' strokeWidth={2} />
                 <Area type='monotone' dataKey='bull' stroke={T.violet} fill='url(#t1_scenarioBull)' strokeWidth={2} />
                 <Area type='monotone' dataKey='bear' stroke={T.coral} fill='url(#t1_scenarioBear)' strokeWidth={2} />
