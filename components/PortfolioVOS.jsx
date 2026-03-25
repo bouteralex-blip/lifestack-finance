@@ -1300,7 +1300,6 @@ const T1 = ({ truthLayer })=>{
   const monthly = MONTHLY_DATA || [];
   const weekly = NW_WEEKLY || [];
   const forecast = NW_FORECAST?.length ? NW_FORECAST : weekly;
-  const scoreData = SCORECARD?.length ? SCORECARD : SCORE || [];
   const opps = OPPS || [];
   const bridge = BRIDGE_ITEMS || [];
   const stress = STRESS || [];
@@ -1315,9 +1314,10 @@ const T1 = ({ truthLayer })=>{
     return {...p, drawdown: peakNW ? ((p.nw-peakNW)/peakNW)*100 : 0};
   });
 
+  const scorecardArray = SCORECARD ? Object.entries(SCORECARD).filter(([k,v])=>typeof v==='number').map(([k,v])=>({d:k.charAt(0).toUpperCase()+k.slice(1),s:v})) : [{d:'Overall',s:5}];
   const alertPills = [
     {label:'Macro Regime', value:MKTENG?.regime?.regime || 'Neutral', color:P.cyan},
-    {label:'Risk Budget', value:`${((scoreData||[]).reduce((acc,v)=>acc+(v.s||0),0)/((scoreData||[]).length||1)).toFixed(1)}%`, color:P.amber},
+    {label:'Risk Budget', value:`${(scorecardArray.reduce((acc,v)=>acc+(v.s||0),0)/(scorecardArray.length||1)).toFixed(1)}/10`, color:P.amber},
     {label:'Cash Runway', value:`${runway.toFixed(1)} mo`, color: runway>=3 ? P.green : P.red},
     {label:'FIRE Gap', value:`${(100-fireProgress).toFixed(1)}%`, color: fireProgress>=100 ? P.green : P.amber},
     {label:'Debt', value:`£${fmt(PORT.debts)}`, color:P.red},
@@ -1395,7 +1395,7 @@ const T1 = ({ truthLayer })=>{
             <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:8}}>Portfolio Quality Radar</div>
             <div style={{height:120}}>
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="60%" data={scoreData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="60%" data={scorecardArray}>
                   <PolarGrid stroke="rgba(255,255,255,0.08)" />
                   <PolarAngleAxis dataKey="d" tick={{fill:P.t3,fontSize:10}} />
                   <PolarRadiusAxis angle={30} tick={false} axisLine={false} />
@@ -1532,7 +1532,7 @@ const T1 = ({ truthLayer })=>{
         <div style={{gridColumn:'span 4'}}>
           <EmeraldGlassCard style={{padding:16,minHeight:220}}>
             <div style={{fontSize:11,fontWeight:700,color:P.t3,textTransform:'uppercase',marginBottom:10}}>Risk Budget Utilisation</div>
-            {(scoreData||[]).map((item,i)=>(
+            {(scorecardArray||[]).map((item,i)=>(
               <div key={i} style={{marginBottom:8}}>
                 <div style={{fontSize:10,color:P.t2,marginBottom:4}}>{item.d}</div>
                 <div style={{height:8,background:'rgba(255,255,255,0.08)',borderRadius:99}}><div style={{width:`${Math.min(100,item.s)}%`,height:'100%',borderRadius:99,background:P.cyan}}/></div>
