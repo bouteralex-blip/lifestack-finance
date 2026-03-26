@@ -50,7 +50,7 @@ export function CIOInsightBannerWidget({ data }) {
 
   return (
     <div
-      className="relative flex items-start gap-4 overflow-hidden rounded-xl bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] border-l-4 p-4 md:items-center"
+      className="relative flex items-start gap-4 overflow-hidden rounded-[18px] bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] border-l-4 p-4 md:items-center"
       style={{
         borderLeftColor: accentColor,
         boxShadow: [
@@ -58,12 +58,12 @@ export function CIOInsightBannerWidget({ data }) {
           "inset 0 -1px 1px rgba(255,255,255,0.1)",
           "0 20px 40px rgba(0,0,0,0.4)",
         ].join(", "),
-        fontFamily: "Geist, sans-serif",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       {/* AE Specular Shine */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.2] to-transparent"
+        className="pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-br from-white/[0.2] to-transparent"
         aria-hidden="true"
       />
 

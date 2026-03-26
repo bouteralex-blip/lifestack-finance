@@ -48,7 +48,7 @@ function MintGlassTooltip({ active, payload, label }) {
 
   return (
     <div
-      className="overflow-hidden rounded-xl border border-white/10"
+      className="overflow-hidden rounded-[12px] border border-white/10"
       style={{
         backgroundColor: "rgba(11,42,28,0.60)",
         backdropFilter: "blur(20px) saturate(1.3)",
@@ -133,7 +133,7 @@ export function TrajectoryChartWidget({
       </div>
 
       {/* Chart inside inner plate */}
-      <div className="relative z-10 mt-6 bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-3">
+      <div className="relative z-10 mt-6 bg-black/[0.25] rounded-[12px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-3">
         <div className="h-[360px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -264,7 +264,7 @@ export function TrajectoryChartWidget({
         {(footerStats || []).map((stat) => (
           <div
             key={stat.label}
-            className="bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-2"
+            className="bg-black/[0.25] rounded-[12px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-2"
           >
             <span className="text-[11px] font-sans font-medium uppercase tracking-widest text-emerald-100/60">
               {stat.label}

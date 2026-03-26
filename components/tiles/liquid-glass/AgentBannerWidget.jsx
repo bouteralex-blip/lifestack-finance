@@ -40,7 +40,7 @@ export function AgentBannerWidget({ data }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-r-2xl border-l-4 border-l-[#F5A623] bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-4"
+      className="relative overflow-hidden rounded-r-[18px] border-l-4 border-l-[#F5A623] bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-4"
       style={{
         boxShadow: [
           "inset 0 1px 2px rgba(255,255,255,0.5)",
@@ -52,7 +52,7 @@ export function AgentBannerWidget({ data }) {
     >
       {/* AE specular shine */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.2] to-transparent"
+        className="pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-br from-white/[0.2] to-transparent"
         aria-hidden="true"
       />
       {/* Primary glare sweep */}
@@ -95,7 +95,7 @@ export function AgentBannerWidget({ data }) {
         {/* Text content */}
         <div className="min-w-0 flex-1">
           <div
-            className="rounded-xl border border-white/5 bg-black/30 p-2"
+            className="rounded-[12px] border border-white/5 bg-black/30 p-2"
             style={{ boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 1px rgba(255,255,255,0.05)" }}
           >
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623]">

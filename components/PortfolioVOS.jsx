@@ -122,7 +122,7 @@ const T = {
   t3: "#64748B",
   glass: "rgba(255,255,255,0.05)",
   glassGap: 16,
-  glassRadius: 16,
+  glassRadius: 18,
   grid: "rgba(255,255,255,0.04)",
   bg: "#080810",
   shadow: "0 8px 32px rgba(0,0,0,0.3),0 0 80px rgba(0,0,0,0.15)",
@@ -134,11 +134,11 @@ const T = {
 // --- MATERIAL TILE STYLES: Solid gradient accent cards — teal-navy spectrum ---
 // All radius 16px per blueprint Factor 1 spec
 const MAT = {
-  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), 0 0 80px rgba(15,150,156,0.10), inset 0 1px 0 rgba(255,255,255,0.22)',borderRadius:16,border:'1px solid rgba(15,150,156,0.35)'},
-  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), 0 0 80px rgba(41,77,97,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',borderRadius:16,border:'1px solid rgba(109,165,192,0.25)'},
-  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), 0 0 80px rgba(217,119,6,0.08), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
-  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), 0 0 80px rgba(220,38,38,0.08), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:16,border:'1px solid rgba(255,255,255,0.12)'},
-  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), 0 0 80px rgba(12,112,117,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',borderRadius:16,border:'1px solid rgba(15,150,156,0.20)'},
+  teal:{background:'linear-gradient(135deg, #0F969C 0%, #0C7075 50%, #072E33 100%)',boxShadow:'0 8px 32px rgba(15,150,156,0.45), 0 0 80px rgba(15,150,156,0.10), inset 0 1px 0 rgba(255,255,255,0.22)',borderRadius:18,border:'1px solid rgba(15,150,156,0.35)'},
+  indigo:{background:'linear-gradient(135deg, #294D61 0%, #1a3548 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(41,77,97,0.45), 0 0 80px rgba(41,77,97,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',borderRadius:18,border:'1px solid rgba(109,165,192,0.25)'},
+  amber:{background:'linear-gradient(135deg, #d97706, #92400e)',boxShadow:'0 8px 32px rgba(217,119,6,0.30), 0 0 80px rgba(217,119,6,0.08), inset 0 1px 0 rgba(255,255,255,0.15)',borderRadius:18,border:'1px solid rgba(255,255,255,0.12)'},
+  red:{background:'linear-gradient(135deg, #dc2626, #7f1d1d)',boxShadow:'0 8px 32px rgba(220,38,38,0.30), 0 0 80px rgba(220,38,38,0.08), inset 0 1px 0 rgba(255,255,255,0.12)',borderRadius:18,border:'1px solid rgba(255,255,255,0.12)'},
+  dark:{background:'linear-gradient(135deg, #0C7075 0%, #072E33 50%, #05161A 100%)',boxShadow:'0 8px 32px rgba(12,112,117,0.40), 0 0 80px rgba(12,112,117,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',borderRadius:18,border:'1px solid rgba(15,150,156,0.20)'},
 };
 
 // --- LIQUID GLASS SYSTEM: True refraction over teal/green wallpaper ---
@@ -146,7 +146,7 @@ const MAT = {
 // SVG feTurbulence + feDisplacementMap for light-bending effect
 // Stack: shell (blur+refract) + plate (dark readability) + content
 const GLASS_BASE = {
-  radius: 16,  // Blueprint spec: 16px consistent on all cards
+  radius: 18,  // Bento refinement: 18px primary card radius
   padding: 20, // Blueprint spec: 20px internal padding everywhere
 };
 
@@ -179,20 +179,20 @@ const G3 = glassLight(3);
 const GS = {
   background:"rgba(7,46,51,0.92)",
   backdropFilter:"blur(20px) saturate(1.6)",WebkitBackdropFilter:"blur(20px) saturate(1.6)",
-  border:"1px solid rgba(15,150,156,0.28)",borderRadius:16,
+  border:"1px solid rgba(15,150,156,0.28)",borderRadius:18,
   boxShadow:"0 8px 32px rgba(0,0,0,0.30), 0 0 80px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.16)",
   backgroundImage:"linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)",
 };
 // Panel header banner — deep teal-dark strip, teal accent shimmer
 const HEADER_BANNER = {
   background:'linear-gradient(90deg, rgba(5,22,26,0.92), rgba(7,46,51,0.80) 70%)',
-  padding:'10px 16px',borderRadius:'16px 16px 0 0',
+  padding:'10px 16px',borderRadius:'18px 18px 0 0',
   marginBottom:0,display:'flex',justifyContent:'space-between',alignItems:'center',
   backgroundImage:'linear-gradient(90deg, rgba(15,150,156,0.10), transparent 70%)',
   borderBottom:'1px solid rgba(15,150,156,0.16)',
 };
-const HEADER_TITLE = {fontSize:13,fontWeight:800,color:'#e8f4f5',letterSpacing:1.5,textTransform:'uppercase'};
-const HEADER_SUB = {fontSize:10,fontWeight:500,color:'rgba(232,244,245,0.45)',marginTop:1};
+const HEADER_TITLE = {fontSize:15,fontWeight:600,color:'#e8f4f5',letterSpacing:'0.2px',textTransform:'none'};
+const HEADER_SUB = {fontSize:12,fontWeight:400,color:'rgba(232,244,245,0.55)',marginTop:1};
 const HEADER_DOTS = {fontSize:16,color:'rgba(255,255,255,0.30)',cursor:'pointer',letterSpacing:2};
 const EMPTY_TRUTH_LAYER = {
   portfolio_state: null,
@@ -556,7 +556,7 @@ const hx2 = c => { if(!c||c[0]!=="#") return "99,102,241"; c=c.replace("#",""); 
 
 const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
   <div style={{
-    position:'relative', borderRadius:16, overflow:'hidden', textAlign:"center",
+    position:'relative', borderRadius:18, overflow:'hidden', textAlign:"center",
     flex:sm?"1 1 110px":"1 1 145px", minWidth:sm?95:130,
   }}>
     {/* Shell — glass blur + refraction over wallpaper */}
@@ -582,8 +582,8 @@ const K = ({l,v,s,c=P.cyan,sm,delta,deltaType,bench}) => (
     }}/>
     {/* Content */}
     <div style={{position:'relative',zIndex:1,padding:sm?"12px 14px":"18px 16px"}}>
-      <div style={{fontSize:11,color:'rgba(255,255,255,0.55)',textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:5}}>{l}</div>
-      <div style={{fontSize:sm?24:28,fontWeight:800,color:c,fontFamily:P.mono,letterSpacing:-0.5,lineHeight:1.1}}>{v}</div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.48)',textTransform:"uppercase",letterSpacing:'1.5px',fontWeight:400,marginBottom:5}}>{l}</div>
+      <div style={{fontSize:sm?32:40,fontWeight:700,color:c,fontFamily:P.mono,letterSpacing:'-0.02em',lineHeight:1.0}}>{v}</div>
       {s&&<div style={{fontSize:10,color:'rgba(255,255,255,0.45)',marginTop:4,lineHeight:1.3}}>{s}</div>}
       {delta&&<div style={{display:'inline-flex',alignItems:'center',gap:3,marginTop:4,fontSize:10,fontWeight:700,
         color:deltaType==="up"?P.positive:deltaType==="down"?P.negative:'rgba(255,255,255,0.5)',
@@ -719,7 +719,7 @@ const PanelShell = ({title,subtitle,metric,metricColor,children,tier=2,takeaway,
   return (
     <GlassCard hover tier={tier} {...cardProps} style={{...cardProps.style,padding:0}}>
       {/* Top glass shimmer highlight — bright edge like image 1, spec radius 16px */}
-      <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.20) 32%,${ac}60 50%,rgba(255,255,255,0.20) 68%,transparent 92%)`,borderRadius:'16px 16px 0 0',flexShrink:0}}/>
+      <div style={{height:1,background:`linear-gradient(90deg,transparent 8%,rgba(255,255,255,0.20) 32%,${ac}60 50%,rgba(255,255,255,0.20) 68%,transparent 92%)`,borderRadius:'18px 18px 0 0',flexShrink:0}}/>
       {(title||metric||badge) && <div style={{...HEADER_BANNER,padding:cfg.hpad}}>
         <div style={{flex:1}}>
           {title && <div style={{...HEADER_TITLE,fontSize:cfg.titleSz}}>{title}</div>}
@@ -1394,16 +1394,16 @@ const T1=()=>{
   const Plate=({children})=>(<div style={{background:"rgba(0,0,0,0.06)",borderRadius:10,padding:"6px 14px",display:"inline-block"}}>{children}</div>);
   const Dot=({c,sz=6})=>(<span style={{width:sz,height:sz,borderRadius:"50%",background:c,display:"inline-block",flexShrink:0}}/>);
   const Tag=({t,c=L.accent})=>(<span style={{fontFamily:MONO,fontSize:8,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:c,background:c+"15",padding:"2px 7px",borderRadius:5}}>{t}</span>);
-  const HTitle=({t})=>(<div style={{fontSize:14,fontWeight:700,color:L.t1,letterSpacing:"-0.01em"}}>{t}</div>);
+  const HTitle=({t})=>(<div style={{fontSize:15,fontWeight:600,color:L.t1,letterSpacing:"-0.01em"}}>{t}</div>);
 
   const HKpi=({items})=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
     {items.map((k,i)=>(<div key={i} style={{flex:1,textAlign:i===0?"left":i===items.length-1?"right":"center"}}>
-      <div style={{display:"flex",alignItems:"center",gap:3,fontSize:10,color:L.t2,fontWeight:500,justifyContent:i===0?"flex-start":i===items.length-1?"flex-end":"center"}}>{k.dot&&<Dot c={k.dot}/>}{k.icon}{k.label}</div>
+      <div style={{display:"flex",alignItems:"center",gap:3,fontSize:11,color:L.t2,fontWeight:400,justifyContent:i===0?"flex-start":i===items.length-1?"flex-end":"center"}}>{k.dot&&<Dot c={k.dot}/>}{k.icon}{k.label}</div>
       <div style={{display:"flex",alignItems:"baseline",gap:5,justifyContent:i===0?"flex-start":i===items.length-1?"flex-end":"center"}}>
-        <span style={{fontSize:24,fontWeight:700,color:L.t1,fontFamily:MONO,letterSpacing:"-0.02em"}}>{k.value}</span>
+        <span style={{fontSize:28,fontWeight:700,color:L.t1,fontFamily:MONO,letterSpacing:"-0.02em"}}>{k.value}</span>
         {k.delta&&<span style={{fontSize:11,fontWeight:700,color:k.deltaC||L.teal,background:(k.deltaC||L.teal)+"15",padding:"1px 6px",borderRadius:4}}>{k.delta}</span>}
       </div>
-      {k.sub&&<div style={{fontSize:9,color:L.t3,textAlign:i===0?"left":i===items.length-1?"right":"center",marginTop:2}}>{k.sub}</div>}
+      {k.sub&&<div style={{fontSize:11,color:L.t3,fontWeight:400,textAlign:i===0?"left":i===items.length-1?"right":"center",marginTop:2}}>{k.sub}</div>}
     </div>))}
   </div>);
 
@@ -1466,12 +1466,12 @@ const T1=()=>{
       ].map((k,i)=>(<G key={i} accent={k.ac} style={kpiGlass}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div>
-            <div style={{fontSize:10,color:L.t3,fontFamily:MONO,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{k.l}</div>
+            <div style={{fontSize:11,color:L.t3,fontFamily:MONO,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.03em",marginBottom:6}}>{k.l}</div>
             <Plate><div style={{display:"flex",alignItems:"baseline",gap:6}}>
-              <span style={{fontSize:24,fontWeight:700,color:L.t1,fontFamily:MONO,letterSpacing:"-0.02em",textShadow:"0 0 20px "+k.ac+"33"}}>{k.v}</span>
+              <span style={{fontSize:36,fontWeight:700,color:L.t1,fontFamily:MONO,letterSpacing:"-0.02em",lineHeight:1.0,textShadow:"0 0 20px "+k.ac+"33"}}>{k.v}</span>
               <span style={{fontSize:11,fontWeight:700,color:k.dc,background:k.dc+"15",padding:"1px 6px",borderRadius:4}}>{k.d}</span>
             </div></Plate>
-            <div style={{fontSize:9,color:L.t3,marginTop:4}}>{k.sub}</div>
+            <div style={{fontSize:11,color:L.t3,fontWeight:400,marginTop:4}}>{k.sub}</div>
           </div>
           <Spark data={k.sp} color={k.sc}/>
         </div>

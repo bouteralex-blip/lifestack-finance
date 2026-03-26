@@ -20,15 +20,15 @@ export function KpiGridWidget({ data }) {
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
       {data.map((kpi) => (
         <EmeraldGlassCard key={kpi.label} className="flex flex-col p-4">
-          <div className="rounded-lg bg-black/30 p-2 shadow-inner">
+          <div className="rounded-[12px] bg-black/30 p-2 shadow-inner">
             {/* Label */}
-            <span className="text-[11px] font-sans font-medium uppercase tracking-widest text-emerald-100/60">
+            <span className="text-[11px] font-normal uppercase tracking-widest text-white/[0.48]">
               {kpi.label}
             </span>
 
             {/* Value */}
             <div className="mt-2">
-              <span className="font-mono text-2xl font-medium tracking-tight text-white">
+              <span className="font-sans text-[36px] font-bold leading-none text-white" style={{letterSpacing:'-0.02em'}}>
                 {kpi.value}
               </span>
             </div>
