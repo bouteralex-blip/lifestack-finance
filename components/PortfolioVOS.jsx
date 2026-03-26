@@ -1320,12 +1320,12 @@ const T1=()=>{
     t1: "#0F172A",
     t2: "#334155",
     t3: "#64748B",
-    accent: "#D97706",
-    teal: "#0D7377",
+    accent: "#B45309",
+    teal: "#0E7490",
     coral: "#DC2626",
-    positive: "#0D7377",
+    positive: "#0E7490",
     negative: "#DC2626",
-    warning: "#D97706",
+    warning: "#B45309",
     grid: "rgba(0,0,0,0.06)",
   };
 
@@ -1355,6 +1355,20 @@ const T1=()=>{
     padding: "12px 20px",
     marginBottom: 0,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.30)",
+  };
+
+  // ═══ STABILISED GLASS VARIANTS ═══
+  const kpiGlass = {
+    background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.22) 100%)",
+  };
+  const chartPlate = {
+    background: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 12,
+    padding: "12px 8px",
+    margin: "8px 0",
+  };
+  const summaryCard = {
+    background: "linear-gradient(135deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.25) 100%)",
   };
 
   /* ═══ T1 INLINE HELPERS — defined inside T1, not global ═══ */
@@ -1394,7 +1408,7 @@ const T1=()=>{
   </div>);
 
   const HTable=({rows,cols=1})=>(<div style={{marginTop:10,borderTop:"1px solid "+L.grid,paddingTop:8}}>
-    {rows.map((r,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderTop:i>0?"1px solid "+L.grid:"none"}}>
+    {rows.map((r,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(0,0,0,0.05)",background:i%2===0?"transparent":"rgba(0,0,0,0.03)"}}>
       <span style={{fontSize:12,color:L.t2}}>{r.city}</span>
       <div style={{display:"flex",gap:cols>1?16:0}}>{r.values.map((v,j)=>(<span key={j} style={{fontSize:12,color:L.t1,fontFamily:MONO,fontWeight:500,minWidth:cols>1?70:90,textAlign:"right"}}>{v}</span>))}</div>
     </div>))}
@@ -1434,6 +1448,7 @@ const T1=()=>{
   const holdingsAll=[{n:"Daiwa Pension",v:"\u00A360,275",w:"23.0%",r:"+28.6%",c:L.teal,cont:"+4.2%"},{n:"Fixed Deposit",v:"\u00A346,000",w:"17.5%",r:"+7.4%",c:L.teal,cont:"+0.6%"},{n:"JURE.L",v:"\u00A323,834",w:"9.1%",r:"+8.4%",c:L.teal,cont:"+0.7%"},{n:"BTC",v:"\u00A321,900",w:"8.3%",r:"-44.0%",c:L.coral,cont:"-3.5%"},{n:"ZAR Invest",v:"\u00A320,258",w:"7.7%",r:"+21.2%",c:L.teal,cont:"+1.5%"},{n:"Monzo Cash",v:"\u00A311,558",w:"4.4%",r:"+11.1%",c:L.teal,cont:"+0.3%"}];
 
   /* ═══ RENDER ═══ */
+  // TODO: sidebar still dark — needs separate fix in AppShell.jsx
   return(<div style={{position:"relative",minHeight:"100vh"}}>
     <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,backgroundImage:"url(/t1-bg.jpg)",backgroundSize:"cover",backgroundPosition:"center top",backgroundRepeat:"no-repeat",zIndex:0,pointerEvents:"none"}}/>
     <div style={{position:"relative",zIndex:1,padding:"24px 20px",display:"flex",flexDirection:"column",gap:16}}>
@@ -1448,7 +1463,7 @@ const T1=()=>{
         {l:"6M Return (TWR)",v:"-11.7%",d:"\u25BC 34.8k",dc:L.coral,sp:retS,sc:L.coral,sub:"XIRR: -13.2% \u00B7 Bench: -4.1%",avg:"Avg. score -7.2%",ac:L.coral},
         {l:"Peak Drawdown",v:"-16.7%",d:"Feb 2026",dc:L.coral,sp:ddS,sc:L.coral,sub:"CDaR\u2098: -18.4% \u00B7 Recovery: In Progress",avg:"Avg. score -9.4%",ac:L.coral},
         {l:"Coast FIRE",v:"34%",d:"+2.1pp",dc:L.teal,sp:fireS,sc:L.teal,sub:"Target: \u00A3750k \u00B7 Gap: \u00A3487k",avg:"Avg. score 28%",ac:L.teal}
-      ].map((k,i)=>(<G key={i} accent={k.ac}>
+      ].map((k,i)=>(<G key={i} accent={k.ac} style={kpiGlass}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div>
             <div style={{fontSize:10,color:L.t3,fontFamily:MONO,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{k.l}</div>
@@ -1476,6 +1491,7 @@ const T1=()=>{
           {dot:L.accent,label:"Monthly",value:"\u00A3262k",delta:"-\u00A31k",deltaC:L.coral,sub:"Compared to \u00A3263k last month"},
           {dot:T.violet,label:"6M",value:"\u00A3262k",delta:"-\u00A335k",deltaC:L.coral,sub:"Compared to \u00A3297k Sep 2025"},
         ]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={edgeD}>
             <defs>
@@ -1483,7 +1499,7 @@ const T1=()=>{
                 <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c} stopOpacity={o}/><stop offset="100%" stopColor={c} stopOpacity={0.08}/></linearGradient>
               ))}
             </defs>
-            <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+            <CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis dataKey="m" tick={{fontSize:10,fill:L.t3,fontFamily:MONO}} axisLine={false} tickLine={false}/>
             <YAxis tick={{fontSize:10,fill:L.t3,fontFamily:MONO}} axisLine={false} tickLine={false} tickFormatter={v=>"\u00A3"+v+"k"} domain={[0,70]}/>
             <Area type="basis" dataKey="pension" stroke={T.violet} fill="url(#t1_pen)" strokeWidth={0} name="Pension" label={({x,y,value,index})=>index===0||index===6?<PillLabel x={x} y={y} value={"\u00A3"+value+"k"} color={T.violet}/>:null}/>
@@ -1495,6 +1511,7 @@ const T1=()=>{
             <ReferenceLine x="Jan" stroke="rgba(0,0,0,0.06)" strokeWidth={6}/>
           </AreaChart>
         </ResponsiveContainer>
+        </div>
         <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
           {[{n:"Pension",c:T.violet},{n:"Equities",c:L.teal},{n:"Crypto",c:L.accent},{n:"Cash",c:"#34D399"},{n:"ZAR",c:L.coral}].map((l,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:4,fontSize:10,color:L.t2}}><Dot c={l.c} sz={5}/>{l.n}</div>))}
         </div>
@@ -1562,16 +1579,18 @@ const T1=()=>{
           {label:"Recovery",value:"In Progress",sub:"0 of \u00A335.4k recovered"},
           {dot:L.accent,label:"Max DD",value:"-16.7%",sub:"Peak \u00A3297k \u2192 \u00A3248k"},
         ]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={150}>
           <AreaChart data={ddS.map((d,i)=>({x:["Sep","Oct","Nov","Dec","Jan","Feb","Mar","","","","",""][i]||("W"+i),v:d.v}))}>
             <defs><linearGradient id="t1_dd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={L.coral} stopOpacity={0.45}/><stop offset="100%" stopColor={L.coral} stopOpacity={0.03}/></linearGradient></defs>
-            <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+            <CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis dataKey="x" tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false}/>
             <YAxis tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>v+"%"}/>
             <ReferenceLine y={-16.7} stroke={L.coral} strokeDasharray="6 4" strokeWidth={1} strokeOpacity={0.5}/>
             <Area type="monotone" dataKey="v" stroke={L.coral} fill="url(#t1_dd)" strokeWidth={2.5} dot={false} style={{filter:"drop-shadow(0 0 6px rgba(255,92,122,0.4))"}}/>
           </AreaChart>
         </ResponsiveContainer>
+        </div>
         <HTable rows={[{city:"Peak-to-Trough",values:["-\u00A349,834"]},{city:"Recovery Needed",values:["+\u00A335,400"]},{city:"Days in Drawdown",values:["142 days"]}]}/>
       </G>
     </div>
@@ -1581,13 +1600,14 @@ const T1=()=>{
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Up/Down Capture"/><Tag t="CMP-0043" c={L.t3}/></div>
         <HKpi items={[{dot:T.blue,label:"Up Capture",value:"68%",delta:"+3pp",deltaC:L.teal,sub:"vs 60/40 benchmark"},{dot:L.coral,label:"Down Capture",value:"112%",delta:"+8pp",deltaC:L.coral,sub:"Excess down exposure"}]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={155}>
           <AreaChart data={captureD}>
             <defs>
               <linearGradient id="t1_up" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.blue} stopOpacity={0.55}/><stop offset="100%" stopColor={T.blue} stopOpacity={0.05}/></linearGradient>
               <linearGradient id="t1_dn" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor={L.coral} stopOpacity={0.55}/><stop offset="100%" stopColor={L.coral} stopOpacity={0.05}/></linearGradient>
             </defs>
-            <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+            <CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis dataKey="m" tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false}/>
             <YAxis tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false}/>
             <ReferenceLine y={0} stroke="rgba(0,0,0,0.08)"/>
@@ -1595,20 +1615,23 @@ const T1=()=>{
             <Area type="monotone" dataKey="down" stroke={L.coral} fill="url(#t1_dn)" strokeWidth={2.5} dot={false} style={{filter:"drop-shadow(0 0 4px rgba(255,92,122,0.35))"}}/>
           </AreaChart>
         </ResponsiveContainer>
+        </div>
         <HTable rows={[{city:"Net Capture Ratio",values:["0.61x"]},{city:"Asymmetry Score",values:["-0.44"]},{city:"Batting Average",values:["42%"]}]}/>
       </G>
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Brinson Attribution"/><Star size={14} color={L.accent}/></div>
         <HKpi items={[{dot:L.teal,label:"Allocation",value:"+2.1%",delta:"Positive",deltaC:L.teal,sub:"Asset class positioning"},{dot:L.coral,label:"Selection",value:"-9.8%",delta:"Negative",deltaC:L.coral,sub:"Security-level drag (BTC)"}]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={165}>
           <BarChart data={contribD} layout="vertical" barCategoryGap="16%">
-            <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+            <CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis type="number" tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>(v>0?"+":"")+v+"k"}/>
             <YAxis type="category" dataKey="n" tick={{fontSize:9,fill:L.t2}} axisLine={false} tickLine={false} width={50}/>
             <ReferenceLine x={0} stroke="rgba(0,0,0,0.08)"/>
             <Bar dataKey="v" radius={[0,4,4,0]} label={{position:"right",fontSize:8,fill:L.t2,fontFamily:MONO,formatter:v=>(v>0?"+":"")+v+"k"}}>{contribD.map((d,i)=><Cell key={i} fill={d.v>=0?L.teal:L.coral} fillOpacity={0.8}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
+        </div>
         <HBadge icon={<TrendingDown size={12} color={L.coral}/>} label="Total active return" value="-7.6%" color={L.coral}/>
       </G>
     </div>
@@ -1618,19 +1641,22 @@ const T1=()=>{
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Risk / Return Map"/><Tag t="CMP-0053" c={L.t3}/></div>
         <HKpi items={[{dot:L.teal,label:"Monthly",value:"\u00A38,097",delta:"+19.6%",deltaC:L.teal,sub:"44,214 USD"},{dot:L.accent,label:"Yearly",value:"\u00A3312,134",delta:"+2.5%",deltaC:L.teal,sub:"301,002 USD"}]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={175}>
-          <ScatterChart><CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+          <ScatterChart><CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis type="number" dataKey="x" tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false}/>
             <YAxis type="number" dataKey="y" tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false}/>
             <ReferenceLine y={0} stroke="rgba(0,0,0,0.06)"/>
             {riskRetD.map((b,i)=>(<Scatter key={i} data={[b]} fill={b.c} fillOpacity={0.65}><Cell r={Math.sqrt(b.z)*1.8}/></Scatter>))}
           </ScatterChart>
         </ResponsiveContainer>
+        </div>
         <HTable rows={riskRetD.map(b=>({city:b.n,values:["Vol: "+b.x+"%","Ret: "+(b.y>0?"+":"")+b.y+"%"]}))} cols={2}/>
       </G>
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Monthly Returns"/><Tag t="CMP-0018" c={L.t3}/></div>
         <HKpi items={[{dot:L.teal,label:"Monthly",value:"\u00A38,097",delta:"+19.6%",deltaC:L.teal,sub:"44,214 USD"},{dot:L.accent,label:"Yearly",value:"\u00A3312,134",delta:"+2.5%",deltaC:L.teal,sub:"301,002 USD"}]}/>
+        <div style={chartPlate}>
         <div style={{display:"grid",gridTemplateColumns:"55px repeat(6,1fr)",gap:2,fontSize:7,fontFamily:MONO}}>
           <div/>{thermalD.months.map((m,i)=>(<div key={i} style={{textAlign:"center",color:L.t3,padding:3}}>{m}</div>))}
           {thermalD.assets.map((asset,ri)=>(<Fragment key={ri}>
@@ -1639,6 +1665,7 @@ const T1=()=>{
               <div key={ci} style={{background:c+String(Math.min(Math.round(Math.abs(v)*12+20),99)),borderRadius:4,padding:"5px 2px",textAlign:"center",color:L.t1,fontWeight:600}}>{v>0?"+":""}{v.toFixed(1)}</div>
             );})}
           </Fragment>))}
+        </div>
         </div>
         <HTable rows={[{city:"Best Month",values:["Jan +1.2%"]},{city:"Worst Month",values:["Nov -4.5%"]},{city:"Hit Rate",values:["33% positive"]}]}/>
       </G>
@@ -1649,26 +1676,30 @@ const T1=()=>{
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Monthly Return Distribution"/><Tag t="RAINFALL" c={L.t3}/></div>
         <HKpi items={[{dot:L.teal,label:"Positive",value:"2",delta:"33%",deltaC:L.teal,sub:"months positive"},{dot:L.coral,label:"Negative",value:"4",delta:"67%",deltaC:L.coral,sub:"months negative"},{label:"Avg",value:"-1.6%",sub:"mean monthly"}]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={145}>
-          <BarChart data={monthlyR}><CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+          <BarChart data={monthlyR}><CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis dataKey="m" tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false}/>
             <YAxis tick={{fontSize:9,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>v+"%"}/>
             <ReferenceLine y={0} stroke="rgba(0,0,0,0.06)"/>
             <Bar dataKey="v" radius={[4,4,0,0]} label={{position:"top",fontSize:8,fill:L.t2,fontFamily:MONO,formatter:v=>(v>0?"+":"")+v+"%"}}>{monthlyR.map((d,i)=><Cell key={i} fill={d.v>=0?L.teal:L.coral} fillOpacity={0.8}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
+        </div>
         <HTable rows={[{city:"Sharpe (monthly)",values:["0.42"]},{city:"Sortino",values:["0.31"]},{city:"Skewness",values:["-0.8"]}]}/>
       </G>
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Liquidity Ladder"/><HExport/></div>
         <HKpi items={[{dot:L.teal,label:"Liquid",value:"\u00A335k",delta:"13.3%",deltaC:L.teal,sub:"of total NAV"},{dot:T.violet,label:"Semi-liquid",value:"\u00A3106k",delta:"40.4%",deltaC:L.accent,sub:"T+30 to T+90"},{dot:L.coral,label:"Illiquid",value:"\u00A322k",delta:"8.4%",deltaC:L.coral,sub:"Locked/restricted"}]}/>
+        <div style={chartPlate}>
         <ResponsiveContainer width="100%" height={145}>
-          <BarChart data={liqD} barCategoryGap="20%"><CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+          <BarChart data={liqD} barCategoryGap="20%"><CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
             <XAxis dataKey="n" tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false}/>
             <YAxis tick={{fontSize:8,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>"\u00A3"+v+"k"}/>
             <Bar dataKey="v" radius={[4,4,0,0]} label={{position:"top",fontSize:8,fill:L.t2,fontFamily:MONO,formatter:v=>"\u00A3"+v+"k"}}>{liqD.map((_,i)=><Cell key={i} fill={[L.teal,L.teal,"#38BDF8",T.blue,T.violet,L.coral][i]} fillOpacity={0.8}/>)}</Bar>
           </BarChart>
         </ResponsiveContainer>
+        </div>
         <HTable rows={[{city:"Cash Buffer",values:["\u00A312k (2.6mo)"]},{city:"Emergency Target",values:["\u00A318k (3mo)"]},{city:"Buffer Gap",values:["-\u00A36k"]}]}/>
       </G>
     </div>
@@ -1681,13 +1712,14 @@ const T1=()=>{
         {dot:T.blue,label:"Base 2030",value:"\u00A3398k",delta:"+52%",deltaC:L.teal,sub:"8.7% CAGR historical"},
         {dot:L.coral,label:"Bear 2030",value:"\u00A3270k",delta:"+3%",deltaC:L.accent,sub:"0.6% real after inflation"},
       ]}/>
+      <div style={chartPlate}>
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart data={scenD}>
           <defs>
             <linearGradient id="t1_sc1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={L.teal} stopOpacity={0.3}/><stop offset="100%" stopColor={L.teal} stopOpacity={0.02}/></linearGradient>
             <linearGradient id="t1_sc2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.blue} stopOpacity={0.25}/><stop offset="100%" stopColor={T.blue} stopOpacity={0.02}/></linearGradient>
           </defs>
-          <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="3 3"/>
+          <CartesianGrid strokeOpacity={0.06} stroke="rgba(0,0,0,0.06)" strokeDasharray="3 3"/>
           <XAxis dataKey="y" tick={{fontSize:10,fill:L.t3}} axisLine={false} tickLine={false}/>
           <YAxis tick={{fontSize:10,fill:L.t3}} axisLine={false} tickLine={false} tickFormatter={v=>"\u00A3"+v+"k"}/>
           <Area type="monotone" dataKey="bull" stroke={L.teal} fill="url(#t1_sc1)" strokeWidth={2.5} dot={false} style={{filter:"drop-shadow(0 0 6px rgba(0,212,170,0.4))"}} label={({x,y,value,index})=>index===4?<PillLabel x={x} y={y} value={"\u00A3"+value+"k"} color={L.teal}/>:null}/>
@@ -1696,6 +1728,7 @@ const T1=()=>{
           <ReferenceLine y={750} stroke={L.accent} strokeDasharray="8 4" strokeOpacity={0.3}/>
         </AreaChart>
       </ResponsiveContainer>
+      </div>
       <HTable rows={[{city:"FIRE Target",values:["\u00A3750k","\u00A31.8M","25x expenses"]},{city:"Coast FIRE",values:["\u00A3398k","2030","Base case"]},{city:"Current Gap",values:["\u00A3488k","-65%","vs target"]}]} cols={3}/>
     </G>
 
@@ -1704,8 +1737,8 @@ const T1=()=>{
       <G>
         <div style={{display:"flex",justifyContent:"space-between"}}><HTitle t="Top Holdings"/><Tag t="POSITION" c={L.t3}/></div>
         <table style={{width:"100%",borderCollapse:"collapse",marginTop:6}}>
-          <thead><tr>{["Holding","Value","Wt","Ret","Ctb"].map((h,i)=>(<th key={i} style={{textAlign:i===0?"left":"right",fontSize:7,color:L.t3,fontFamily:MONO,textTransform:"uppercase",letterSpacing:"0.06em",padding:"4px 4px",borderBottom:"1px solid "+L.grid}}>{h}</th>))}</tr></thead>
-          <tbody>{holdingsAll.map((h,i)=>(<tr key={i} style={{borderBottom:"1px solid "+L.grid}}><td style={{padding:"4px",fontSize:10,color:L.t2}}>{h.n}</td><td style={{padding:"4px",fontSize:10,color:L.t1,fontFamily:MONO,textAlign:"right"}}>{h.v}</td><td style={{padding:"4px",fontSize:10,color:L.t3,fontFamily:MONO,textAlign:"right"}}>{h.w}</td><td style={{padding:"4px",fontSize:10,color:h.c,fontFamily:MONO,fontWeight:600,textAlign:"right"}}>{h.r}</td><td style={{padding:"4px",fontSize:10,color:h.c,fontFamily:MONO,textAlign:"right"}}>{h.cont}</td></tr>))}</tbody>
+          <thead><tr>{["Holding","Value","Wt","Ret","Ctb"].map((h,i)=>(<th key={i} style={{textAlign:i===0?"left":"right",fontSize:7,color:L.t3,fontFamily:MONO,textTransform:"uppercase",letterSpacing:"0.06em",padding:"4px 4px",background:"rgba(0,0,0,0.04)",borderBottom:"2px solid rgba(0,0,0,0.08)"}}>{h}</th>))}</tr></thead>
+          <tbody>{holdingsAll.map((h,i)=>(<tr key={i} style={{borderBottom:"1px solid rgba(0,0,0,0.05)",background:i%2===0?"transparent":"rgba(0,0,0,0.03)"}}><td style={{padding:"4px",fontSize:10,color:L.t2}}>{h.n}</td><td style={{padding:"4px",fontSize:10,color:L.t1,fontFamily:MONO,textAlign:"right"}}>{h.v}</td><td style={{padding:"4px",fontSize:10,color:L.t3,fontFamily:MONO,textAlign:"right"}}>{h.w}</td><td style={{padding:"4px",fontSize:10,color:h.c,fontFamily:MONO,fontWeight:600,textAlign:"right"}}>{h.r}</td><td style={{padding:"4px",fontSize:10,color:h.c,fontFamily:MONO,textAlign:"right"}}>{h.cont}</td></tr>))}</tbody>
         </table>
         <HBadge icon={<BarChart3 size={12} color={L.teal}/>} label="Total positions" value="40 holdings" color={L.teal}/>
       </G>
@@ -1715,7 +1748,7 @@ const T1=()=>{
         <HBadge icon={<Activity size={12} color={L.accent}/>} label="Overall quality" value="5.2 / 7.0" color={L.accent}/>
       </G>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-        {[{l:"Savings Rate",v:"38%",d:"+2pp",c:L.teal,avg:"Avg. 32%"},{l:"Runway",v:"4.2mo",d:"\u25BC 1.8",c:L.coral,avg:"Target: 3.0mo"},{l:"Debt Ratio",v:"0%",d:"Clear",c:L.teal,avg:"Amex cleared"},{l:"ISA Used",v:"\u00A320k",d:"Max",c:L.teal,avg:"100% utilised"},{l:"Pension YTD",v:"\u00A312.3k",d:"+\u00A38.3k",c:L.teal,avg:"Target \u00A360k"},{l:"DQS",v:"72",d:"+5",c:L.accent,avg:"Decision Quality"}].map((k,i)=>(<G key={i} style={{padding:12,textAlign:"center"}}>
+        {[{l:"Savings Rate",v:"38%",d:"+2pp",c:L.teal,avg:"Avg. 32%"},{l:"Runway",v:"4.2mo",d:"\u25BC 1.8",c:L.coral,avg:"Target: 3.0mo"},{l:"Debt Ratio",v:"0%",d:"Clear",c:L.teal,avg:"Amex cleared"},{l:"ISA Used",v:"\u00A320k",d:"Max",c:L.teal,avg:"100% utilised"},{l:"Pension YTD",v:"\u00A312.3k",d:"+\u00A38.3k",c:L.teal,avg:"Target \u00A360k"},{l:"DQS",v:"72",d:"+5",c:L.accent,avg:"Decision Quality"}].map((k,i)=>(<G key={i} style={{...kpiGlass,padding:12,textAlign:"center"}}>
           <div style={{fontSize:8,color:L.t3,fontFamily:MONO,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:3}}>{k.l}</div>
           <Plate><span style={{fontSize:18,fontWeight:700,color:L.t1,fontFamily:MONO}}>{k.v}</span></Plate>
           <div style={{fontSize:9,fontWeight:700,color:k.c,marginTop:3,background:k.c+"15",padding:"1px 6px",borderRadius:4,display:"inline-block"}}>{k.d}</div>
@@ -1746,7 +1779,7 @@ const T1=()=>{
         {t:"Strengths",c:L.teal,icon:<TrendingUp size={13}/>,items:["JPM Enhanced suite all positive: JUKC +16%, JURE +8%, JGEP +8%","Pension revalued +26% (+\u00A316.8k) \u2014 largest single contributor","15.4 effective positions with HHI 0.065 \u2014 genuinely diversified","New comp (\u00A3340k gross) transforms savings engine completely"]},
         {t:"Weaknesses",c:L.coral,icon:<AlertTriangle size={13}/>,items:["Crypto lost \u00A338k \u2014 32% of risk from 13% of capital","Cash buffer halved from \u00A334k to \u00A316k. Now 2.6mo vs 3mo target","Amex debt \u00A310,652 at 22% APR \u2014 most expensive capital","47% in taxable GIA wrapper \u2014 est. 1.5-2.0% annual tax drag"]},
         {t:"Priority Actions",c:L.accent,icon:<Zap size={13}/>,items:["Max ISA (\u00A320k) before 5 April \u2014 29 days left. Non-negotiable","Clear Amex (\u00A310,652) from bonus \u2014 guaranteed 22% return","Salary sacrifice \u00A31,250/mo into pension \u2014 60% effective band","Consolidate 18 micro-positions to \u226415. Every position must earn its place"]}
-      ].map((sec,i)=>(<G key={i} accent={sec.c}>
+      ].map((sec,i)=>(<G key={i} accent={sec.c} style={summaryCard}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><div style={{color:sec.c}}>{sec.icon}</div><span style={{fontSize:11,fontWeight:700,color:sec.c,textTransform:"uppercase",fontFamily:MONO,letterSpacing:"0.06em"}}>{sec.t}</span></div>
         {sec.items.map((item,j)=>(<div key={j} style={{fontSize:10,color:L.t2,lineHeight:1.65,padding:"4px 0",borderBottom:"1px solid "+L.grid}}><span style={{color:sec.c,marginRight:5,fontWeight:700}}>{j+1}.</span>{item}</div>))}
       </G>))}
