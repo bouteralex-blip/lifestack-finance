@@ -26,7 +26,7 @@ const NOISE_URI =
 export function EmeraldInnerPlate({ children, className = "" }) {
   return (
     <div
-      className={`bg-black/[0.25] rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-4 ${className}`}
+      className={`bg-black/[0.25] rounded-[12px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] p-4 ${className}`}
     >
       {children}
     </div>
@@ -36,8 +36,8 @@ export function EmeraldInnerPlate({ children, className = "" }) {
 export function EmeraldLabel({ children, className = "" }) {
   return (
     <span
-      className={`text-[11px] font-medium uppercase tracking-widest text-emerald-100/60 ${className}`}
-      style={{ fontFamily: "Geist, sans-serif" }}
+      className={`text-[11px] font-normal uppercase tracking-widest text-white/[0.48] ${className}`}
+      style={{ fontFamily: "'Inter', sans-serif" }}
     >
       {children}
     </span>
@@ -47,8 +47,8 @@ export function EmeraldLabel({ children, className = "" }) {
 export function EmeraldValue({ children, className = "" }) {
   return (
     <span
-      className={`text-3xl font-medium tracking-tight text-white ${className}`}
-      style={{ fontFamily: "Geist Mono, monospace" }}
+      className={`text-[36px] font-bold tracking-tight leading-none text-white ${className}`}
+      style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.02em" }}
     >
       {children}
     </span>
@@ -60,17 +60,17 @@ export function EmeraldValue({ children, className = "" }) {
 export function EmeraldGlassCard({ children, className = "", title }) {
   return (
     <div
-      className={`relative overflow-hidden bg-white/[0.04] backdrop-blur-[40px] saturate-[1.5] rounded-2xl border border-white/[0.10] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.3)] ${className}`}
+      className={`relative overflow-hidden bg-white/[0.04] backdrop-blur-[40px] saturate-[1.5] rounded-[18px] border border-white/[0.10] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.3)] ${className}`}
     >
       {/* ── AE Specular Shine (studio-lit top-left highlight) ──────────── */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.2] to-transparent"
+        className="pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-br from-white/[0.2] to-transparent"
         aria-hidden="true"
       />
 
       {/* ── Fresnel conic rim ─────────────────────────────────────────── */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl"
+        className="pointer-events-none absolute inset-0 rounded-[18px]"
         style={{
           background: `conic-gradient(
             from 315deg at 50% 50%,

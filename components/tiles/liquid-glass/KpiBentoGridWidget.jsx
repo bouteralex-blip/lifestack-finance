@@ -47,7 +47,7 @@ function GlassTile({ children, backlightColor = "255,255,255" }) {
       />
 
       <div
-        className="relative flex flex-1 flex-col overflow-hidden rounded-2xl bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-5"
+        className="relative flex flex-1 flex-col overflow-hidden rounded-[18px] bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-5"
         style={{
           boxShadow: [
             "inset 0 1px 2px rgba(255,255,255,0.5)",
@@ -58,7 +58,7 @@ function GlassTile({ children, backlightColor = "255,255,255" }) {
         }}
       >
         {/* AE specular shine */}
-        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.2] to-transparent" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-br from-white/[0.2] to-transparent" aria-hidden="true" />
         {/* Primary glare sweep */}
         <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(325deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 15%, rgba(255,255,255,0.01) 28%, transparent 45%)" }} aria-hidden="true" />
         {/* Corner hotspot */}
@@ -97,19 +97,19 @@ export function KpiBentoGridWidget({ data, title, className = "" }) {
             key={kpi.label}
             backlightColor={BACKLIGHT[kpi.deltaType]}
           >
-            <span className="text-xs uppercase tracking-wide text-slate-400 opacity-50">
+            <span className="text-[11px] font-normal uppercase tracking-widest text-white/[0.48]">
               {kpi.label}
             </span>
 
             <div className="mt-2 flex flex-col gap-1.5">
-              <span className="font-mono text-[28px] font-bold leading-none text-[#F8FAFC] lg:text-[32px]">
+              <span className="font-sans text-[36px] font-bold leading-none text-[#F8FAFC] lg:text-[40px]" style={{letterSpacing:'-0.02em'}}>
                 {kpi.value}
               </span>
               <DeltaBadge delta={kpi.delta} type={kpi.deltaType} />
             </div>
 
             {kpi.subtext && (
-              <span className="mt-auto pt-2 text-[11px] text-slate-500 opacity-30">
+              <span className="mt-auto pt-2 text-[11px] font-normal text-white/[0.55]">
                 {kpi.subtext}
               </span>
             )}

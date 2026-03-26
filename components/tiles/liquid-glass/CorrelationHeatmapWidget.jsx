@@ -34,7 +34,7 @@ export function CorrelationHeatmapWidget({ data }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-5"
+      className="relative overflow-hidden rounded-[18px] bg-white/[0.08] backdrop-blur-[40px] saturate-[2.0] border border-white/[0.15] p-5"
       style={{
         boxShadow: [
           "inset 0 1px 2px rgba(255,255,255,0.5)",
@@ -47,7 +47,7 @@ export function CorrelationHeatmapWidget({ data }) {
     >
       {/* AE specular shine */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.2] to-transparent"
+        className="pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-br from-white/[0.2] to-transparent"
         aria-hidden="true"
       />
       {/* Primary glare */}
