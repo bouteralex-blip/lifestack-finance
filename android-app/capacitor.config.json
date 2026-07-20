@@ -1,0 +1,25 @@
+{
+  "appId": "com.lifestack.finance",
+  "appName": "LifeStack Finance",
+  "webDir": "www",
+  "server": {
+    "url": "https://lifestack-finance.vercel.app",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#0B0E14",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0B0E14"
+    }
+  }
+}
